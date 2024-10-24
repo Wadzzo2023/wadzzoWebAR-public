@@ -1,20 +1,7 @@
 // pages/ar.js
 import { useEffect } from "react";
 
-// Declare custom elements for TypeScript
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      "a-scene": any;
-      "a-box": any;
-      "a-marker-camera": any;
-      "a-entity": any;
-      "a-sphere": any;
-      "a-text": any;
-      "a-cursor": any;
-    }
-  }
-}
+
 import Head from "next/head";
 
 export default function ARPage() {

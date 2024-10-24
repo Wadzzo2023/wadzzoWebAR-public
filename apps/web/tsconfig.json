@@ -22,6 +22,12 @@
       "@api/*": ["../../packages/api/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "src/pages/ar.jsx",
+    "src/pages/map.jsx"
+  ],
   "exclude": ["node_modules"]
 }
