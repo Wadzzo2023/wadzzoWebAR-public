@@ -5,7 +5,7 @@
     "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "com.wadzzoAR.wadzzo",
+    "scheme": "com.wadzzoar.wadzzo",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -33,7 +33,7 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.wadzzoAR.wadzzo"
+      "package": "com.wadzzoar.wadzzo"
     },
     "web": {
       "bundler": "metro",

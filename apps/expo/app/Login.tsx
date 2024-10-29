@@ -1,29 +1,29 @@
 import React, { useEffect } from "react";
 import {
-  View,
-  TextInput,
-  Text,
-  TouchableOpacity,
-  ScrollView,
   Image,
-  StyleSheet,
-  Dimensions,
   Platform,
-  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import * as WebBrowser from "expo-web-browser";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { ActivityIndicator, Button } from "react-native-paper";
-import { BASE_URL, CALLBACK_URL } from "@/constants/Common";
-import { useRouter } from "expo-router";
 import { Color } from "@/constants/Colors";
-import * as Google from "expo-auth-session/providers/google";
-const webPlatform = Platform.OS === "web";
+import { BASE_URL, CALLBACK_URL } from "@/constants/Common";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useMutation } from "@tanstack/react-query";
+import * as Google from "expo-auth-session/providers/google";
+import { useRouter } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import { ActivityIndicator, Button } from "react-native-paper";
+
+import { makeRedirectUri } from "expo-auth-session";
+
+const webPlatform = Platform.OS === "web";
 
 WebBrowser.maybeCompleteAuthSession();
+
 const LoginScreen = () => {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -33,20 +33,32 @@ const LoginScreen = () => {
   const [loading, setLoading] = React.useState(false);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    iosClientId: process.env.EXPO_PUBLIC_OAUTH_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_OAUTH_ANDROID_CLIENT_ID,
-    webClientId: process.env.EXPO_PUBLIC_OAUTH_WEB_CLIENT_ID,
+    androidClientId:
+      "443284916220-d9idlov4ms8ft9otro9kk9ae7i3kq3t6.apps.googleusercontent.com",
+
+    // clientId:
+    //   "443284916220-l3qg7qu1klpfvph43q35p9u76kf3fkqt.apps.googleusercontent.com",
+
+    redirectUri: makeRedirectUri({
+      path: "(tabs)",
+      isTripleSlashed: true,
+    }),
   });
 
   async function handleSignInWithGoogle() {
-    const user = await AsyncStorage.getItem("@user");
-    if (!user) {
-      if (response?.type === "success") {
-        await getUserinfo(response.authentication?.accessToken);
-      }
-    } else {
-      setUserInfo(JSON.stringify(response));
+    console.log(response);
+    if (response?.type === "success") {
+      const { authentication } = response;
+      console.log(authentication);
     }
+    // const user = await AsyncStorage.getItem("@user");
+    // if (!user) {
+    //   if (response?.type === "success") {
+    //     await getUserinfo(response.authentication?.accessToken);
+    //   }
+    // } else {
+    //   setUserInfo(JSON.stringify(response));
+    // }
   }
 
   const getUserinfo = async (token?: string) => {
