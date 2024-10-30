@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  Linking,
 } from "react-native";
 import {
   ViroARScene,
@@ -26,6 +27,7 @@ import {
 import { ConsumedLocation } from "@/types/CollectionTypes";
 import { Color } from "@/constants/Colors";
 import { useWinnerAnimation } from "./hooks/useWinnerAnimation";
+import { useRouter } from "expo-router";
 const { width, height } = Dimensions.get("window");
 
 interface ARSceneARProps {
@@ -37,7 +39,7 @@ const renderWinnerAnimation = () => {
   return (
     <ViroParticleEmitter
       position={[0, 4.5, 0]} // Position in the scene
-      duration={2000} // How long the emitter will emit particles
+      duration={4000} // How long the emitter will emit particles
       visible={true} // Whether the emitter is visible
       delay={0} // No delay before starting
       run={true} // Whether it should run
@@ -57,7 +59,7 @@ const renderWinnerAnimation = () => {
           params: [20, 1, 20], // Size of the box
           spawnOnSurface: false, // Spawn inside the volume, not just on the surface
         },
-        maxParticles: 800, // Maximum number of particles active at once
+        maxParticles: 400, // Maximum number of particles active at once
       }}
       particleAppearance={{
         opacity: {
@@ -129,7 +131,75 @@ ViroAnimations.registerAnimations({
     duration: 500,
   },
 });
+const renderItemDetail = (
+  renderItemDetail: ConsumedLocation,
+  position: number[]
+) => {
+  if (!renderItemDetail) {
+    return null;
+  }
 
+  return (
+    <ViroFlexView
+      style={styles.itemDetailContainer}
+      position={[position[0], position[1], position[2]]}
+      rotation={[0, 0, 0]}
+      height={2.2}
+      width={3}
+    >
+      <ViroFlexView style={styles.itemDetailHeader}>
+        <ViroImage
+          source={{ uri: renderItemDetail.image_url }}
+          style={styles.itemDetailImage}
+          height={0.8}
+          width={0.8}
+        />
+        <ViroText
+          text={renderItemDetail.title}
+          style={styles.itemDetailTitle}
+          height={0.5}
+          width={1}
+        />
+      </ViroFlexView>
+      <ViroText
+        // onClick={() => {
+        //   const url = "https://www.example.com"; // Replace with your desired URL
+        //   Linking.openURL(url).catch((err) =>
+        //     console.error("Failed to open URL:", err)
+        //   );
+        // }}
+        text={`Brand: ${renderItemDetail.brand_name}`}
+        style={styles.itemDetailText}
+        height={0.2}
+        width={3.5}
+      />
+      <ViroText
+        text={`Description: ${renderItemDetail.description}`}
+        style={styles.itemDetailText}
+        height={0.4}
+        width={1}
+      />
+      <ViroText
+        text={`Remaining: ${renderItemDetail.collection_limit_remaining}`}
+        style={styles.itemDetailText}
+        height={0.2}
+        width={1}
+      />
+      <ViroText
+        onClick={() => {
+          const url = renderItemDetail.url; // Replace with your desired URL
+          Linking.openURL(url).catch((err) =>
+            console.error("Failed to open URL:", err)
+          );
+        }}
+        text={`Link: ${renderItemDetail.url}`}
+        style={styles.itemDetailText}
+        height={0.2}
+        width={3.5}
+      />
+    </ViroFlexView>
+  );
+};
 const ARSceneAR: React.FC<ARSceneARProps> = ({
   items,
   singleAR,
@@ -139,12 +209,17 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
     useState<ViroTrackingStateConstants>(
       ViroTrackingStateConstants.TRACKING_UNAVAILABLE
     );
+  const [onFocusedItem, setOnFocusedItem] = useState<ConsumedLocation | null>(
+    null
+  );
+  const [position, setPosition] = useState([0, 0, 0]);
   const onItemFocus = (item: ConsumedLocation) => {
     console.log("Item focused", item);
     onCapture(item);
+    setOnFocusedItem(item);
   };
   const onItemBlur = () => {
-    onCapture(null);
+    // onCapture(null);
     console.log("Item blurred");
   };
 
@@ -152,14 +227,14 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
 
   console.log("showWinnerAnimation", data.showWinnerAnimation);
   const itemPositions = useMemo(() => {
-    return items.slice(0, 20).map(() => {
+    return items.slice(0, 30).map(() => {
       const angleY = Math.random() * Math.PI * 2; // Random angle for horizontal (360 degrees)
       const angleX = Math.random() * Math.PI - Math.PI / 2; // Random angle for vertical
       const radius = 5; // Distance from the camera
       const x = radius * Math.cos(angleX) * Math.cos(angleY);
       const y = radius * Math.sin(angleX);
       const z = radius * Math.cos(angleX) * Math.sin(angleY);
-      return [x, y % 4, z];
+      return [x, y % 5, z];
     });
   }, [items]); // Only calculate positions once when items change
   const onARInitialized = (
@@ -172,11 +247,15 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
     if (data.showWinnerAnimation) {
       console.log("Winner animation triggered");
     }
+
+    return () => {
+      // Clean up any long-running async operations here if needed
+    };
   }, [data.showWinnerAnimation]);
 
   return (
     <ViroARScene onTrackingUpdated={onARInitialized}>
-      <ViroAmbientLight color="#FFFFFF" />
+      <ViroAmbientLight color="#FFFFFF" intensity={200} />
       <ViroSpotLight
         innerAngle={5}
         outerAngle={90}
@@ -187,7 +266,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
       />
 
       {trackingStatus == ViroTrackingStateConstants.TRACKING_NORMAL &&
-        items.slice(0, 20).map((item, index) => (
+        items.slice(0, 30).map((item, index) => (
           <ViroNode
             key={`${index}-${item.id}`}
             animation={{
@@ -201,12 +280,21 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
                 : [
                     itemPositions[index][0],
                     itemPositions[index][1],
-                    itemPositions[index][1],
+                    itemPositions[index][2],
                   ]
             }
             onHover={(isHovering) => {
               if (isHovering) {
                 onItemFocus(item);
+                setPosition(
+                  singleAR
+                    ? [0, 2.3, -5]
+                    : [
+                        itemPositions[index][0],
+                        itemPositions[index][1] + 2.5,
+                        itemPositions[index][2],
+                      ]
+                );
               } else {
                 onItemBlur();
               }
@@ -237,6 +325,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
               scale={[0.4, 0.4, 0]} // Larger scale for back image as well
               position={[0, 0.5, 0.025]}
             />
+
             <ViroText
               text={item.title}
               scale={[0.7, 0.7, 0.7]} // Larger text scale
@@ -246,6 +335,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
           </ViroNode>
         ))}
       {data.showWinnerAnimation && renderWinnerAnimation()}
+      {onFocusedItem && renderItemDetail(onFocusedItem, position)}
     </ViroARScene>
   );
 };
@@ -315,6 +405,35 @@ const styles = StyleSheet.create({
     width: width * 0.2,
     height: width * 0.2,
     resizeMode: "contain",
+  },
+  itemDetailContainer: {
+    flexDirection: "column",
+    backgroundColor: "rgba(0,0,0,0.8)",
+    padding: 0.1,
+  },
+  itemDetailHeader: {
+    flexDirection: "row",
+    height: 1,
+  },
+  itemDetailImage: {
+    height: 1,
+    width: 1,
+  },
+  itemDetailTitle: {
+    fontFamily: "Arial",
+    fontSize: 20,
+    color: "#FFFFFF",
+    textAlignVertical: "center",
+    textAlign: "left",
+    flex: 1,
+  },
+  itemDetailText: {
+    fontFamily: "Arial",
+    fontSize: 14,
+    color: "#FFFFFF",
+    textAlignVertical: "center",
+    textAlign: "left",
+    padding: 0.05,
   },
 });
 

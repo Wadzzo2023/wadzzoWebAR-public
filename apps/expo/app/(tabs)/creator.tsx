@@ -26,6 +26,10 @@ import { UnFollowBrand } from "../api/unfollow-brand";
 import { set } from "zod";
 import LoadingScreen from "@/components/Loading";
 import { Color } from "@/constants/Colors";
+import {
+  BrandMode,
+  useAccountAction,
+} from "@/components/hooks/useAccountAction";
 
 type Brand = {
   id: string;
@@ -36,7 +40,6 @@ type Brand = {
 };
 
 export default function CreatorPage() {
-  const [isFollowMode, setIsFollowMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("available");
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -44,6 +47,9 @@ export default function CreatorPage() {
   const [unfollowLoadingId, setUnfollowLoadingId] = useState<string | null>(
     null
   );
+
+  const { data: accountActionData, setData: setAccountActionData } =
+    useAccountAction();
   const [refreshing, setRefreshing] = useState(false);
   const queryClient = useQueryClient();
 
@@ -105,6 +111,12 @@ export default function CreatorPage() {
       setBrands(data.users);
     }
   }, [data]);
+
+  useEffect(() => {
+    queryClient.refetchQueries({
+      queryKey: ["MapsAllPins"],
+    });
+  }, [accountActionData.brandMode]);
 
   const filteredBrands = brands.filter((brand) => {
     const matchesSearch = brand.first_name
@@ -168,20 +180,26 @@ export default function CreatorPage() {
             <Text
               style={[
                 styles.switchLabel,
-                !isFollowMode && styles.activeSwitchLabel,
+                !BrandMode.GENERAL && styles.activeSwitchLabel,
               ]}
             >
               General
             </Text>
             <Switch
-              value={isFollowMode}
-              onValueChange={setIsFollowMode}
+              value={accountActionData.brandMode === BrandMode.FOLLOW}
+              onValueChange={(value) =>
+                setAccountActionData({
+                  ...accountActionData,
+                  brandMode: value ? BrandMode.FOLLOW : BrandMode.GENERAL,
+                })
+              }
               color={Color.wadzzo}
             />
             <Text
               style={[
                 styles.switchLabel,
-                isFollowMode && styles.activeSwitchLabel,
+                accountActionData.brandMode === BrandMode.FOLLOW &&
+                  styles.activeSwitchLabel,
               ]}
             >
               Follow

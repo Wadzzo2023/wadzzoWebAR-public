@@ -35,7 +35,8 @@ const LoginScreen = () => {
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId:
       "443284916220-d9idlov4ms8ft9otro9kk9ae7i3kq3t6.apps.googleusercontent.com",
-
+    iosClientId:
+      "888775726548-2ar1q1hndl3ta7r51u0190n545rcq1td.apps.googleusercontent.com",
     // clientId:
     //   "443284916220-l3qg7qu1klpfvph43q35p9u76kf3fkqt.apps.googleusercontent.com",
 
@@ -181,14 +182,26 @@ const LoginScreen = () => {
                   style={{ backgroundColor: Color.wadzzo }}
                   disabled={loading}
                 >
-                  Login {loading && <ActivityIndicator size={12} />}
+                  <Text style={{ color: "white" }}> Login </Text>
+                  {loading && <ActivityIndicator size={12} />}
                 </Button>
-                <View>
+                <View
+                  style={{
+                    marginTop: 10,
+                  }}
+                >
                   <Button
                     onPress={() => promptAsync()}
-                    style={{ backgroundColor: Color.wadzzo }}
+                    style={{ backgroundColor: "white" }}
                   >
-                    Continue with Google
+                    <Text
+                      style={{
+                        color: Color.wadzzo,
+                      }}
+                    >
+                      {" "}
+                      Continue with Google
+                    </Text>
                   </Button>
                 </View>
 

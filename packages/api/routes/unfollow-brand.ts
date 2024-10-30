@@ -1,4 +1,5 @@
-import { BASE_URL } from "@/constants/Common";
+import { BASE_URL } from "../../../apps/expo/constants/Common";
+
 
 export const UnFollowBrand = async (
     { brand_id }: { brand_id: string }

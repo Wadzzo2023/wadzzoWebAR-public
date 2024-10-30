@@ -3111,9 +3111,9 @@
     web-streams-polyfill "^3.1.1"
 
 "@rnmapbox/maps@^10.1.31":
-  version "10.1.32"
-  resolved "https://registry.yarnpkg.com/@rnmapbox/maps/-/maps-10.1.32.tgz#4e945994a4b225810135724b83125717cd7e927b"
-  integrity sha512-8nC+7Il6FmXevbEEBDMY9Lc7JikY/AiHSo2w7inKY0Ptdg/mOfn3RkJmIoPC4j+Zth6Etr+R/5lQAsNat/wr2w==
+  version "10.1.33"
+  resolved "https://registry.yarnpkg.com/@rnmapbox/maps/-/maps-10.1.33.tgz#ef2bbe4b4d7af8c1822d1d5840b8b9b4ffa4ba57"
+  integrity sha512-+J1aJnZ6q0N3044doCb6To/Eftpsn3Eq78AYPMa/Ig9x/u1eWpmbt5WbXJCehkOltGsjvTCenn+/gZKsXMZfww==
   dependencies:
     "@turf/along" "6.5.0"
     "@turf/distance" "6.5.0"
@@ -4521,9 +4521,9 @@ camelize@^1.0.0:
   integrity sha512-dU+Tx2fsypxTgtLoE36npi3UqcjSSMNYfkqgmoEhtZrraP5VWq0K7FkWVTYa8eMPtnU/G2txVsfdCJTn9uzpuQ==
 
 caniuse-lite@^1.0.30001579, caniuse-lite@^1.0.30001669:
-  version "1.0.30001674"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001674.tgz#eb200a716c3e796d33d30b9c8890517a72f862c8"
-  integrity sha512-jOsKlZVRnzfhLojb+Ykb+gyUSp9Xb57So+fAiFlLzzTKpqg8xxSav0e40c8/4F/v9N8QSvrRRaLeVzQbLqomYw==
+  version "1.0.30001675"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001675.tgz#0c1f01fc9cc543b61839753a4c234f995588d1b9"
+  integrity sha512-/wV1bQwPrkLiQMjaJF5yUMVM/VdRPOCU8QZ+PmG6uW6DvYSrNY1bpwHI/3mOcUosLaJCzYDi5o91IQB51ft6cg==
 
 chalk@^2.0.1, chalk@^2.4.2:
   version "2.4.2"
@@ -11973,6 +11973,6 @@ zustand@^3.5.13, zustand@^3.7.1:
   integrity sha512-PIJDIZKtokhof+9+60cpockVOq05sJzHCriyvaLBmEJixseQ1a5Kdov6fWZfWOu5SK9c+FhH1jU0tntLxRJYMA==
 
 zustand@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/zustand/-/zustand-5.0.0.tgz#71f8aaecf185592a3ba2743d7516607361899da9"
-  integrity sha512-LE+VcmbartOPM+auOjCCLQOsQ05zUTp8RkgwRzefUk+2jISdMMFnxvyTjA4YNWr5ZGXYbVsEMZosttuxUBkojQ==
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/zustand/-/zustand-5.0.1.tgz#2bdca5e4be172539558ce3974fe783174a48fdcf"
+  integrity sha512-pRET7Lao2z+n5R/HduXMio35TncTlSW68WsYBq2Lg1ASspsNGjpwLAsij3RpouyV6+kHMwwwzP0bZPD70/Jx/w==

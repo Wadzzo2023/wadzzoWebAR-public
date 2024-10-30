@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  Vibration,
 } from "react-native";
 import {
   ViroARScene,
@@ -93,6 +94,7 @@ const ARScene = () => {
         );
         console.log("response", response);
         if (response.ok) {
+          Vibration.vibrate(1000);
           setData({
             showWinnerAnimation: true,
           });
@@ -128,7 +130,11 @@ const ARScene = () => {
       </Appbar.Header>
       {!singleAR && (
         <Text style={styles.itemTitle}>
-          {capturedItem ? capturedItem.title : "No item captured"}
+          {capturedItem
+            ? loading
+              ? "Collecting Pin...."
+              : capturedItem.title
+            : "No item selected!"}
         </Text>
       )}
 
@@ -185,7 +191,7 @@ const styles = StyleSheet.create({
   appbarTitle: {
     textAlign: "center",
     color: "#ffffff",
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
   },
   captureButton: {

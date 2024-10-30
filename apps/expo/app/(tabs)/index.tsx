@@ -31,7 +31,10 @@ import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import { useRouter } from "expo-router";
 import { useExtraInfo } from "@/components/hooks/useExtraInfo";
 import { BASE_URL } from "@/constants/Common";
-import { useAccountAction } from "@/components/hooks/useAccountAction";
+import {
+  BrandMode,
+  useAccountAction,
+} from "@/components/hooks/useAccountAction";
 import NearbyPinModal from "@/components/modals/NearBy-Pin-Modal";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
@@ -57,7 +60,8 @@ const HomeScreen = () => {
   const autoCollectModeRef = useRef(data.mode);
   const { onOpen } = useModal();
   const cameraRef = useRef<Camera>(null);
-
+  const { data: accountActionData, setData: setAccountActionData } =
+    useAccountAction();
   const isFocused = useIsFocused();
 
   const getNearbyPins = (
@@ -101,7 +105,7 @@ const HomeScreen = () => {
     userLocation: userLocationType,
     locations: ConsumedLocation[]
   ) => {
-    const nearbyPins = getNearbyPins(userLocation, locations, 1000);
+    const nearbyPins = getNearbyPins(userLocation, locations, 100);
     if (nearbyPins.length > 0) {
       setData({
         nearbyPins: nearbyPins,
@@ -179,7 +183,10 @@ const HomeScreen = () => {
 
   const response = useQuery({
     queryKey: ["MapsAllPins"],
-    queryFn: getMapAllPins,
+    queryFn: () =>
+      getMapAllPins({
+        filterID: accountActionData.brandMode === BrandMode.FOLLOW ? "1" : "0",
+      }),
   });
 
   const locations = response.data?.locations ?? [];
@@ -229,7 +236,7 @@ const HomeScreen = () => {
 
   useEffect(() => {
     if (data.mode && userLocation && locations) {
-      const autoCollectPins = getAutoCollectPins(userLocation, locations, 50);
+      const autoCollectPins = getAutoCollectPins(userLocation, locations, 100);
 
       if (autoCollectPins.length > 0) {
         collectPinsSequentially(autoCollectPins);
