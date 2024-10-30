@@ -30,7 +30,7 @@ const { width, height } = Dimensions.get("window");
 
 interface ARSceneARProps {
   items: ConsumedLocation[];
-  onCapture: (item: ConsumedLocation) => void;
+  onCapture: (item: ConsumedLocation | null) => void;
   singleAR?: boolean;
 }
 const renderWinnerAnimation = () => {
@@ -144,6 +144,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
     onCapture(item);
   };
   const onItemBlur = () => {
+    onCapture(null);
     console.log("Item blurred");
   };
 
