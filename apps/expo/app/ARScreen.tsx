@@ -31,8 +31,39 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { Color } from "@/constants/Colors";
 import { useQueryClient } from "@tanstack/react-query";
 import ARSceneAR from "@/components/ARSceneAR";
+import { useWinnerAnimation } from "@/components/hooks/useWinnerAnimation";
 const { width, height } = Dimensions.get("window");
 
+ViroAnimations.registerAnimations({
+  rotate: {
+    properties: {
+      rotateY: "+=360",
+    },
+    duration: 2500,
+  },
+  scaleUp: {
+    properties: {
+      scaleX: 1.5,
+      scaleY: 1.5,
+      scaleZ: 1.5,
+    },
+    duration: 500,
+  },
+  scaleDown: {
+    properties: {
+      scaleX: 0,
+      scaleY: 0,
+      scaleZ: 0,
+    },
+    duration: 500,
+  },
+  fadeOut: {
+    properties: {
+      opacity: 0,
+    },
+    duration: 500,
+  },
+});
 const ARScene = () => {
   const { data } = useNearByPin();
   const items = data?.nearbyPins || [];
@@ -43,38 +74,7 @@ const ARScene = () => {
   );
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
-  const auraAnimation = useRef(new Animated.Value(0)).current;
-  const logoRotation = useRef(new Animated.Value(0)).current;
-
-  const startAuraAnimation = () => {
-    Animated.parallel([
-      Animated.sequence([
-        Animated.timing(auraAnimation, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(auraAnimation, {
-          toValue: 0,
-          duration: 1000,
-          delay: 3000,
-          useNativeDriver: true,
-        }),
-      ]),
-      Animated.timing(logoRotation, {
-        toValue: 1,
-        duration: 4000, // 5 seconds total - 1 second
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      logoRotation.setValue(0); // Reset rotation for next animation
-    });
-  };
-  const spin = logoRotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
-
+  const { setData } = useWinnerAnimation();
   const onCaptureButtonPress = async () => {
     if (capturedItem) {
       console.log(`Captured item: ${capturedItem.id}`);
@@ -93,10 +93,15 @@ const ARScene = () => {
         );
         console.log("response", response);
         if (response.ok) {
-          startAuraAnimation();
+          setData({
+            showWinnerAnimation: true,
+          });
           setTimeout(() => {
             setLoading(false);
             setCapturedItem(null);
+            setData({
+              showWinnerAnimation: false,
+            });
             queryClient.invalidateQueries({
               queryKey: ["collection", "MapsAllPins"],
             });
@@ -141,7 +146,7 @@ const ARScene = () => {
         style={styles.f1}
       />
 
-      {!singleAR && (
+      {!singleAR && capturedItem && (
         <>
           <TouchableOpacity
             disabled={loading || !capturedItem}
@@ -153,33 +158,6 @@ const ARScene = () => {
               style={styles.captureIcon}
             />
           </TouchableOpacity>
-          <Animated.View
-            style={[
-              styles.auraEffect,
-              {
-                opacity: auraAnimation,
-                transform: [
-                  {
-                    scale: auraAnimation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.5, 1.5],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
-            <View style={styles.auraCircle} />
-            <Animated.Image
-              source={require("../assets/images/wadzzo.png")}
-              style={[
-                styles.logo,
-                {
-                  transform: [{ rotate: spin }],
-                },
-              ]}
-            />
-          </Animated.View>
         </>
       )}
     </View>

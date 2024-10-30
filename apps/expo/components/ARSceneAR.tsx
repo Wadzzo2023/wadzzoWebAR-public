@@ -25,6 +25,7 @@ import {
 } from "@reactvision/react-viro";
 import { ConsumedLocation } from "@/types/CollectionTypes";
 import { Color } from "@/constants/Colors";
+import { useWinnerAnimation } from "./hooks/useWinnerAnimation";
 const { width, height } = Dimensions.get("window");
 
 interface ARSceneARProps {
@@ -32,6 +33,71 @@ interface ARSceneARProps {
   onCapture: (item: ConsumedLocation) => void;
   singleAR?: boolean;
 }
+const renderWinnerAnimation = () => {
+  return (
+    <ViroParticleEmitter
+      position={[0, 4.5, 0]} // Position in the scene
+      duration={2000} // How long the emitter will emit particles
+      visible={true} // Whether the emitter is visible
+      delay={0} // No delay before starting
+      run={true} // Whether it should run
+      loop={true} // Loop the particle emission
+      fixedToEmitter={true} // Particles follow the emitter's movement
+      image={{
+        source: require("../assets/images/wadzzo.png"), // Replace with your particle image
+        height: 0.1,
+        width: 0.1,
+        bloomThreshold: 1.0, // Adjust for glow effect if needed
+      }}
+      spawnBehavior={{
+        particleLifetime: [4000, 4000], // Particles last between 4000ms to 4000ms
+        emissionRatePerSecond: [150, 200], // Particles emitted per second
+        spawnVolume: {
+          shape: "box", // Shape of emission area
+          params: [20, 1, 20], // Size of the box
+          spawnOnSurface: false, // Spawn inside the volume, not just on the surface
+        },
+        maxParticles: 800, // Maximum number of particles active at once
+      }}
+      particleAppearance={{
+        opacity: {
+          initialRange: [0, 0], // Start fully transparent
+          factor: "time", // Change opacity over time
+          interpolation: [
+            { endValue: 0.5, interval: [0, 500] }, // Increase opacity to 0.5 over first 500ms
+            { endValue: 1.0, interval: [4000, 5000] }, // Fade out by the end
+          ],
+        },
+        rotation: {
+          initialRange: [0, 360], // Start with random rotation
+          factor: "time", // Rotate over time
+          interpolation: [
+            { endValue: 1080, interval: [0, 5000] }, // Spin the particle by 1080 degrees over 5 seconds
+          ],
+        },
+        scale: {
+          initialRange: [
+            [5, 5, 5], // Start with larger size
+            [10, 10, 10], // Range of initial scales
+          ],
+          factor: "time",
+          interpolation: [
+            { endValue: [3, 3, 3], interval: [0, 4000] }, // Shrink over 4 seconds
+            { endValue: [0, 0, 0], interval: [4000, 5000] }, // Shrink to 0 by 5 seconds
+          ],
+        },
+      }}
+      particlePhysics={{
+        velocity: {
+          initialRange: [
+            [-2, -0.5, 0], // Initial velocity range
+            [2, -3.5, 0], // Spread particles over time
+          ],
+        },
+      }}
+    />
+  );
+};
 
 ViroAnimations.registerAnimations({
   rotate: {
@@ -80,6 +146,10 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
   const onItemBlur = () => {
     console.log("Item blurred");
   };
+
+  const { data } = useWinnerAnimation();
+
+  console.log("showWinnerAnimation", data.showWinnerAnimation);
   const itemPositions = useMemo(() => {
     return items.slice(0, 20).map(() => {
       const angleY = Math.random() * Math.PI * 2; // Random angle for horizontal (360 degrees)
@@ -97,6 +167,11 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
   ) => {
     setTrackingStatus(state);
   };
+  useEffect(() => {
+    if (data.showWinnerAnimation) {
+      console.log("Winner animation triggered");
+    }
+  }, [data.showWinnerAnimation]);
 
   return (
     <ViroARScene onTrackingUpdated={onARInitialized}>
@@ -169,6 +244,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
             />
           </ViroNode>
         ))}
+      {data.showWinnerAnimation && renderWinnerAnimation()}
     </ViroARScene>
   );
 };
