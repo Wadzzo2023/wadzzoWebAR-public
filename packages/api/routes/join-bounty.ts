@@ -1,4 +1,4 @@
-import { BASE_URL } from "@/constants/Common";
+import { BASE_URL } from "app/utils/Common";
 
 
 export const JoinBounty = async ({ bountyId }: { bountyId: string }) => {

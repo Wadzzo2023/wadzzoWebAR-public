@@ -38,7 +38,7 @@ const OnboardingScreen = () => {
   });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container]}>
       <Animated.FlatList
         ref={flatListRef}
         onScroll={onScroll}

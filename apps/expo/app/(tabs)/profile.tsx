@@ -21,12 +21,12 @@ import {
 } from "react-native-paper";
 import * as Clipboard from "expo-clipboard";
 import { useQuery } from "@tanstack/react-query";
-import { getCurrentUser } from "../api/get-current-user";
+import { getCurrentUser } from "@api/routes/get-current-user";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { EvilIcons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import LoadingScreen from "@/components/Loading";
-import { Color } from "@/constants/Colors";
+import { Color } from "@app/utils/Colors";
 import { useAccountAction } from "@/components/hooks/useAccountAction";
 
 export default function SettingScreen() {
@@ -102,6 +102,7 @@ export default function SettingScreen() {
           <Card.Content>
             <Button
               mode="contained"
+              style={[styles.button, { backgroundColor: Color.wadzzo }]}
               onPress={() => Linking.openURL("https://wadzzo.com")}
               icon={({ size, color }) => (
                 <MaterialCommunityIcons name="web" size={size} color={color} />
@@ -118,9 +119,7 @@ export default function SettingScreen() {
 
             <View style={styles.pinCollectionContainer}>
               <View style={styles.pinCollectionTextContainer}>
-                <Text style={styles.pinCollectionTitle}>
-                  Pin Collection Mode
-                </Text>
+                <Text style={styles.pinCollectionTitle}>Auto Collection</Text>
               </View>
               <View style={styles.switchWrapper}>
                 <Text
@@ -129,7 +128,7 @@ export default function SettingScreen() {
                     !pinMode.mode && styles.activeSwitchLabel,
                   ]}
                 >
-                  Manual
+                  Off
                 </Text>
                 <Switch
                   value={pinMode.mode}
@@ -142,7 +141,7 @@ export default function SettingScreen() {
                     pinMode.mode && styles.activeSwitchLabel,
                   ]}
                 >
-                  Auto
+                  On
                 </Text>
               </View>
             </View>
@@ -169,7 +168,7 @@ export default function SettingScreen() {
             <Button
               mode="contained"
               onPress={signOut}
-              style={styles.button}
+              style={[styles.button, { backgroundColor: Color.wadzzo }]}
               icon="logout"
             >
               Sign Out
@@ -205,7 +204,6 @@ export default function SettingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   profileCard: {
     margin: 16,

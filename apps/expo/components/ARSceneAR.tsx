@@ -13,7 +13,6 @@ import {
   ViroText,
   Viro3DObject,
   ViroTrackingStateConstants,
-  ViroARSceneNavigator,
   ViroAmbientLight,
   ViroSpotLight,
   ViroNode,
@@ -24,8 +23,8 @@ import {
   ViroParticleEmitter,
   ViroTrackingReason,
 } from "@reactvision/react-viro";
-import { ConsumedLocation } from "@/types/CollectionTypes";
-import { Color } from "@/constants/Colors";
+import { ConsumedLocation } from "@app/types/CollectionTypes";
+import { Color } from "@app/utils/Colors";
 import { useWinnerAnimation } from "./hooks/useWinnerAnimation";
 import { useRouter } from "expo-router";
 const { width, height } = Dimensions.get("window");

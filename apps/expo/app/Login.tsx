@@ -5,18 +5,17 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
 
-import { Color } from "@/constants/Colors";
-import { BASE_URL, CALLBACK_URL } from "@/constants/Common";
+import { Color } from "@app/utils/Colors";
+import { BASE_URL, CALLBACK_URL } from "app/utils/Common";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation } from "@tanstack/react-query";
 import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { ActivityIndicator, Button } from "react-native-paper";
+import { ActivityIndicator, Button, TextInput } from "react-native-paper";
 
 import { makeRedirectUri } from "expo-auth-session";
 
@@ -160,6 +159,7 @@ const LoginScreen = () => {
                   </Text>
                 )}
                 <TextInput
+                  mode="outlined"
                   value={email}
                   onChangeText={(text) => setEmail(text)}
                   placeholder="Email"
@@ -167,25 +167,26 @@ const LoginScreen = () => {
                 />
                 <TextInput
                   value={password}
+                  mode="outlined"
                   onChangeText={(text) => setPassword(text)}
                   placeholder="Password"
                   secureTextEntry
                   style={styles.input}
                 />
-                <View style={styles.forgotPasswordContainer}>
+                {/* <View style={styles.forgotPasswordContainer}>
                   <Text style={styles.forgotPasswordText}>
                     Forgot your password?
                   </Text>
-                </View>
+                </View> */}
                 <Button
                   onPress={handleLogin}
-                  style={{ backgroundColor: Color.wadzzo }}
+                  style={{ backgroundColor: Color.wadzzo, marginTop: 10 }}
                   disabled={loading}
                 >
                   <Text style={{ color: "white" }}> Login </Text>
                   {loading && <ActivityIndicator size={12} />}
                 </Button>
-                <View
+                {/* <View
                   style={{
                     marginTop: 10,
                   }}
@@ -199,11 +200,10 @@ const LoginScreen = () => {
                         color: Color.wadzzo,
                       }}
                     >
-                      {" "}
                       Continue with Google
                     </Text>
                   </Button>
-                </View>
+                </View> */}
 
                 <View style={styles.newAccountContainer}>
                   <Text style={styles.newAccountText}>New here?</Text>
@@ -293,7 +293,6 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 10,
     backgroundColor: "#f7fafc", // Gray-100
-    paddingLeft: 8,
   },
   forgotPasswordContainer: {
     padding: 8,

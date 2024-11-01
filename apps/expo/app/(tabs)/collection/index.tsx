@@ -24,10 +24,10 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { ConsumedLocation } from "@/types/CollectionTypes";
+import { ConsumedLocation } from "@app/types/CollectionTypes";
 import { useModal } from "@/components/hooks/useModal";
-import { BASE_URL } from "@/constants/Common";
-import { Color } from "@/constants/Colors";
+import { BASE_URL } from "@app/utils/Common";
+import { Color } from "@app/utils/Colors";
 import { useRouter } from "expo-router";
 import { useCollection } from "@/components/hooks/useCollection";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
@@ -203,7 +203,7 @@ export default function MyCollectionScreen() {
             textAlign: "center",
           }}
         />
-        <Menu
+        {/* <Menu
           visible={sortMenuVisible}
           onDismiss={() => setSortMenuVisible(false)}
           anchor={
@@ -228,7 +228,7 @@ export default function MyCollectionScreen() {
             }}
             title="Sort by Category"
           />
-        </Menu>
+        </Menu> */}
       </Appbar.Header>
 
       <FlatList

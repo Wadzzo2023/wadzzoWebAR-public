@@ -14,11 +14,6 @@ import {
 } from "react-native-paper";
 import { useModal } from "../hooks/useModal";
 import { StyleSheet, ToastAndroid, View } from "react-native";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-
-import { useState } from "react";
-import { JoinBounty } from "@/app/api/join-bounty";
-import { useRouter } from "expo-router";
 
 const NearbyPinModal = () => {
   const { isOpen, onClose, type, data } = useModal();

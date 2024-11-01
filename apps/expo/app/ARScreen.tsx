@@ -24,12 +24,12 @@ import {
   ViroParticleEmitter,
   ViroTrackingReason,
 } from "@reactvision/react-viro";
-import { ConsumedLocation } from "@/types/CollectionTypes";
-import { BASE_URL } from "@/constants/Common";
+import { ConsumedLocation } from "@app/types/CollectionTypes";
+import { BASE_URL } from "app/utils/Common";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import { Appbar, Text } from "react-native-paper";
 import { useFocusEffect, useRouter } from "expo-router";
-import { Color } from "@/constants/Colors";
+import { Color } from "@app/utils/Colors";
 import { useQueryClient } from "@tanstack/react-query";
 import ARSceneAR from "@/components/ARSceneAR";
 import { useWinnerAnimation } from "@/components/hooks/useWinnerAnimation";

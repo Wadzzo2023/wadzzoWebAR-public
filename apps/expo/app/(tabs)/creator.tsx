@@ -5,6 +5,7 @@ import {
   FlatList,
   Image,
   RefreshControl,
+  Alert,
 } from "react-native";
 import {
   Appbar,
@@ -16,16 +17,16 @@ import {
   useTheme,
   ActivityIndicator,
 } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { submitSignedXDRToServer4User } from "@app/utils/submitSignedXDRtoServer4User";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAllBrands } from "../api/get-all-brands";
-
-import { FollowBrand } from "../api/follow-brand";
-import { UnFollowBrand } from "../api/unfollow-brand";
-
+import { getAllBrands } from "@api/routes/get-all-brands";
+import { HasTrustOnPageAsset } from "@api/routes/has-trust-on-pageAsset";
+import { FollowBrand } from "@api/routes/follow-brand";
+import { UnFollowBrand } from "@api/routes/unfollow-brand";
+import { GetXDR4Follow } from "@api/routes/get-XDR4-Follow";
 import { set } from "zod";
 import LoadingScreen from "@/components/Loading";
-import { Color } from "@/constants/Colors";
+import { Color } from "@app/utils/Colors";
 import {
   BrandMode,
   useAccountAction,
@@ -61,7 +62,24 @@ export default function CreatorPage() {
   const followMutation = useMutation({
     mutationFn: async ({ brand_id }: { brand_id: string }) => {
       setFollowLoadingId(brand_id);
-      return await FollowBrand({ brand_id });
+      const hasTrust = await HasTrustOnPageAsset({ brand_id });
+      if (!hasTrust) {
+        const xdr = await GetXDR4Follow({ brand_id });
+        if (xdr) {
+          const res = await submitSignedXDRToServer4User(xdr);
+          if (res) {
+            await FollowBrand({ brand_id });
+          } else {
+            Alert.alert("Trust transaction failed");
+            setFollowLoadingId(null);
+          }
+        } else {
+          Alert.alert("Failed to get XDR");
+          setFollowLoadingId(null);
+        }
+      } else {
+        return await FollowBrand({ brand_id });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({

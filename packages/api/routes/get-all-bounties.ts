@@ -1,6 +1,4 @@
-import { BASE_URL } from "../../../apps/expo/constants/Common";
-
-
+import { BASE_URL } from "app/utils/Common";
 
 export const getAllBounties = async () => {
     try {
@@ -18,7 +16,7 @@ export const getAllBounties = async () => {
         }
 
         const data = await response.json();
-        console.log("Bounties:", data);
+
         return data;
     } catch (error) {
         console.error("Error fetching bounties:", error);

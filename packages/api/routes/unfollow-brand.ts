@@ -1,10 +1,9 @@
-import { BASE_URL } from "../../../apps/expo/constants/Common";
-
+import { BASE_URL } from "app/utils/Common";
 
 export const UnFollowBrand = async (
     { brand_id }: { brand_id: string }
 ) => {
-    console.log("Unfollowing brand", brand_id);
+
     try {
         const response = await fetch(
             new URL("api/game/unfollow", BASE_URL).toString(),

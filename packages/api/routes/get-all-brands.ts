@@ -1,5 +1,4 @@
-import { BASE_URL } from "@/constants/Common";
-
+import { BASE_URL } from "app/utils/Common";
 
 export const getAllBrands = async () => {
     try {
@@ -11,7 +10,7 @@ export const getAllBrands = async () => {
             }
         );
 
-        console.log("Response", response.headers);
+
 
 
         if (!response.ok) {

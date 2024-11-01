@@ -1,15 +1,9 @@
-
-import { BASE_URL } from "@/constants/Common";
-import { SubmissionMediaInfoType } from "../(tabs)/bounty/[id]";
+import { BASE_URL } from "@app/utils/Common";
+import { SubmissionMediaInfoType } from "@app/types/SubmissionTypes";
 
 export const UploadSubmission = async ({ bountyId, content, media }: { bountyId: string, content: string, media?: SubmissionMediaInfoType[] }) => {
     try {
-        console.log("Media", media)
-        console.log("DD", JSON.stringify({
-            bountyId: bountyId.toString(),
-            content: content,
-            media: media,
-        }))
+
         const response = await fetch(
             new URL("api/game/bounty/submission/create-submission", BASE_URL).toString(),
             {

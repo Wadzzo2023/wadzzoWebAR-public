@@ -23,28 +23,20 @@ import {
 
 import * as DocumentPicker from "expo-document-picker";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-
+import { UploadSubmission } from "@api/routes/upload-submission";
+import { SubmissionMediaInfoType } from "@app/types/SubmissionTypes";
 import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { UploadSubmission } from "../../api/upload-submission";
+
 import { router, useRouter } from "expo-router";
 
 import ProgressBar from "@/components/ProgressBar";
-import { Color } from "@/constants/Colors";
-import { addrShort } from "@/constants/AddrShort";
-import { Bounty } from "@/types/BountyTypes";
+import { Color } from "@app/utils/Colors";
+import { addrShort } from "@app/utils/AddrShort";
+import { Bounty } from "@app/types/BountyTypes";
 import { useBounty } from "@/components/hooks/useBounty";
 import RenderHTML from "react-native-render-html";
 import { storage } from "@/components/lib/firebase/config";
-
-export const SubmissionMediaInfo = z.object({
-  url: z.string(),
-  name: z.string(),
-  size: z.number(),
-  type: z.string(),
-});
-
-export type SubmissionMediaInfoType = z.TypeOf<typeof SubmissionMediaInfo>;
 
 interface DocumentPickerAsset extends DocumentPicker.DocumentPickerAsset {
   downloadableURI?: string;

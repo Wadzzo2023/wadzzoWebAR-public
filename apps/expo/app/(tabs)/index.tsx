@@ -22,15 +22,15 @@ import { useIsFocused, useNavigation } from "@react-navigation/native"; // Impor
 
 import { useQuery } from "@tanstack/react-query";
 
-import { getMapAllPins } from "../api/get-Map-all-pins";
-import { ConsumedLocation } from "@/types/CollectionTypes";
+import { getMapAllPins } from "@api/routes/get-Map-all-pins";
+import { ConsumedLocation } from "@app/types/CollectionTypes";
 import LoadingScreen from "@/components/Loading";
 import { useModal } from "@/components/hooks/useModal";
-import { Color } from "@/constants/Colors";
+import { Color } from "@app/utils/Colors";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import { useRouter } from "expo-router";
 import { useExtraInfo } from "@/components/hooks/useExtraInfo";
-import { BASE_URL } from "@/constants/Common";
+import { BASE_URL } from "app/utils/Common";
 import {
   BrandMode,
   useAccountAction,
@@ -273,10 +273,17 @@ const HomeScreen = () => {
               styleURL="mapbox://styles/wadzzo/cm1xtphyn01ci01pi20jhfbto"
               style={styles.map}
               pitchEnabled={true}
+              shouldRasterizeIOS={true}
               logoEnabled={false}
             >
               <UserLocation visible={true} />
               <Camera
+                defaultSettings={{
+                  centerCoordinate: [
+                    userLocation.longitude,
+                    userLocation.latitude,
+                  ],
+                }}
                 animationMode="none"
                 zoomLevel={16}
                 pitch={0}

@@ -3,9 +3,7 @@ import React, { useState } from "react";
 
 import {
   View,
-  TextInput,
   Text,
-  TouchableOpacity,
   ScrollView,
   Image,
   StyleSheet,
@@ -15,11 +13,11 @@ import {
 } from "react-native";
 
 import { useMutation } from "@tanstack/react-query";
-import { BASE_URL } from "@/constants/Common";
+import { BASE_URL } from "app/utils/Common";
 import { useRouter } from "expo-router";
-import { Colors } from "react-native/Libraries/NewAppScreen";
-import { Color } from "@/constants/Colors";
-import { Button } from "react-native-paper";
+
+import { Color } from "@app/utils/Colors";
+import { Button, TextInput } from "react-native-paper";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -54,7 +52,7 @@ const SignUpScreen = () => {
         const token = response.headers.get("set-cookie");
         if (token) {
           Alert.alert("Success", "Signup successful");
-          router.push("/(tabs)/home");
+          router.push("/(tabs)/");
         }
       }
     },
@@ -76,7 +74,7 @@ const SignUpScreen = () => {
             <View
               style={[
                 styles.rotatedCardColor,
-                { backgroundColor: Colors.wadzzo },
+                { backgroundColor: Color.wadzzo },
               ]}
             />
             <View style={styles.innerContainer}>
@@ -91,12 +89,14 @@ const SignUpScreen = () => {
               </View>
               <View style={styles.inputContainer}>
                 <TextInput
+                  mode="outlined"
                   placeholder="Email"
                   style={styles.input}
                   value={email}
                   onChangeText={(text) => setEmail(text)}
                 />
                 <TextInput
+                  mode="outlined"
                   placeholder="Username"
                   secureTextEntry
                   value={userName}
@@ -106,6 +106,7 @@ const SignUpScreen = () => {
                 <TextInput
                   placeholder="Password"
                   secureTextEntry
+                  mode="outlined"
                   value={password}
                   onChangeText={(text) => setPassword(text)}
                   style={styles.input}
@@ -113,6 +114,7 @@ const SignUpScreen = () => {
                 <TextInput
                   placeholder="Confirm Password"
                   value={confirmPassword}
+                  mode="outlined"
                   onChangeText={(text) => setConfirmPassword(text)}
                   secureTextEntry
                   style={styles.input}
@@ -121,7 +123,6 @@ const SignUpScreen = () => {
                 <Button
                   onPress={handleSignUp}
                   style={{
-                    padding: 12,
                     marginTop: 20,
                     backgroundColor: Color.wadzzo,
                   }}
@@ -218,7 +219,6 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 10,
     backgroundColor: "#f7fafc", // Gray-100
-    paddingLeft: 8,
   },
 
   button: {

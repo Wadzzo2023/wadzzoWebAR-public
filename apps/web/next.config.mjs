@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 import { withExpo } from "@expo/next-adapter";
-import withImages from "next-images";
+
 import withFonts from "next-fonts";
 
 const nextConfig = withExpo(
@@ -13,9 +13,11 @@ const nextConfig = withExpo(
       "react-native-web",
       "ui",
       "app",
+ 
       "react-native-paper",
       "react-native-vector-icons",
       "react-native-safe-area-context",
+
       // Add other packages that need transpiling
     ],
     webpack: (config) => {

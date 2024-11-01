@@ -10,7 +10,7 @@ import { StyleSheet, View } from "react-native";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { set } from "zod";
-import { BASE_URL } from "@/constants/Common";
+import { BASE_URL } from "app/utils/Common";
 import { useModal } from "../hooks/useModal";
 
 const DeleteCollectionModal = () => {
@@ -44,12 +44,11 @@ const DeleteCollectionModal = () => {
 
       const result = await response.json();
 
-      setIsDeleting(false);
       return result;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["collection", "MapsAllPins"],
+        queryKey: ["collection"],
       });
       setIsDeleting(false);
       onClose();

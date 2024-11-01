@@ -1,4 +1,4 @@
-import { BASE_URL } from "@/constants/Common";
+import { BASE_URL } from "app/utils/Common";
 
 export const getCurrentUser = async () => {
     try {
@@ -10,7 +10,7 @@ export const getCurrentUser = async () => {
             }
         );
 
-        console.log("Response", response.headers);
+
 
 
         if (!response.ok) {

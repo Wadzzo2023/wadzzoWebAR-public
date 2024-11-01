@@ -27,15 +27,15 @@ import { useQuery } from "@tanstack/react-query";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { useNavigation } from "@react-navigation/native";
-import { Bounty } from "@/types/BountyTypes";
+import { Bounty } from "@app/types/BountyTypes";
 import { useModal } from "@/components/hooks/useModal";
 import LoadingScreen from "@/components/Loading";
 import { useBounty } from "@/components/hooks/useBounty";
-import { addrShort } from "@/constants/AddrShort";
-import { Color } from "@/constants/Colors";
+import { addrShort } from "@app/utils/AddrShort";
+import { Color } from "@app/utils/Colors";
 import { useRouter } from "expo-router";
-import { getAllBounties } from "@/app/api/get-all-bounties";
-import { getUserPlatformAsset } from "@/app/api/get-user-platformAsset";
+import { getAllBounties } from "@api/routes/get-all-bounties";
+import { getUserPlatformAsset } from "@api/routes/get-user-platformAsset";
 
 export default function BountyScreen() {
   const [bounties, setBounties] = useState<Bounty[]>([]);
@@ -139,7 +139,7 @@ export default function BountyScreen() {
   return (
     <View style={styles.container}>
       <Appbar.Header style={styles.header}>
-        <Menu
+        {/* <Menu
           visible={menuVisible}
           onDismiss={() => setMenuVisible(false)}
           anchor={
@@ -168,7 +168,7 @@ export default function BountyScreen() {
             }}
             title="Not Joined"
           />
-        </Menu>
+        </Menu> */}
         <Appbar.Content
           titleStyle={{
             color: "white",
@@ -176,11 +176,11 @@ export default function BountyScreen() {
           title="Bounty"
           style={styles.title}
         />
-        <Appbar.Action
+        {/* <Appbar.Action
           iconColor="white"
           icon="dots-vertical"
           onPress={() => {}}
-        />
+        /> */}
       </Appbar.Header>
       {bountyList.length === 0 && (
         <View
@@ -219,7 +219,6 @@ const getStatusColor = (status: Bounty["status"]) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
   },
   header: {
     backgroundColor: Color.wadzzo,
@@ -230,7 +229,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   listContainer: {
-    padding: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 8,
   },
   card: {
     marginBottom: 16,

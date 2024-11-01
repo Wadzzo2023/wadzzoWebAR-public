@@ -1,4 +1,4 @@
-import { BASE_URL } from "@/constants/Common";
+import { BASE_URL } from "app/utils/Common";
 
 
 export const getUserPlatformAsset = async () => {
@@ -17,7 +17,7 @@ export const getUserPlatformAsset = async () => {
         }
 
         const data = await response.json();
-        console.log("Bounties:", data);
+
         return data;
     } catch (error) {
         console.error("Error fetching bounties:", error);

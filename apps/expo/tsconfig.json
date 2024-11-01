@@ -3,9 +3,10 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"],
+      "@ui/*": ["../../packages/ui/*"],
+      "@app/*": ["../../packages/app/*"],
+      "@api/*": ["../../packages/api/*"],
     }
   },
   "include": [
@@ -13,5 +14,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ]
+, "../../packages/utils/Common.ts"  ]
 }
