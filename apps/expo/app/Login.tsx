@@ -184,7 +184,7 @@ const LoginScreen = () => {
                   disabled={loading}
                 >
                   <Text style={{ color: "white" }}> Login </Text>
-                  {loading && <ActivityIndicator size={12} />}
+                  {loading && <ActivityIndicator color="white" size={12} />}
                 </Button>
                 {/* <View
                   style={{
