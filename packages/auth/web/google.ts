@@ -1,6 +1,7 @@
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../config";
 import { SignIn } from "../sign-in";
+import { WalletType } from "../types";
 
 export async function GoogleLogin() {
   const provider = new GoogleAuthProvider();
@@ -17,7 +18,7 @@ export async function GoogleLogin() {
         options: {
           email: email,
           token: idToken,
-          walletType: "google",
+          walletType: WalletType.google,
         },
       });
 
