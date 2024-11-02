@@ -1,6 +1,7 @@
 import { create } from "zustand";
-import { ConsumedLocation } from "../../types/CollectionTypes";
-import { Bounty } from "../../types/BountyTypes";
+
+import { ConsumedLocation } from "@app/types/CollectionTypes";
+import { Bounty } from "@app/types/BountyTypes";
 
 export type ModalType =
   | "Delete"
@@ -13,7 +14,7 @@ export interface ModalData {
   collectionName?: string;
   Collection?: ConsumedLocation;
   userCurrentBalance?: number;
-  balance?: number;
+  balance?: number | undefined;
   bounty?: Bounty;
 }
 

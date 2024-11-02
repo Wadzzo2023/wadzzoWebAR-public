@@ -7,7 +7,3 @@ node_modules
 apps/expo-test
 .vercel
 
-apps/expo/.env
-apps/web/.env
-
-packages/auth/.env

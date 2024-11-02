@@ -29,6 +29,7 @@ import LoadingScreen from "@/components/Loading";
 import { Color } from "app/utils/Colors";
 import { useAccountAction } from "@/components/hooks/useAccountAction";
 import { useAuth } from "@auth/Provider";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function SettingScreen() {
   const theme = useTheme();
@@ -58,8 +59,7 @@ export default function SettingScreen() {
     setShowDeleteDialog(false);
   };
 
-  const signOut = () => {
-    console.log("Signing out");
+  const signOut = async () => {
     logout();
   };
 

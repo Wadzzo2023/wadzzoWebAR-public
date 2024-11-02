@@ -127,7 +127,7 @@ const SignUpScreen = () => {
                     backgroundColor: Color.wadzzo,
                   }}
                 >
-                  Sign up
+                  <Text style={{ color: "white" }}> Sign Up </Text>
                 </Button>
 
                 <View style={styles.alreadyHaveAccountContainer}>

@@ -15,13 +15,14 @@ import {
   MD3DarkTheme,
   MD3LightTheme,
   PaperProvider,
-  adaptNavigationTheme, //1. Import this package
+  adaptNavigationTheme,
 } from "react-native-paper";
 
 import {
   DarkTheme as NavigationDarkTheme,
   DefaultTheme as NavigationDefaultTheme,
 } from "@react-navigation/native";
+
 const customDarkTheme = { ...MD3DarkTheme, colors: Color.dark };
 const customLightTheme = { ...MD3LightTheme, colors: Color.light };
 
@@ -30,16 +31,13 @@ const { LightTheme, DarkTheme } = adaptNavigationTheme({
   reactNavigationDark: NavigationDarkTheme,
 });
 const CombinedLightTheme = merge(LightTheme, customLightTheme);
-const CombinedDarkTheme = merge(DarkTheme, customDarkTheme);
 
 SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
   let colorScheme = useColorScheme();
-  console.log("colorScheme", colorScheme);
-  const paperTheme =
-    colorScheme === "dark" ? CombinedDarkTheme : CombinedLightTheme;
+
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -57,7 +55,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <PaperProvider theme={paperTheme}>
+        <PaperProvider theme={CombinedLightTheme}>
           <ModalProvider />
           <Stack
             initialRouteName="index"

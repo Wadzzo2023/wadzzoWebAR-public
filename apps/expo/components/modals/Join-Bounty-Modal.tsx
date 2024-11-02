@@ -54,7 +54,36 @@ const JoinBountyModal = () => {
   };
   const { bounty, balance } = data;
   if (!balance || !bounty) {
-    return null;
+    return (
+      <Portal>
+        <Dialog visible={isModalOpen} onDismiss={handleClose}>
+          <Dialog.Title>Join Bounty?</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium" style={styles.message}>
+              Do you want to join this bounty? This action cannot be undone.
+            </Text>
+            <View style={styles.collectionInfo}>
+              <Text style={styles.collectionName}>{bounty?.title}</Text>
+            </View>
+          </Dialog.Content>
+
+          <Text style={{ color: "red", textAlign: "center", padding: 2 }}>
+            You do not have enough balance to join this bounty.
+          </Text>
+
+          <Dialog.Actions>
+            <Button
+              onPress={handleClose}
+              mode="outlined"
+              style={styles.button}
+              textColor="#757575"
+            >
+              Cancel
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+    );
   }
   return (
     <Portal>
@@ -107,7 +136,7 @@ const styles = StyleSheet.create({
   },
   collectionInfo: {
     marginVertical: 10,
-    padding: 10,
+    padding: 8,
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
   },

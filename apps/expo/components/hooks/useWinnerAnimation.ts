@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 export interface AnimationData {
     showWinnerAnimation?: boolean;
+    position?: number[]
 }
 
 interface AnimationStore {

@@ -1,5 +1,5 @@
 import { AuthCredentialType } from "./types";
-import { BASE_URL, CALLBACK_URL } from "./utils";
+import { BASE_URL, CALLBACK_URL } from "@app/utils/Common";
 
 export async function SignIn({ options }: { options: AuthCredentialType }) {
   const _signInUrl = new URL(

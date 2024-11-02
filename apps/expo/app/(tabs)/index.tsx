@@ -105,7 +105,7 @@ const HomeScreen = () => {
     userLocation: userLocationType,
     locations: ConsumedLocation[]
   ) => {
-    const nearbyPins = getNearbyPins(userLocation, locations, 100);
+    const nearbyPins = getNearbyPins(userLocation, locations, 1000);
     if (nearbyPins.length > 0) {
       setData({
         nearbyPins: nearbyPins,
