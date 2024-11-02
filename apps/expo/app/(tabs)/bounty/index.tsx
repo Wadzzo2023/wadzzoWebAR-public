@@ -5,6 +5,7 @@ import {
   FlatList,
   RefreshControl,
   Dimensions,
+  Alert,
 } from "react-native";
 import {
   Card,
@@ -32,10 +33,11 @@ import { useModal } from "@/components/hooks/useModal";
 import LoadingScreen from "@/components/Loading";
 import { useBounty } from "@/components/hooks/useBounty";
 import { addrShort } from "@app/utils/AddrShort";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { useRouter } from "expo-router";
 import { getAllBounties } from "@api/routes/get-all-bounties";
 import { getUserPlatformAsset } from "@api/routes/get-user-platformAsset";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function BountyScreen() {
   const [bounties, setBounties] = useState<Bounty[]>([]);
@@ -49,10 +51,12 @@ export default function BountyScreen() {
     queryKey: ["bounties"],
     queryFn: getAllBounties,
   });
+
   const balanceRes = useQuery({
     queryKey: ["balance"],
     queryFn: getUserPlatformAsset,
   });
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await response.refetch();

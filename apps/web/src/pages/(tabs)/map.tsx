@@ -14,7 +14,7 @@ import { TbZoomScan } from "react-icons/tb";
 import { getMapAllPins } from "@api/routes/get-Map-all-pins";
 import { ConsumedLocation } from "@app/types/CollectionTypes";
 
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 
 import { useExtraInfo } from "@/components/hooks/useExtraInfo";

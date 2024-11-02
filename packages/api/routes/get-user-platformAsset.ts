@@ -10,17 +10,14 @@ export const getUserPlatformAsset = async () => {
                 credentials: "include",
             }
         );
-
-
-        if (!response.ok) {
-            throw new Error("Failed to fetch bounties");
+        if (response.ok) {
+            const data = await response.json();
+            return data;
         }
 
-        const data = await response.json();
 
-        return data;
     } catch (error) {
-        console.error("Error fetching bounties:", error);
-        throw error;
+        console.error("Failed to fetch User Balance:", error);
+        throw new Error("Failed to fetch User Balance");
     }
 };

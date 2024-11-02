@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { BASE_URL, CALLBACK_URL } from "app/utils/Common";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation } from "@tanstack/react-query";
@@ -16,67 +16,118 @@ import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { ActivityIndicator, Button, TextInput } from "react-native-paper";
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 
 import { makeRedirectUri } from "expo-auth-session";
+import { SignIn } from "@auth/sign-in";
+import { GoogleOuthToFirebaseToken } from "@auth/google";
+import { useAuth } from "@auth/Provider";
+import { AlbedoWebViewAuth } from "@auth/wallet/albedo";
+import { AppleLogin } from "@auth/apple/index.ios";
+import { WalletType } from "@auth/types";
+import { set } from "zod";
 
 const webPlatform = Platform.OS === "web";
 
 WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = () => {
+  const { isAuthenticated, login } = useAuth();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const router = useRouter();
   const [error, setError] = React.useState(false);
   const [userInfo, setUserInfo] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+  const [googleLoading, setGoogleLoading] = React.useState(false);
+  const [token, setTokens] = React.useState<{
+    idToken: string;
+    accessToken: string;
+  }>();
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId:
       "443284916220-d9idlov4ms8ft9otro9kk9ae7i3kq3t6.apps.googleusercontent.com",
+
     iosClientId:
-      "888775726548-2ar1q1hndl3ta7r51u0190n545rcq1td.apps.googleusercontent.com",
+      "443284916220-ticav8d3v2lfbdc50vllqeflsiabm63h.apps.googleusercontent.com",
     // clientId:
     //   "443284916220-l3qg7qu1klpfvph43q35p9u76kf3fkqt.apps.googleusercontent.com",
 
     redirectUri: makeRedirectUri({
-      path: "(tabs)",
+      path: "Login",
       isTripleSlashed: true,
     }),
   });
 
   async function handleSignInWithGoogle() {
-    console.log(response);
+    console.log("respone changed");
     if (response?.type === "success") {
       const { authentication } = response;
-      console.log(authentication);
+
+      if (authentication?.idToken && authentication.accessToken) {
+        setTokens({
+          accessToken: authentication.accessToken,
+          idToken: authentication.idToken,
+        });
+        googleMutation.mutate({
+          idToken: authentication.idToken,
+          accessToken: authentication.accessToken,
+        });
+      } else {
+        console.log("no authentication ");
+      }
     }
-    // const user = await AsyncStorage.getItem("@user");
-    // if (!user) {
-    //   if (response?.type === "success") {
-    //     await getUserinfo(response.authentication?.accessToken);
-    //   }
-    // } else {
-    //   setUserInfo(JSON.stringify(response));
-    // }
+    console.log(response);
   }
 
-  const getUserinfo = async (token?: string) => {
-    if (!token) return;
-    try {
-      const response = await fetch(
-        "https://www.googleapis.com/userinfo/v2/me",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const user = await response.json();
-      await AsyncStorage.setItem("@user", JSON.stringify(user));
-      setUserInfo(JSON.stringify(user));
-    } catch (error) {}
-  };
-
   const requestName = "api/auth/callback/credentials";
+
+  const googleMutation = useMutation({
+    mutationFn: async (token: { idToken: string; accessToken: string }) => {
+      setGoogleLoading(true);
+
+      const firebaseToken = await GoogleOuthToFirebaseToken(
+        token.idToken,
+        token.accessToken
+      );
+
+      const response = await SignIn({
+        options: {
+          email: firebaseToken.email,
+          walletType: WalletType.google,
+          token: firebaseToken.firebaseToken,
+        },
+      });
+
+      console.log("response", await response.json());
+
+      if (!response.ok) {
+        console.log("error");
+        const error = await response.json();
+        setError(true);
+        setGoogleLoading(false);
+        throw new Error(error.message);
+      } else {
+        // const body = await response.json();
+        console.log("setCookies");
+        const setCookies = response.headers.get("set-cookie");
+        console.log("setCookies", setCookies);
+        if (setCookies) {
+          login(
+            { email: firebaseToken.email, id: firebaseToken.firebaseToken },
+            setCookies
+          );
+        }
+        console.log("setCookies", setCookies);
+        setGoogleLoading(false);
+      }
+    },
+    onError: (error) => {
+      setError(true);
+      setGoogleLoading(false);
+    },
+  });
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -109,7 +160,10 @@ const LoginScreen = () => {
         setLoading(false);
         throw new Error(error.message);
       } else {
-        router.push("/(tabs)/");
+        const setCookies = response.headers.get("set-cookie");
+        if (setCookies) {
+          login({ email: email, id: email }, setCookies);
+        }
       }
     },
     onError: (error) => {
@@ -125,6 +179,13 @@ const LoginScreen = () => {
   useEffect(() => {
     handleSignInWithGoogle();
   }, [response]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/(tabs)/");
+    }
+  }, [isAuthenticated]);
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.mainContainer}>
@@ -186,13 +247,13 @@ const LoginScreen = () => {
                   <Text style={{ color: "white" }}> Login </Text>
                   {loading && <ActivityIndicator color="white" size={12} />}
                 </Button>
-                {/* <View
+                <View
                   style={{
                     marginTop: 10,
                   }}
                 >
                   <Button
-                    onPress={() => promptAsync()}
+                    onPress={async () => await promptAsync()}
                     style={{ backgroundColor: "white" }}
                   >
                     <Text
@@ -200,17 +261,35 @@ const LoginScreen = () => {
                         color: Color.wadzzo,
                       }}
                     >
-                      Continue with Google
+                      Continue with Google{" "}
                     </Text>
-                  </Button>
-                </View> */}
 
-                <View style={styles.newAccountContainer}>
+                    {googleMutation.isPending && (
+                      <ActivityIndicator size={12} />
+                    )}
+                  </Button>
+                </View>
+
+                {/* <AlbedoWebViewAuth />
+                <Button onPress={() => router.push("/(auth)/albedo")}>
+                  Albedo
+                </Button> */}
+                {/* {Platform.OS === "ios" && (
+                  <View
+                    style={{
+                      marginTop: 10,
+                    }}
+                  >
+                    <AppleLogin />
+                  </View>
+                )} */}
+
+                {/* <View style={styles.newAccountContainer}>
                   <Text style={styles.newAccountText}>New here?</Text>
                   <Button onPress={() => router.push("/Signup")}>
                     Create an account
                   </Button>
-                </View>
+                </View> */}
               </View>
             </View>
           </View>

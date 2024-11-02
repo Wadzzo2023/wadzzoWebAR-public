@@ -1,7 +1,7 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 // import { BASE_URL, CALLBACK_URL } from "@app/utils/constants/Common";
 import { useMutation } from "@tanstack/react-query";
 

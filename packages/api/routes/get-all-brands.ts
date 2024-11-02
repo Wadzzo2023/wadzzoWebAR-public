@@ -9,12 +9,8 @@ export const getAllBrands = async () => {
                 credentials: "include",
             }
         );
-
-
-
-
         if (!response.ok) {
-            throw new Error("Failed to fetch collections");
+            console.log("Failed to fetch collections");
         }
 
         const data = await response.json();
@@ -22,6 +18,6 @@ export const getAllBrands = async () => {
         return data;
     } catch (error) {
         console.error("Error fetching collections:", error);
-        throw error;
+
     }
 };
