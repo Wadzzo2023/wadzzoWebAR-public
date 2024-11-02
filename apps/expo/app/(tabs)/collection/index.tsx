@@ -27,7 +27,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { ConsumedLocation } from "@app/types/CollectionTypes";
 import { useModal } from "@/components/hooks/useModal";
 import { BASE_URL } from "@app/utils/Common";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { useRouter } from "expo-router";
 import { useCollection } from "@/components/hooks/useCollection";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";

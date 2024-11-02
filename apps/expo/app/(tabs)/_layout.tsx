@@ -1,10 +1,19 @@
-import { Tabs } from "expo-router";
-import React from "react";
+import { useRouter, Tabs } from "expo-router";
+import React, { useEffect } from "react";
 import { View, Image, StyleSheet, Platform } from "react-native";
 import { AntDesign, Entypo, FontAwesome5 } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useAuth } from "@auth/Provider";
 
 export default function _layout() {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/Login");
+    }
+  }, [isAuthenticated]);
   return (
     <Tabs
       initialRouteName="index"

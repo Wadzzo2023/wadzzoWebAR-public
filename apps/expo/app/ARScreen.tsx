@@ -29,7 +29,7 @@ import { BASE_URL } from "app/utils/Common";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import { Appbar, Text } from "react-native-paper";
 import { useFocusEffect, useRouter } from "expo-router";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { useQueryClient } from "@tanstack/react-query";
 import ARSceneAR from "@/components/ARSceneAR";
 import { useWinnerAnimation } from "@/components/hooks/useWinnerAnimation";

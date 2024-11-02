@@ -26,7 +26,7 @@ import { UnFollowBrand } from "@api/routes/unfollow-brand";
 import { GetXDR4Follow } from "@api/routes/get-XDR4-Follow";
 import { set } from "zod";
 import LoadingScreen from "@/components/Loading";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import {
   BrandMode,
   useAccountAction,

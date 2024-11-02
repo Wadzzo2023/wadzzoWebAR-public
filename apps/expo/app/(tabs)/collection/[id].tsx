@@ -31,7 +31,7 @@ import { ConsumedLocation } from "@app/types/CollectionTypes";
 import { useCollection } from "@/components/hooks/useCollection";
 import { useRouter } from "expo-router";
 import { BASE_URL } from "app/utils/Common";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 

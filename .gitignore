@@ -9,3 +9,5 @@ apps/expo-test
 
 apps/expo/.env
 apps/web/.env
+
+packages/auth/.env

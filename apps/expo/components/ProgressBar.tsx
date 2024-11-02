@@ -1,4 +1,4 @@
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { View } from "react-native";
 import Svg, { Rect } from "react-native-svg";
 

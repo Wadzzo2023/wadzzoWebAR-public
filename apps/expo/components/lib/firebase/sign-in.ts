@@ -1,4 +1,5 @@
-import { BASE_URL, CALLBACK_URL } from "@/constants/Common";
+export const BASE_URL = "http://192.168.0.115:3000/"
+export const CALLBACK_URL = "http://192.168.0.115:3000/"        
 
 type EmailPassOptions = {
   walletType: "emailPass";

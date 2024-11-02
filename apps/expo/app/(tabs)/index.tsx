@@ -26,7 +26,7 @@ import { getMapAllPins } from "@api/routes/get-Map-all-pins";
 import { ConsumedLocation } from "@app/types/CollectionTypes";
 import LoadingScreen from "@/components/Loading";
 import { useModal } from "@/components/hooks/useModal";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import { useRouter } from "expo-router";
 import { useExtraInfo } from "@/components/hooks/useExtraInfo";

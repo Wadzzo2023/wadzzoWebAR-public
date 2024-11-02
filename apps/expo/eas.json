@@ -26,5 +26,8 @@
         "appleTeamId": "L5747V2LKA"
       }
     }
+  },
+  "ios": {
+    "usesAppleSignIn": true
   }
 }

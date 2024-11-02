@@ -32,7 +32,7 @@ import { useModal } from "@/components/hooks/useModal";
 import LoadingScreen from "@/components/Loading";
 import { useBounty } from "@/components/hooks/useBounty";
 import { addrShort } from "@app/utils/AddrShort";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { useRouter } from "expo-router";
 import { getAllBounties } from "@api/routes/get-all-bounties";
 import { getUserPlatformAsset } from "@api/routes/get-user-platformAsset";

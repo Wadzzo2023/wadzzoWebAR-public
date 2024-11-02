@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { BASE_URL, CALLBACK_URL } from "app/utils/Common";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation } from "@tanstack/react-query";
@@ -16,20 +16,33 @@ import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { ActivityIndicator, Button, TextInput } from "react-native-paper";
+import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 
 import { makeRedirectUri } from "expo-auth-session";
+import { SignIn } from "@auth/sign-in";
+import { GoogleOuthToFirebaseToken } from "@auth/google";
+import { useAuth } from "@auth/Provider";
+import { AlbedoWebViewAuth } from "@auth/wallet/albedo";
+import { AppleLogin } from "@auth/apple/index.ios";
+import { WalletType } from "@auth/types";
 
 const webPlatform = Platform.OS === "web";
 
 WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = () => {
+  const { isAuthenticated, login } = useAuth();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const router = useRouter();
   const [error, setError] = React.useState(false);
   const [userInfo, setUserInfo] = React.useState("");
   const [loading, setLoading] = React.useState(false);
+
+  const [token, setTokens] = React.useState<{
+    idToken: string;
+    accessToken: string;
+  }>();
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId:
@@ -40,25 +53,26 @@ const LoginScreen = () => {
     //   "443284916220-l3qg7qu1klpfvph43q35p9u76kf3fkqt.apps.googleusercontent.com",
 
     redirectUri: makeRedirectUri({
-      path: "(tabs)",
+      path: "Login",
       isTripleSlashed: true,
     }),
   });
 
   async function handleSignInWithGoogle() {
-    console.log(response);
+    console.log("respone changed");
     if (response?.type === "success") {
       const { authentication } = response;
-      console.log(authentication);
+
+      if (authentication?.idToken && authentication.accessToken) {
+        setTokens({
+          accessToken: authentication.accessToken,
+          idToken: authentication.idToken,
+        });
+      } else {
+        console.log("no authentication ");
+      }
     }
-    // const user = await AsyncStorage.getItem("@user");
-    // if (!user) {
-    //   if (response?.type === "success") {
-    //     await getUserinfo(response.authentication?.accessToken);
-    //   }
-    // } else {
-    //   setUserInfo(JSON.stringify(response));
-    // }
+    console.log(response);
   }
 
   const getUserinfo = async (token?: string) => {
@@ -77,6 +91,46 @@ const LoginScreen = () => {
   };
 
   const requestName = "api/auth/callback/credentials";
+
+  const googleMutation = useMutation({
+    mutationFn: async (token: { idToken: string; accessToken: string }) => {
+      setLoading(true);
+
+      const firebaseToken = await GoogleOuthToFirebaseToken(
+        token.idToken,
+        token.accessToken
+      );
+
+      const response = await SignIn({
+        options: {
+          email: firebaseToken.email,
+          walletType: WalletType.google,
+          token: firebaseToken.firebaseToken,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        setError(true);
+        setLoading(false);
+        throw new Error(error.message);
+      } else {
+        // const body = await response.json();
+
+        const setCookies = response.headers.get("set-cookie");
+        if (setCookies) {
+          login(
+            { email: firebaseToken.email, id: firebaseToken.firebaseToken },
+            setCookies
+          );
+        }
+      }
+    },
+    onError: (error) => {
+      setError(true);
+      setLoading(false);
+    },
+  });
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -125,6 +179,13 @@ const LoginScreen = () => {
   useEffect(() => {
     handleSignInWithGoogle();
   }, [response]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/(tabs)/");
+    }
+  }, [isAuthenticated]);
+
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.mainContainer}>
@@ -186,13 +247,13 @@ const LoginScreen = () => {
                   <Text style={{ color: "white" }}> Login </Text>
                   {loading && <ActivityIndicator size={12} />}
                 </Button>
-                {/* <View
+                <View
                   style={{
                     marginTop: 10,
                   }}
                 >
                   <Button
-                    onPress={() => promptAsync()}
+                    onPress={async () => await promptAsync()}
                     style={{ backgroundColor: "white" }}
                   >
                     <Text
@@ -200,10 +261,36 @@ const LoginScreen = () => {
                         color: Color.wadzzo,
                       }}
                     >
+                      {googleMutation.isPending && (
+                        <ActivityIndicator size={12} />
+                      )}
                       Continue with Google
                     </Text>
                   </Button>
-                </View> */}
+                  {token && (
+                    <Button
+                      onPress={() => googleMutation.mutate(token)}
+                      style={{ backgroundColor: "white" }}
+                    >
+                      <Text
+                        style={{
+                          color: Color.wadzzo,
+                        }}
+                      >
+                        {googleMutation.isPending && (
+                          <ActivityIndicator size={12} />
+                        )}
+                        Next
+                      </Text>
+                    </Button>
+                  )}
+                </View>
+
+                <AlbedoWebViewAuth />
+                <Button onPress={() => router.push("/(auth)/albedo")}>
+                  Albedo
+                </Button>
+                <AppleLogin />
 
                 <View style={styles.newAccountContainer}>
                   <Text style={styles.newAccountText}>New here?</Text>

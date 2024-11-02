@@ -26,12 +26,14 @@ import { getCurrentUser } from "@api/routes/get-current-user";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { EvilIcons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import LoadingScreen from "@/components/Loading";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { useAccountAction } from "@/components/hooks/useAccountAction";
+import { useAuth } from "@auth/Provider";
 
 export default function SettingScreen() {
   const theme = useTheme();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { logout } = useAuth();
 
   const { data: pinMode, setData } = useAccountAction();
   const { data, isLoading, error } = useQuery({
@@ -58,6 +60,7 @@ export default function SettingScreen() {
 
   const signOut = () => {
     console.log("Signing out");
+    logout();
   };
 
   const togglePinCollectionMode = () => {

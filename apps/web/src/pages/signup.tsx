@@ -12,7 +12,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { BASE_URL } from "app/utils/Common";
 
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { Button } from "react-native-paper";
 import Image from "next/image";
 import Wrapper from "@/components/Wrapper";

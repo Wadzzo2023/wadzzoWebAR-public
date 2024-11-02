@@ -31,7 +31,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { router, useRouter } from "expo-router";
 
 import ProgressBar from "@/components/ProgressBar";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/Colors";
 import { addrShort } from "@app/utils/AddrShort";
 import { Bounty } from "@app/types/BountyTypes";
 import { useBounty } from "@/components/hooks/useBounty";

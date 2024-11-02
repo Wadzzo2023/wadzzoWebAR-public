@@ -1,0 +1,12 @@
+{
+  "name": "auth",
+  "version": "1.0.0",
+  "description": "auth solution for web and expo",
+  "main": "index.js",
+  "author": "ih",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "react-native-base64": "^0.2.1"
+  }
+}

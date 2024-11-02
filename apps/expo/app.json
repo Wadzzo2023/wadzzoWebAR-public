@@ -63,7 +63,8 @@
           "RNMapboxMapsVersion": "11.0.0"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true
