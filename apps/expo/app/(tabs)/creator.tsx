@@ -1,36 +1,37 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Image,
-  RefreshControl,
-  Alert,
-} from "react-native";
-import {
-  Appbar,
-  Searchbar,
-  Button,
-  Chip,
-  Text,
-  Switch,
-  useTheme,
-  ActivityIndicator,
-} from "react-native-paper";
-import { submitSignedXDRToServer4User } from "@app/utils/submitSignedXDRtoServer4User";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAllBrands } from "@api/routes/get-all-brands";
-import { HasTrustOnPageAsset } from "@api/routes/has-trust-on-pageAsset";
-import { FollowBrand } from "@api/routes/follow-brand";
-import { UnFollowBrand } from "@api/routes/unfollow-brand";
-import { GetXDR4Follow } from "@api/routes/get-XDR4-Follow";
-import { set } from "zod";
-import LoadingScreen from "@/components/Loading";
-import { Color } from "app/utils/Colors";
 import {
   BrandMode,
   useAccountAction,
 } from "@/components/hooks/useAccountAction";
+import LoadingScreen from "@/components/Loading";
+import { FollowBrand } from "@api/routes/follow-brand";
+import { getAllBrands } from "@api/routes/get-all-brands";
+import { GetXDR4Follow } from "@api/routes/get-XDR4-Follow";
+import { HasTrustOnPageAsset } from "@api/routes/has-trust-on-pageAsset";
+import { UnFollowBrand } from "@api/routes/unfollow-brand";
+import { submitSignedXDRToServer4User } from "@app/utils/submitSignedXDRtoServer4User";
+import { useAuth } from "@auth/Provider";
+import { WalletType } from "@auth/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Color } from "app/utils/Colors";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  Alert,
+  FlatList,
+  Image,
+  RefreshControl,
+  StyleSheet,
+  View,
+} from "react-native";
+import {
+  ActivityIndicator,
+  Appbar,
+  Button,
+  Chip,
+  Searchbar,
+  Switch,
+  Text,
+} from "react-native-paper";
 
 type Brand = {
   id: string;
@@ -41,6 +42,8 @@ type Brand = {
 };
 
 export default function CreatorPage() {
+  const { user } = useAuth();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("available");
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -48,6 +51,8 @@ export default function CreatorPage() {
   const [unfollowLoadingId, setUnfollowLoadingId] = useState<string | null>(
     null
   );
+
+  const router = useRouter();
 
   const { data: accountActionData, setData: setAccountActionData } =
     useAccountAction();
@@ -60,11 +65,24 @@ export default function CreatorPage() {
   });
 
   const followMutation = useMutation({
-    mutationFn: async ({ brand_id }: { brand_id: string }) => {
+    mutationFn: async ({
+      brand_id,
+      wallate,
+    }: {
+      brand_id: string;
+      wallate: WalletType;
+    }) => {
       setFollowLoadingId(brand_id);
       const hasTrust = await HasTrustOnPageAsset({ brand_id });
       if (!hasTrust) {
-        const xdr = await GetXDR4Follow({ brand_id });
+        const xdr = await GetXDR4Follow({ brand_id, wallate });
+        if (wallate == WalletType.albedo) {
+          router.push({
+            pathname: "/albedo",
+            params: { xdr: xdr, brandId: brand_id },
+          });
+          return;
+        }
         if (xdr) {
           const res = await submitSignedXDRToServer4User(xdr);
           if (res) {
@@ -115,8 +133,12 @@ export default function CreatorPage() {
       setUnfollowLoadingId(brandId);
       unfollowMutation.mutate({ brand_id: brandId });
     } else {
-      setFollowLoadingId(brandId);
-      followMutation.mutate({ brand_id: brandId });
+      if (user) {
+        setFollowLoadingId(brandId);
+        followMutation.mutate({ brand_id: brandId, wallate: user.walletType });
+      } else {
+        console.log("user is not authenticated");
+      }
     }
   };
   const handleRefresh = async () => {

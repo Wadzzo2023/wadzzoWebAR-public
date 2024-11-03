@@ -7,17 +7,22 @@ import React, {
   FC,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { WalletType } from "./types";
+import { getUser } from "@api/routes/get-user";
 
-type User = {
+export type User = {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
   id: string;
-  email: string;
-  // Add other user properties as needed
+  walletType: WalletType;
+  emailVerified: boolean;
 };
 
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
-  login: (userData: User, cookie: string) => Promise<void>;
+  login: (cookie: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -31,6 +36,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({
   children,
 }: AuthProviderProps): JSX.Element => {
   const [user, setUser] = useState<User | null>(null);
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -40,24 +46,38 @@ export const AuthProvider: FC<AuthProviderProps> = ({
   const checkAuth = async () => {
     try {
       const storedCookies = await AsyncStorage.getItem("auth_cookies");
-
       if (storedCookies) {
         setIsAuthenticated(true);
-        // Optionally, you could fetch and set user details here
+      }
+
+      if (!user) {
+        const userString = await AsyncStorage.getItem("user");
+
+        if (userString) {
+          const user = JSON.parse(userString) as User;
+
+          setUser(user);
+        }
       }
     } catch (error) {
       console.error("Failed to check authentication:", error);
     }
   };
 
-  const login = async (userData: User, cookie: string): Promise<void> => {
+  const login = async (cookie: string): Promise<void> => {
     try {
-      setUser(userData);
-      setIsAuthenticated(true);
-      console.log("vong cong...1", cookie);
-      await AsyncStorage.setItem("auth_cookies", cookie); // Save token
-      const a = await AsyncStorage.getItem("auth_cookies");
-      console.log("vong cong...2", a);
+      const user = await getUser();
+      console.log(user, "user");
+
+      if (user) {
+        setIsAuthenticated(true);
+        await AsyncStorage.setItem("auth_cookies", cookie.toString());
+        await AsyncStorage.setItem("user", JSON.stringify(user));
+      }
+
+      await checkAuth();
+
+      // Save token
     } catch (error) {
       console.error("Failed to log in:", error);
     }
@@ -66,6 +86,8 @@ export const AuthProvider: FC<AuthProviderProps> = ({
   const logout = async (): Promise<void> => {
     try {
       await AsyncStorage.removeItem("auth_cookies");
+      await AsyncStorage.removeItem("user");
+
       setUser(null);
       setIsAuthenticated(false);
     } catch (error) {

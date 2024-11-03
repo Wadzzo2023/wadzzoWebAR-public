@@ -1,41 +1,37 @@
-import React, { useEffect, useState, useRef } from "react";
-import {
-  StyleSheet,
-  View,
-  Alert,
-  ActivityIndicator,
-  TouchableOpacity,
-  Text,
-  Image,
-  Animated,
-} from "react-native";
+import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useIsFocused } from "@react-navigation/native"; // Import the hook
 import Mapbox, {
-  MapView,
-  UserLocation,
   Camera,
+  MapView,
   MarkerView,
-  UserTrackingMode,
+  UserLocation,
 } from "@rnmapbox/maps";
 import * as Location from "expo-location";
-import { MaterialCommunityIcons, FontAwesome } from "@expo/vector-icons";
-import { useIsFocused, useNavigation } from "@react-navigation/native"; // Import the hook
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Alert,
+  Animated,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { useQuery } from "@tanstack/react-query";
 
-import { getMapAllPins } from "@api/routes/get-Map-all-pins";
-import { ConsumedLocation } from "@app/types/CollectionTypes";
 import LoadingScreen from "@/components/Loading";
-import { useModal } from "@/components/hooks/useModal";
-import { Color } from "app/utils/Colors";
-import { useNearByPin } from "@/components/hooks/useNearbyPin";
-import { useRouter } from "expo-router";
-import { useExtraInfo } from "@/components/hooks/useExtraInfo";
-import { BASE_URL } from "app/utils/Common";
 import {
   BrandMode,
   useAccountAction,
 } from "@/components/hooks/useAccountAction";
-import NearbyPinModal from "@/components/modals/NearBy-Pin-Modal";
+import { useExtraInfo } from "@/components/hooks/useExtraInfo";
+import { useModal } from "@/components/hooks/useModal";
+import { useNearByPin } from "@/components/hooks/useNearbyPin";
+import { getMapAllPins } from "@api/routes/get-Map-all-pins";
+import { ConsumedLocation } from "@app/types/CollectionTypes";
+import { Color } from "app/utils/Colors";
+import { BASE_URL } from "app/utils/Common";
+import { useRouter } from "expo-router";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 

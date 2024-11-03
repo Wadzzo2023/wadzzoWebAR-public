@@ -1,36 +1,32 @@
 import { useQuery } from "@tanstack/react-query";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import {
-  View,
-  StyleSheet,
-  FlatList,
   ActivityIndicator,
-  Text,
+  FlatList,
   Image,
   RefreshControl,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import {
   Appbar,
-  Card,
-  Title,
-  Paragraph,
-  Searchbar,
-  Menu,
-  Button,
   Badge,
+  Button,
+  Card,
+  Paragraph,
+  Title,
 } from "react-native-paper";
 
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { ConsumedLocation } from "@app/types/CollectionTypes";
+import { useCollection } from "@/components/hooks/useCollection";
 import { useModal } from "@/components/hooks/useModal";
+import { useNearByPin } from "@/components/hooks/useNearbyPin";
+import { ConsumedLocation } from "@app/types/CollectionTypes";
 import { BASE_URL } from "@app/utils/Common";
 import { Color } from "app/utils/Colors";
 import { useRouter } from "expo-router";
-import { useCollection } from "@/components/hooks/useCollection";
-import { useNearByPin } from "@/components/hooks/useNearbyPin";
 
 export default function MyCollectionScreen() {
   const [sortBy, setSortBy] = useState("title");

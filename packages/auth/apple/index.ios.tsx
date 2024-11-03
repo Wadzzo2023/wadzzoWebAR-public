@@ -1,21 +1,17 @@
 import * as AppleAuthentication from "expo-apple-authentication";
+import { useState } from "react";
 import {
-  View,
-  StyleSheet,
-  Button,
-  Alert,
   ActivityIndicator,
-  Text,
-  TouchableOpacity,
+  Alert,
   Image,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { getAuth, signInWithCredential, OAuthProvider } from "firebase/auth";
-import { auth } from "../config";
+import base64 from "react-native-base64";
+import { useAuth } from "../Provider";
 import { SignIn } from "../sign-in";
 import { WalletType } from "../types";
-import { useAuth } from "../Provider";
-import { useState } from "react";
-import base64 from "react-native-base64";
 
 export function AppleLogin() {
   const [loading, setLoading] = useState(false);
@@ -40,10 +36,7 @@ export function AppleLogin() {
       } else {
         const setCookies = res.headers.get("set-cookie");
         if (setCookies) {
-          login(
-            { email: "firebaseToken.email", id: "firebaseToken.firebaseToken" },
-            setCookies
-          );
+          login(setCookies);
         }
       }
     } catch (e) {

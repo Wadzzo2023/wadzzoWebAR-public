@@ -5,23 +5,30 @@ import { WebView } from "react-native-webview";
 import { useAuth } from "../Provider";
 import { SignIn } from "../sign-in";
 import { WalletType } from "../types";
+import { FollowBrand } from "@api/routes/follow-brand";
+import { submitSignedXDRToServer4User } from "@app/utils/submitSignedXDRtoServer4User";
 
-export function AlbedoWebViewAuth() {
+export function AlbedoWebViewAuth({
+  xdr,
+  brandId,
+}: {
+  xdr?: string;
+  brandId?: string;
+}) {
   const [showWebView, setShowWebView] = useState(false);
   const webViewRef = useRef(null);
   const { login } = useAuth();
 
   const router = useRouter();
 
+  // here to sing any xdr, just pass the xdrQueryParam
   // Generate a random token (similar to your original implementation)
   const generateToken = () => {
     return Math.random().toString(36).substring(2, 12);
   };
 
-  const handleAlbedoLogin = () => {
-    const token = generateToken();
-    setShowWebView(true);
-  };
+  // for login pass teh tokenQueryParam in the url
+  const token = generateToken();
 
   const handleWebViewMessage = async (event) => {
     try {
@@ -39,15 +46,16 @@ export function AlbedoWebViewAuth() {
             walletType: WalletType.albedo,
             pubkey: pubkey,
             signature: signature,
-            token: "vongCong",
+            token: token,
           },
         });
 
         if (!res.ok) {
         } else {
           const setCookies = res.headers.get("set-cookie");
+          // res.headers.forEach(console.log);
           if (setCookies) {
-            login({ email: "vong", id: "vo" }, setCookies);
+            login(setCookies);
 
             Alert.alert("Login sucessfull");
             router.back();
@@ -64,7 +72,17 @@ export function AlbedoWebViewAuth() {
           signed_envelope_xdr: string;
         };
 
-        Alert.alert("Submit the transection", data.error);
+        if (brandId) {
+          const res = await submitSignedXDRToServer4User(signed_envelope_xdr);
+          if (res) {
+            console.log(brandId, "brand_id");
+            await FollowBrand({ brand_id: brandId });
+            Alert.alert("Submitted the transection");
+          } else {
+            Alert.alert("Trust transaction failed");
+          }
+        }
+
         router.back();
       }
     } catch (error) {
@@ -73,21 +91,21 @@ export function AlbedoWebViewAuth() {
     }
   };
 
-  // here to sing any xdr, just pass the xdrQueryParam
-
-  const xdr =
-    "AAAAALPZeTF820NFDKBqBJo0dpb99l+TZnWIgxf3Y7k7hfVxAAAFeACPVIQAAAABAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAACGtsbDMyNDIzAAAADgAAAAAAAAAAAAAAALPZeTF820NFDKBqBJo0dpb99l+TZnWIgxf3Y7k7hfVxAAAAAAL68IAAAAABAAAAALPZeTF820NFDKBqBJo0dpb99l+TZnWIgxf3Y7k7hfVxAAAAAQAAAACz2XkxfNtDRQygagSaNHaW/fZfk2Z1iIMX92O5O4X1cQAAAAAAAAAAAJiWgAAAAAAAAAACAAAAAURERAAAAAAAs9l5MXzbQ0UMoGoEmjR2lv32X5NmdYiDF/djuTuF9XEAAAAAAvrwgAAAAACz2XkxfNtDRQygagSaNHaW/fZfk2Z1iIMX92O5O4X1cQAAAAJra2trawAAAAAAAAAAAAAAs9l5MXzbQ0UMoGoEmjR2lv32X5NmdYiDF/djuTuF9XEAAAAABycOAAAAAAEAAAAAAAAAAAAAAAMAAAAAAAAAAUREAAAAAAAAs9l5MXzbQ0UMoGoEmjR2lv32X5NmdYiDF/djuTuF9XEAAAAAIFNYSAAAAAwAAAABAAAAAAAAAAAAAAABAAAAALPZeTF820NFDKBqBJo0dpb99l+TZnWIgxf3Y7k7hfVxAAAAAwAAAAAAAAACREREREQAAAAAAAAAAAAAALPZeTF820NFDKBqBJo0dpb99l+TZnWIgxf3Y7k7hfVxAAAAAAAAAAAAAAABAAAAAQAAAAAAAAB7AAAAAAAAAAQAAAAAAAAAAVVTRAAAAAAAs9l5MXzbQ0UMoGoEmjR2lv32X5NmdYiDF/djuTuF9XEAAAAAAJiWgAAAAAEAAAABAAAAAQAAAACz2XkxfNtDRQygagSaNHaW/fZfk2Z1iIMX92O5O4X1cQAAAAUAAAABAAAAALPZeTF820NFDKBqBJo0dpb99l+TZnWIgxf3Y7k7hfVxAAAAAQAAAAIAAAABAAAAAQAAAAEAAAAEAAAAAQAAAAIAAAABAAAAAgAAAAEAAAACAAAAAQAAAAtleGFtcGxlLmNvbQAAAAABAAAAALPZeTF820NFDKBqBJo0dpb99l+TZnWIgxf3Y7k7hfVxAAAABAAAAAAAAAAGAAAAAUZGAAAAAAAAs9l5MXzbQ0UMoGoEmjR2lv32X5NmdYiDF/djuTuF9XF//////////wAAAAEAAAAAs9l5MXzbQ0UMoGoEmjR2lv32X5NmdYiDF/djuTuF9XEAAAAHAAAAALPZeTF820NFDKBqBJo0dpb99l+TZnWIgxf3Y7k7hfVxAAAAAURERAAAAAAAAAAAAAAAAAcAAAAAs9l5MXzbQ0UMoGoEmjR2lv32X5NmdYiDF/djuTuF9XEAAAABVVNEAAAAAAEAAAAAAAAACAAAAACz2XkxfNtDRQygagSaNHaW/fZfk2Z1iIMX92O5O4X1cQAAAAAAAAAJAAAAAAAAAAoAAAACZGQAAAAAAAEAAAACdnYAAAAAAAAAAAAKAAAAAmtrAAAAAAAAAAAAAAAAAAA=";
-  const xdrQeuryParam = new URLSearchParams({ xdr }).toString();
-
-  // for login pass teh tokenQueryParam in the url
-  const token = "vongCong";
-  const tokenQeuryParam = new URLSearchParams({ token }).toString();
+  function getParam() {
+    if (xdr) {
+      const xdrQeuryParam = new URLSearchParams({ xdr }).toString();
+      return xdrQeuryParam;
+    } else {
+      const tokenQeuryParam = new URLSearchParams({ token }).toString();
+      return tokenQeuryParam;
+    }
+  }
 
   return (
     <View style={{ flex: 1 }}>
       <WebView
         ref={webViewRef}
-        source={{ uri: `https://app.wadzzo.com/albedo?${tokenQeuryParam}` }}
+        source={{ uri: `https://app.wadzzo.com/albedo?${getParam()}` }}
         onMessage={handleWebViewMessage}
         // Optional: add loading indicator
         renderLoading={() => (

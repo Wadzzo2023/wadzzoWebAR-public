@@ -1,43 +1,25 @@
 import React, { useState } from "react";
 import {
-  View,
-  StyleSheet,
+  Dimensions,
   FlatList,
   RefreshControl,
-  Dimensions,
-  Alert,
+  StyleSheet,
+  View,
 } from "react-native";
-import {
-  Card,
-  Title,
-  Paragraph,
-  Chip,
-  Button,
-  FAB,
-  Text,
-  useTheme,
-  Portal,
-  Dialog,
-  Appbar,
-  Menu,
-} from "react-native-paper";
+import { Appbar, Button, Card, Chip, Text, Title } from "react-native-paper";
 import RenderHtml from "react-native-render-html";
 
 import { useQuery } from "@tanstack/react-query";
 
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-
-import { useNavigation } from "@react-navigation/native";
-import { Bounty } from "@app/types/BountyTypes";
+import { useBounty } from "@/components/hooks/useBounty";
 import { useModal } from "@/components/hooks/useModal";
 import LoadingScreen from "@/components/Loading";
-import { useBounty } from "@/components/hooks/useBounty";
-import { addrShort } from "@app/utils/AddrShort";
-import { Color } from "app/utils/Colors";
-import { useRouter } from "expo-router";
 import { getAllBounties } from "@api/routes/get-all-bounties";
 import { getUserPlatformAsset } from "@api/routes/get-user-platformAsset";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Bounty } from "@app/types/BountyTypes";
+import { addrShort } from "@app/utils/AddrShort";
+import { Color } from "@app/utils/Colors";
+import { useRouter } from "expo-router";
 
 export default function BountyScreen() {
   const [bounties, setBounties] = useState<Bounty[]>([]);

@@ -9,24 +9,20 @@ import {
   View,
 } from "react-native";
 
+import { useMutation } from "@tanstack/react-query";
 import { Color } from "app/utils/Colors";
 import { BASE_URL, CALLBACK_URL } from "app/utils/Common";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useMutation } from "@tanstack/react-query";
 import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { ActivityIndicator, Button, TextInput } from "react-native-paper";
-import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
 
-import { makeRedirectUri } from "expo-auth-session";
-import { SignIn } from "@auth/sign-in";
+import { AppleLogin } from "@auth/apple/index.ios";
 import { GoogleOuthToFirebaseToken } from "@auth/google";
 import { useAuth } from "@auth/Provider";
-import { AlbedoWebViewAuth } from "@auth/wallet/albedo";
-import { AppleLogin } from "@auth/apple/index.ios";
+import { SignIn } from "@auth/sign-in";
 import { WalletType } from "@auth/types";
-import { set } from "zod";
+import { makeRedirectUri } from "expo-auth-session";
 
 const webPlatform = Platform.OS === "web";
 
@@ -38,7 +34,7 @@ const LoginScreen = () => {
   const [password, setPassword] = React.useState("");
   const router = useRouter();
   const [error, setError] = React.useState(false);
-  const [userInfo, setUserInfo] = React.useState("");
+
   const [loading, setLoading] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
   const [token, setTokens] = React.useState<{
@@ -62,7 +58,6 @@ const LoginScreen = () => {
   });
 
   async function handleSignInWithGoogle() {
-    console.log("respone changed");
     if (response?.type === "success") {
       const { authentication } = response;
 
@@ -101,26 +96,18 @@ const LoginScreen = () => {
         },
       });
 
-      console.log("response", await response.json());
-
       if (!response.ok) {
-        console.log("error");
         const error = await response.json();
         setError(true);
         setGoogleLoading(false);
         throw new Error(error.message);
       } else {
-        // const body = await response.json();
-        console.log("setCookies");
         const setCookies = response.headers.get("set-cookie");
-        console.log("setCookies", setCookies);
+
         if (setCookies) {
-          login(
-            { email: firebaseToken.email, id: firebaseToken.firebaseToken },
-            setCookies
-          );
+          login(setCookies);
         }
-        console.log("setCookies", setCookies);
+
         setGoogleLoading(false);
       }
     },
@@ -163,7 +150,7 @@ const LoginScreen = () => {
       } else {
         const setCookies = response.headers.get("set-cookie");
         if (setCookies) {
-          login({ email: email, id: email }, setCookies);
+          login(setCookies);
         }
       }
     },
@@ -267,7 +254,12 @@ const LoginScreen = () => {
                     </View>
                   </TouchableOpacity>
                   {Platform.OS === "ios" && <AppleLogin />}
-                  <TouchableOpacity disabled={googleMutation.isPending}>
+                  <TouchableOpacity
+                    disabled={googleMutation.isPending}
+                    onPress={() => {
+                      router.push("/albedo");
+                    }}
+                  >
                     <View style={styles.login_social_button}>
                       {googleMutation.isPending ? (
                         <ActivityIndicator size={12} />

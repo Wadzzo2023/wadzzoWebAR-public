@@ -1,42 +1,39 @@
 import React, { useState } from "react";
 import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Image,
   Dimensions,
-  TouchableOpacity,
+  Image,
+  ScrollView,
+  StyleSheet,
   ToastAndroid,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
   Appbar,
-  Card,
-  Title,
-  Paragraph,
   Button,
-  TextInput,
+  Card,
   Chip,
-  Text,
-  useTheme,
   SegmentedButtons,
+  Text,
+  TextInput,
+  Title,
 } from "react-native-paper";
 
-import * as DocumentPicker from "expo-document-picker";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { UploadSubmission } from "@api/routes/upload-submission";
 import { SubmissionMediaInfoType } from "@app/types/SubmissionTypes";
-import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import * as DocumentPicker from "expo-document-picker";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 
-import { router, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 
-import ProgressBar from "@/components/ProgressBar";
-import { Color } from "app/utils/Colors";
-import { addrShort } from "@app/utils/AddrShort";
-import { Bounty } from "@app/types/BountyTypes";
 import { useBounty } from "@/components/hooks/useBounty";
-import RenderHTML from "react-native-render-html";
 import { storage } from "@/components/lib/firebase/config";
+import ProgressBar from "@/components/ProgressBar";
+import { Bounty } from "@app/types/BountyTypes";
+import { addrShort } from "@app/utils/AddrShort";
+import { Color } from "@app/utils/Colors";
+import RenderHTML from "react-native-render-html";
 
 interface DocumentPickerAsset extends DocumentPicker.DocumentPickerAsset {
   downloadableURI?: string;

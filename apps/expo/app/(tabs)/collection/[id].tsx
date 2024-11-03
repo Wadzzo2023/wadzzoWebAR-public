@@ -1,38 +1,22 @@
 import React from "react";
+import { Image, Linking, ScrollView, StyleSheet, View } from "react-native";
 import {
-  View,
-  ScrollView,
-  StyleSheet,
-  Dimensions,
-  Linking,
-  Text,
-  Image,
-} from "react-native";
-import {
-  Card,
-  Title,
-  Paragraph,
-  Button,
+  Appbar,
   Avatar,
+  Button,
+  Card,
   Chip,
   FAB,
-  Appbar,
+  Paragraph,
+  Title,
 } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
 
-import Mapbox, {
-  MapView,
-  UserLocation,
-  Camera,
-  MarkerView,
-  FillExtrusionLayer,
-} from "@rnmapbox/maps";
-import { ConsumedLocation } from "@app/types/CollectionTypes";
 import { useCollection } from "@/components/hooks/useCollection";
-import { useRouter } from "expo-router";
-import { BASE_URL } from "app/utils/Common";
-import { Color } from "app/utils/Colors";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
+import Mapbox, { Camera, MapView, MarkerView } from "@rnmapbox/maps";
+import { Color } from "app/utils/Colors";
+import { BASE_URL } from "app/utils/Common";
+import { useRouter } from "expo-router";
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
 const SingleCollectionItem = () => {
