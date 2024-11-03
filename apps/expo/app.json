@@ -21,8 +21,7 @@
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to use your camera",
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use your microphone"
       },
-      "bundleIdentifier": "com.wadzzoAR.wadzzo",
-      "usesAppleSignIn": true
+      "bundleIdentifier": "com.wadzzoAR.wadzzo"
     },
     "android": {
       "adaptiveIcon": {

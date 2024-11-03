@@ -9,19 +9,12 @@ export async function GoogleOuthToFirebaseToken(
 ) {
   try {
     const credential = GoogleAuthProvider.credential(idToken, accessToken);
-
     const decodedToken = base64.decode(idToken.split(".")[1]);
-
     const email = extractEmailFromToken(decodedToken);
-
-    // const email = data.email;
     console.log(email);
-
     const firebaseResult = await signInWithCredential(auth, credential);
-
     if (!email) throw new Error("Email is must");
     const firebaseToken = await firebaseResult.user.getIdToken();
-
     return { firebaseToken, email };
   } catch (e) {
     console.log(e);

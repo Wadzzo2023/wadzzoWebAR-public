@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -234,6 +235,7 @@ const LoginScreen = () => {
                   secureTextEntry
                   style={styles.input}
                 />
+
                 {/* <View style={styles.forgotPasswordContainer}>
                   <Text style={styles.forgotPasswordText}>
                     Forgot your password?
@@ -247,42 +249,37 @@ const LoginScreen = () => {
                   <Text style={{ color: "white" }}> Login </Text>
                   {loading && <ActivityIndicator color="white" size={12} />}
                 </Button>
-                <View
-                  style={{
-                    marginTop: 10,
-                  }}
-                >
-                  <Button
+
+                <View style={styles.socialContainer}>
+                  <TouchableOpacity
+                    disabled={googleMutation.isPending}
                     onPress={async () => await promptAsync()}
-                    style={{ backgroundColor: "white" }}
                   >
-                    <Text
-                      style={{
-                        color: Color.wadzzo,
-                      }}
-                    >
-                      Continue with Google{" "}
-                    </Text>
-
-                    {googleMutation.isPending && (
-                      <ActivityIndicator size={12} />
-                    )}
-                  </Button>
+                    <View style={styles.login_social_button}>
+                      {googleMutation.isPending ? (
+                        <ActivityIndicator size={12} />
+                      ) : (
+                        <Image
+                          style={styles.login_social_icon}
+                          source={require("../assets/icons/google.png")}
+                        />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                  {Platform.OS === "ios" && <AppleLogin />}
+                  <TouchableOpacity disabled={googleMutation.isPending}>
+                    <View style={styles.login_social_button}>
+                      {googleMutation.isPending ? (
+                        <ActivityIndicator size={12} />
+                      ) : (
+                        <Image
+                          style={styles.login_social_icon}
+                          source={require("../assets/icons/albedo.png")}
+                        />
+                      )}
+                    </View>
+                  </TouchableOpacity>
                 </View>
-
-                {/* <AlbedoWebViewAuth />
-                <Button onPress={() => router.push("/(auth)/albedo")}>
-                  Albedo
-                </Button> */}
-                {/* {Platform.OS === "ios" && (
-                  <View
-                    style={{
-                      marginTop: 10,
-                    }}
-                  >
-                    <AppleLogin />
-                  </View>
-                )} */}
 
                 {/* <View style={styles.newAccountContainer}>
                   <Text style={styles.newAccountText}>New here?</Text>
@@ -316,6 +313,23 @@ const styles = StyleSheet.create({
     padding: 10,
     justifyContent: "center",
     fontFamily: "sans-serif",
+  },
+  socialContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  login_social_button: {
+    margin: 10,
+    width: 60,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 30,
+  },
+  login_social_icon: {
+    width: 30,
+    height: 30,
   },
   card: {
     position: "relative",
