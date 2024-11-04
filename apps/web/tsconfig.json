@@ -19,7 +19,8 @@
       "@/*": ["./src/*"],
       "@ui/*": ["../../packages/ui/*"],
       "@app/*": ["../../packages/app/*"],
-      "@api/*": ["../../packages/api/*"]
+      "@api/*": ["../../packages/api/*"],
+      "@auth/*": ["../../packages/auth/*"]
     }
   },
   "include": [

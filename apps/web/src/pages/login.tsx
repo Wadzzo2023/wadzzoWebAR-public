@@ -12,6 +12,8 @@ import { BASE_URL, CALLBACK_URL } from "@app/utils/Common";
 import Image from "next/image";
 import Wrapper from "@/components/Wrapper";
 
+import { getUser } from "@api/routes/get-user";
+
 const LoginScreen = () => {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -25,7 +27,10 @@ const LoginScreen = () => {
       setLoading(true);
       console.log("Login mutation called");
       const csrTokenRequest = await fetch(
-        new URL("api/auth/csrf", BASE_URL).toString()
+        new URL("api/auth/csrf", BASE_URL).toString(),
+        {
+          credentials: "include",
+        }
       );
       const csrTokenResponse = await csrTokenRequest.json();
       const csrfToken = csrTokenResponse.csrfToken;
@@ -48,16 +53,23 @@ const LoginScreen = () => {
           walletType: "emailPass",
           json: "true",
         }).toString(),
+        credentials: "include",
       });
 
       if (!response.ok) {
         const error = await response.json();
+
         setError(true);
         setLoading(false);
         throw new Error(error.message);
       } else {
-        console.log("response", await response.json());
-        router.push("/(tabs)/map");
+        const user = await getUser();
+
+        if (user) {
+          console.log("User", user);
+        }
+
+        // router.push("/(tabs)/map");
       }
     },
     onError: (error) => {
