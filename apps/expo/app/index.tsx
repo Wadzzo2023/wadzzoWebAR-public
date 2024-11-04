@@ -10,12 +10,21 @@ import RenderItem from "@/components/RenderItem";
 import Pagination from "@/components/Pagination";
 import CustomButton from "@/components/CustomButton";
 import LottieView from "lottie-react-native"; // Import Lottie
+import { useRouter } from "expo-router";
+import { useAuth } from "@auth/Provider";
 
 const OnboardingScreen = () => {
   const flatListRef = useAnimatedRef<FlatList<OnboardingData>>();
   const x = useSharedValue(0);
   const flatListIndex = useSharedValue(0);
   const [playAnimation, setPlayAnimation] = useState(false);
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/(tabs)/");
+    }
+  }, [isAuthenticated]);
 
   const onViewableItemsChanged = ({
     viewableItems,

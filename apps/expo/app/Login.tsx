@@ -255,20 +255,15 @@ const LoginScreen = () => {
                   </TouchableOpacity>
                   {Platform.OS === "ios" && <AppleLogin />}
                   <TouchableOpacity
-                    disabled={googleMutation.isPending}
                     onPress={() => {
                       router.push("/albedo");
                     }}
                   >
                     <View style={styles.login_social_button}>
-                      {googleMutation.isPending ? (
-                        <ActivityIndicator size={12} />
-                      ) : (
-                        <Image
-                          style={styles.login_social_icon}
-                          source={require("../assets/icons/albedo.png")}
-                        />
-                      )}
+                      <Image
+                        style={styles.login_social_icon}
+                        source={require("../assets/icons/albedo.png")}
+                      />
                     </View>
                   </TouchableOpacity>
                 </View>
