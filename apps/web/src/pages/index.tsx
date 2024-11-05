@@ -1,7 +1,5 @@
-import React from "react";
-
+import { useAuth } from "@/components/AuthProvider";
 import Head from "next/head";
-import LoginScreen from "./login";
 
 export default function Home() {
   return (
@@ -31,5 +29,6 @@ export default function Home() {
 }
 
 function MainSection() {
-  return <LoginScreen />;
+  const { user } = useAuth();
+  return <h1>main page, {JSON.stringify(user)}</h1>;
 }

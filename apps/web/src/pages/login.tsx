@@ -57,11 +57,11 @@ const LoginScreen = () => {
 
       if (!response.ok) {
         const error = await response.json();
+
         setError(true);
         setLoading(false);
         throw new Error(error.message);
       } else {
-        console.log("response", response.headers);
         console.log("response", await response.json());
         router.push("/(tabs)/map");
       }
