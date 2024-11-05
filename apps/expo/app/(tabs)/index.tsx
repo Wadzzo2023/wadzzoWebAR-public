@@ -257,6 +257,10 @@ const HomeScreen = () => {
     }
   }, [isFocused]);
 
+  if (!response.isLoading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <View style={styles.container}>
       {loading ? (

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "wadzzoWebAR",
-    "slug": "wadzzoWebAR",
-    "version": "1.0.3",
+    "name": "Wadzzo",
+    "slug": "Wadzzo",
+    "version": "4.1.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "com.wadzzoar.wadzzo",
+    "scheme": "Wadzzo",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -13,6 +13,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "buildNumber": "1",
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "infoPlist": {
@@ -21,9 +22,10 @@
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to use your camera",
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use your microphone"
       },
-      "bundleIdentifier": "com.wadzzoAR.wadzzo"
+      "bundleIdentifier": "com.thebillboardapp.wadzzo"
     },
     "android": {
+      "buildNumber": "2",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -34,7 +36,7 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.wadzzoar.wadzzo"
+      "package": "com.thebillboardapp.wadzzo"
     },
     "web": {
       "bundler": "metro",
@@ -72,7 +74,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "26dc5f20-66a3-44c9-9c06-f85658073967"
+        "projectId": "34778138-5508-469e-957a-26658b8b4c35"
       }
     }
   }

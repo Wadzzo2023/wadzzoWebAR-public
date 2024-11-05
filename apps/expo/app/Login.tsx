@@ -47,7 +47,7 @@ const LoginScreen = () => {
       "443284916220-d9idlov4ms8ft9otro9kk9ae7i3kq3t6.apps.googleusercontent.com",
 
     iosClientId:
-      "443284916220-ticav8d3v2lfbdc50vllqeflsiabm63h.apps.googleusercontent.com",
+      "443284916220-0o3tqbeeksf9thva9idge4psar2dmi58.apps.googleusercontent.com",
     // clientId:
     //   "443284916220-l3qg7qu1klpfvph43q35p9u76kf3fkqt.apps.googleusercontent.com",
 

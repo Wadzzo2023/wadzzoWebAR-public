@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { Color } from "app/utils/Colors";
@@ -11,6 +11,7 @@ import { useRouter } from "next/router";
 import { BASE_URL, CALLBACK_URL } from "@app/utils/Common";
 import Image from "next/image";
 import Wrapper from "@/components/Wrapper";
+import { useAuth } from "@/components/provider/AuthProvider";
 
 const LoginScreen = () => {
   const [email, setEmail] = React.useState("");
@@ -19,13 +20,16 @@ const LoginScreen = () => {
   const [error, setError] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const requestName = "api/auth/callback/credentials";
-
+  const { isAuthenticated } = useAuth();
   const mutation = useMutation({
     mutationFn: async () => {
       setLoading(true);
       console.log("Login mutation called");
       const csrTokenRequest = await fetch(
-        new URL("api/auth/csrf", BASE_URL).toString()
+        new URL("api/auth/csrf", BASE_URL).toString(),
+        {
+          credentials: "include",
+        }
       );
       const csrTokenResponse = await csrTokenRequest.json();
       const csrfToken = csrTokenResponse.csrfToken;
@@ -40,6 +44,7 @@ const LoginScreen = () => {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
+        credentials: "include",
         body: new URLSearchParams({
           email,
           password,
@@ -56,6 +61,7 @@ const LoginScreen = () => {
         setLoading(false);
         throw new Error(error.message);
       } else {
+        console.log("response", response.headers);
         console.log("response", await response.json());
         router.push("/(tabs)/map");
       }
@@ -71,6 +77,13 @@ const LoginScreen = () => {
     console.log("Login button clicked");
     mutation.mutate();
   };
+  console.log("isAuthenticated", isAuthenticated);
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/(tabs)/map");
+    }
+  }, [isAuthenticated]);
+
   return (
     <Wrapper>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
