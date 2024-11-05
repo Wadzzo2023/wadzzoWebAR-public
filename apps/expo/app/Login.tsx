@@ -53,6 +53,7 @@ const LoginScreen = () => {
 
     redirectUri: makeRedirectUri({
       path: "Login",
+      scheme: "com.thebillboardapp.wadzzo",
       isTripleSlashed: true,
     }),
   });
