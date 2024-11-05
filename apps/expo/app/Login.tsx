@@ -44,7 +44,7 @@ const LoginScreen = () => {
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId:
-      "443284916220-ial26mo0nnham60c53f5vof83gah94gp.apps.googleusercontent.com",
+      "443284916220-osvpbndj71un7c4s2skn5nglku1ih30e.apps.googleusercontent.com",
 
     iosClientId:
       "443284916220-0o3tqbeeksf9thva9idge4psar2dmi58.apps.googleusercontent.com",
