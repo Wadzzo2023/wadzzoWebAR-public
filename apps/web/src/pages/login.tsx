@@ -1,23 +1,21 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { Color } from "app/utils/Colors";
+import { Color } from "@app/utils/colors";
 // import { BASE_URL, CALLBACK_URL } from "@app/utils/constants/Common";
 import { useMutation } from "@tanstack/react-query";
 
 import { ActivityIndicator, Button } from "react-native-paper";
 
-import { useRouter } from "next/router";
+import Wrapper from "@/components/Wrapper";
 import { BASE_URL, CALLBACK_URL } from "@app/utils/Common";
 import Image from "next/image";
-import Wrapper from "@/components/Wrapper";
 
 import { getUser } from "@api/routes/get-user";
 
 const LoginScreen = () => {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const router = useRouter();
   const [error, setError] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const requestName = "api/auth/callback/credentials";
