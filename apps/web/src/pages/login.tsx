@@ -20,7 +20,7 @@ import Image from "next/image";
 import { albedoLogin } from "@/components/wallet_clients/albedo_login";
 import { appleLogin } from "@/components/wallet_clients/apple_login";
 import { googleLogin } from "@/components/wallet_clients/google_login";
-import { useAuth } from "@auth/Provider";
+import { useAuth } from "@/components/provider/AuthProvider";
 import { useRouter } from "next/router";
 
 const LoginScreen = () => {
@@ -29,7 +29,7 @@ const LoginScreen = () => {
   const [error, setError] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const requestName = "api/auth/callback/credentials";
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, login } = useAuth();
   const router = useRouter();
   const mutation = useMutation({
     mutationFn: async () => {
@@ -74,6 +74,7 @@ const LoginScreen = () => {
         throw new Error(error.message);
       } else {
         console.log("response", await response.json());
+        login();
         router.push("/(tabs)/map");
       }
     },
@@ -92,9 +93,27 @@ const LoginScreen = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/(tabs)/map");
+      router.push("/(tabs)/ar");
     }
   }, [isAuthenticated]);
+
+  async function handleAlbedoLogin() {
+    try {
+      setLoading(true);
+      const result = await albedoLogin();
+      if (result) {
+        login();
+        router.push("/(tabs)/map");
+      } else {
+        setError(true);
+      }
+    } catch (error) {
+      console.error("Albedo login failed", error);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <Wrapper>
@@ -186,7 +205,7 @@ const LoginScreen = () => {
                         />
                       </View>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={async () => await albedoLogin()}>
+                    <TouchableOpacity onPress={handleAlbedoLogin}>
                       <View style={styles.login_social_button}>
                         <Image
                           height={30}

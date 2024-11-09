@@ -13,14 +13,14 @@ export async function albedoLogin() {
   } catch (e) {
     console.error(e);
     toast.error(
-      "Login failed. Please try to login again after refreshing the page.",
+      "Login failed. Please try to login again after refreshing the page."
     );
     return;
   }
 
   if (checkPubkey(userData.pubkey)) {
     toast.error(
-      "Login failed. Please try to login again after refreshing the page.",
+      "Login failed. Please try to login again after refreshing the page."
     );
     return;
   }
@@ -33,14 +33,13 @@ export async function albedoLogin() {
       token: token,
       walletType: WalletType.albedo,
     }),
-    { error: "Login error", loading: "Please wait", success: null },
+    { error: "Login error", loading: "Please wait", success: null }
   );
 
   if (res?.ok) {
     toast.success("Public Key : " + addrShort(userData.pubkey, 10));
+    return true;
   }
-
-
 }
 
 export async function getSingedXdrAlbedo(xdr: string, customer: string) {
@@ -57,7 +56,7 @@ export async function getSingedXdrAlbedo(xdr: string, customer: string) {
         res.signed_envelope_xdr,
         res.network,
         res.result,
-        "aha",
+        "aha"
       );
       return res.signed_envelope_xdr;
     })
@@ -123,8 +122,8 @@ export async function AlbedoNextLogin({
       walletType: walletType,
       pubkey: pubkey,
       signature: signature,
-      token: token
-    }
+      token: token,
+    },
   });
   return response;
-} 
+}
