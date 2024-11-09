@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  Dimensions,
-  Image,
-  ScrollView,
-  StyleSheet,
-  ToastAndroid,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import {
   Appbar,
   Button,
@@ -18,21 +10,30 @@ import {
   TextInput,
   Title,
 } from "react-native-paper";
+import parse from "html-react-parser";
+
 import { UploadSubmission } from "@api/routes/upload-submission";
 import { SubmissionMediaInfoType } from "@app/types/SubmissionTypes";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import { useBounty } from "@/components/hooks/useBounty";
-import { storage } from "@auth/config";
+import { storage } from "@auth/web/webfirebaseconfig";
 import ProgressBar from "@/components/ProgressBar";
 import { Bounty } from "@app/types/BountyTypes";
 import { addrShort } from "@app/utils/AddrShort";
 import { Color } from "@app/utils/Colors";
 import { useRouter } from "next/router";
+import toast from "react-hot-toast";
+import MainLayout from "../layout";
+
+import { IoArrowBack } from "react-icons/io5";
 
 interface UploadProgress {
   [fileName: string]: number;
 }
+type FileItem =
+  | File
+  | { name: string; size: number; type: string; downloadableURL?: string };
 
 const SingleBountyItem = () => {
   const router = useRouter();
@@ -40,12 +41,11 @@ const SingleBountyItem = () => {
   const [solution, setSolution] = useState("");
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
   const [media, setMedia] = useState<SubmissionMediaInfoType[]>([]);
-  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadFiles, setUploadFiles] = useState<FileItem[]>([]);
   const queryClient = useQueryClient();
   const { data } = useBounty();
-  if (!data.item) return null;
-  const { item: bounty } = data;
 
+  const { item: bounty } = data;
   const addMediaItem = (
     url: string,
     name: string,
@@ -70,7 +70,7 @@ const SingleBountyItem = () => {
       return await UploadSubmission({ bountyId, content, media });
     },
     onSuccess: () => {
-      ToastAndroid.show("Submission created successfully", ToastAndroid.SHORT);
+      toast.success("Solution submitted successfully");
       setMedia([]);
       setSolution("");
       setUploadFiles([]);
@@ -81,6 +81,7 @@ const SingleBountyItem = () => {
       console.error("Error following bounty:", error);
     },
   });
+  if (!bounty) return null;
 
   const handleSubmitSolution = () => {
     createBountyAttachmentMutation.mutate({
@@ -108,10 +109,11 @@ const SingleBountyItem = () => {
         const blob = await response.blob();
         const fileName = file.name;
 
+        // Check if the file already exists to avoid re-uploading
         if (
           uploadFiles.some((existingFile) => existingFile.name === fileName)
         ) {
-          return; // Skip this file if already uploaded
+          return;
         }
 
         const storageRef = ref(
@@ -133,17 +135,28 @@ const SingleBountyItem = () => {
           (error) => {
             console.error("Upload error:", error);
           },
-          () => {
-            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-              setUploadFiles((prevFiles) =>
-                prevFiles.map((f) =>
-                  f.name === fileName
-                    ? { ...f, downloadableURI: downloadURL }
-                    : f
-                )
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+
+            setUploadFiles((prevFiles) => {
+              return prevFiles.map((prevFile) =>
+                prevFile.name === fileName
+                  ? {
+                      name: fileName,
+                      size: file.size,
+                      type: file.type,
+                      downloadableURL: downloadURL,
+                    }
+                  : {
+                      name: prevFile.name,
+                      size: prevFile.size,
+                      type: prevFile.type,
+                    }
               );
-              addMediaItem(downloadURL, fileName, file.size, file.type);
             });
+
+            // Add file info to media state
+            addMediaItem(downloadURL, file.name, file.size, file.type);
           }
         );
       });
@@ -151,112 +164,170 @@ const SingleBountyItem = () => {
       console.log("error", error);
     }
   };
-
+  console.log("uploadFiles", uploadFiles);
   return (
-    <View style={styles.container}>
-      <Appbar.Header style={styles.appbar}>
-        <Appbar.BackAction iconColor="white" onPress={() => router.back()} />
-        <Appbar.Content
-          titleStyle={{
-            color: "white",
-            textAlign: "center",
-            fontWeight: "bold",
-          }}
-          title={bounty.title}
-        />
-      </Appbar.Header>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Image
-          alt=""
-          source={{
-            uri:
-              bounty.imageUrls[0] ??
-              "https://app.wadzzo.com/images/loading.png",
-          }}
-          style={styles.image}
-        />
-        <View style={styles.content}>
-          <Card style={styles.card}>
-            <Card.Content>Bounty Information *</Card.Content>
-          </Card>
-          {uploadFiles.length > 0 && (
+    <MainLayout>
+      <View style={styles.container}>
+        <Appbar.Header style={styles.appbar}>
+          <Button onPress={() => router.back()}>
+            <IoArrowBack color="white" size={25} />
+          </Button>
+          <Appbar.Content
+            titleStyle={{
+              color: "white",
+              textAlign: "center",
+              fontWeight: "bold",
+            }}
+            title={bounty.title}
+          />
+        </Appbar.Header>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <Card.Cover
+            source={{
+              uri:
+                bounty.imageUrls[0] ??
+                "https://app.wadzzo.com/images/loading.png",
+            }}
+            style={styles.image}
+          />
+          <View style={styles.content}>
             <Card style={styles.card}>
-              <Card.Content>
-                <Title style={styles.uploadedFilesTitle}>Uploaded Files</Title>
-                {uploadFiles.map((file, index) => (
-                  <View key={index} style={styles.fileItem}>
-                    <Text style={styles.fileName}>{file.name}</Text>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
+              <Card.Content style={{}}>
+                <Text
+                  style={{
+                    fontSize: 20,
+                    fontWeight: "bold",
+                    color: "black",
+                  }}
+                >
+                  Bounty Information *
+                </Text>
+              </Card.Content>
+            </Card>
+            {uploadFiles.length > 0 && (
+              <Card style={styles.card}>
+                <Card.Content>
+                  <Title style={styles.uploadedFilesTitle}>
+                    Uploaded Files
+                  </Title>
+                  {uploadFiles.map((file, index) => {
+                    console.log("file", file);
+                    console.log("xdUploadedfile", uploadFiles);
+                    return (
+                      <View key={index} style={styles.fileItem}>
+                        <Text style={styles.fileName}>{file.name}</Text>
+                        <View
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <ProgressBar
+                            progress={uploadProgress[file.name] ?? 0}
+                          />
+                          <Text>{uploadProgress[file.name]?.toFixed(1)}%</Text>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </Card.Content>
+              </Card>
+            )}
+            <SegmentedButtons
+              value={activeTab}
+              onValueChange={setActiveTab}
+              buttons={[
+                { value: "information", label: "Information" },
+                { value: "submission", label: "Submission" },
+              ]}
+              style={styles.segmentedButtons}
+            />
+
+            {activeTab === "submission" && bounty.winnerId === null ? (
+              <>
+                <Card style={styles.card}>
+                  <Card.Content>
+                    <TextInput
+                      label="Your Solution (**Required**)"
+                      value={solution}
+                      onChangeText={setSolution}
+                      multiline
+                      numberOfLines={6}
+                      style={styles.solutionInput}
+                    />
+                    <View style={{ alignItems: "flex-start" }}>
+                      <input type="file" multiple onChange={handleFileChange} />
+                    </View>
+                    <Button
+                      mode="contained"
+                      onPress={handleSubmitSolution}
+                      disabled={
+                        solution.length === 0 ||
+                        createBountyAttachmentMutation.isPending
+                      }
+                      style={styles.submitButton}
                     >
-                      <ProgressBar progress={uploadProgress[file.name] || 0} />
-                      <Text>
-                        {(uploadProgress[file.name] || 0).toFixed(1)}%
+                      Submit Solution
+                    </Button>
+                  </Card.Content>
+                </Card>
+              </>
+            ) : activeTab === "submission" && bounty.winnerId ? (
+              <Card style={styles.card}>
+                <Card.Content>
+                  {bounty.winnerId && (
+                    <Text style={styles.winnerText}>
+                      Winner: {addrShort(bounty.winnerId, 15)}
+                    </Text>
+                  )}
+                </Card.Content>
+              </Card>
+            ) : (
+              <>
+                <Card style={styles.card}>
+                  <Card.Content>
+                    <View style={styles.detailsContainer}>
+                      <Chip
+                        style={[
+                          styles.statusChip,
+                          { backgroundColor: getStatusColor(bounty.status) },
+                        ]}
+                      >
+                        {bounty.status}
+                      </Chip>
+                      <Text style={styles.prizeText}>
+                        Prize: {bounty.priceInUSD.toFixed(2)}$
+                      </Text>
+                      <Text style={styles.prizeText}>
+                        Prize : {bounty.priceInBand.toFixed(2)} Wadzzo
                       </Text>
                     </View>
-                  </View>
-                ))}
-              </Card.Content>
-            </Card>
-          )}
-          <SegmentedButtons
-            value={activeTab}
-            onValueChange={setActiveTab}
-            buttons={[
-              { value: "information", label: "Information" },
-              { value: "submission", label: "Submission" },
-            ]}
-            style={styles.segmentedButtons}
-          />
-          {activeTab === "submission" && bounty.winnerId === null ? (
-            <Card style={styles.card}>
-              <Card.Content>
-                <TextInput
-                  label="Your Solution (**Required**)"
-                  value={solution}
-                  onChangeText={setSolution}
-                  multiline
-                  numberOfLines={6}
-                  style={styles.solutionInput}
-                />
-                <View style={{ alignItems: "center" }}>
-                  {Platform.OS === "web" ? (
-                    <input type="file" multiple onChange={handleFileChange} />
-                  ) : (
-                    <Button textColor="black" onPress={pickDocument}>
-                      Upload Files
-                    </Button>
-                  )}
-                </View>
-                <Button
-                  mode="contained"
-                  onPress={handleSubmitSolution}
-                  disabled={
-                    solution.length === 0 ||
-                    createBountyAttachmentMutation.isPending
-                  }
-                  style={styles.submitButton}
-                >
-                  Submit Solution
-                </Button>
-              </Card.Content>
-            </Card>
-          ) : (
-            <Card style={styles.card}>
-              <Card.Content>
-                <Title style={styles.winnerText}>
-                  Winner: {addrShort(bounty.winnerId, 15)}
-                </Title>
-              </Card.Content>
-            </Card>
-          )}
-        </View>
-      </ScrollView>
-    </View>
+                    <Text style={styles.participantsText}>
+                      Participants: {bounty._count.participants}
+                    </Text>
+                  </Card.Content>
+                </Card>
+                <Card style={styles.card}>
+                  <Card.Title title="Description" />
+                  <Card.Content>
+                    <Text
+                      style={{
+                        color: "black",
+                      }}
+                    >
+                      {
+                        parse(bounty.description) // Parse HTML content
+                      }
+                    </Text>
+                  </Card.Content>
+                </Card>
+              </>
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    </MainLayout>
   );
 };
 
@@ -286,10 +357,16 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 8,
     borderBottomRightRadius: 8,
   },
+  detailsContainer: {
+    flex: 1,
+    flexDirection: "column",
+    gap: 8,
+    alignItems: "flex-start",
+    marginTop: 8,
+    marginBottom: 8,
+  },
   image: {
-    width: Dimensions.get("window").width,
     height: 200,
-    resizeMode: "cover",
   },
   content: {
     padding: 16,
@@ -359,15 +436,18 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   uploadedFilesTitle: {
+    color: "black",
     marginBottom: 12,
   },
   fileItem: {
     flexDirection: "column",
+    color: "black",
     paddingVertical: 8,
     borderBottomColor: "#e0e0e0",
   },
   fileName: {
     flex: 1,
+    color: "black",
     fontSize: 14,
   },
 });

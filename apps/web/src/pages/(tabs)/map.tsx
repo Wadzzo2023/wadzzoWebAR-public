@@ -259,6 +259,12 @@ const HomeScreen = () => {
                   style={styles.map}
                   zoomControl={false}
                 >
+                  <Marker
+                    position={{
+                      lat: userLocation.latitude,
+                      lng: userLocation.longitude,
+                    }}
+                  />
                   <MyPins locations={locations} />
                 </Map>
                 {/* Recenter button */}

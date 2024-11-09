@@ -12,28 +12,34 @@ import {
 } from "react-native-paper";
 import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
 import { LuExternalLink } from "react-icons/lu";
+import { FaMapPin, FaHashtag } from "react-icons/fa";
 
 import { useCollection } from "@/components/hooks/useCollection";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 
 import { Color } from "app/utils/Colors";
 import { BASE_URL } from "app/utils/Common";
-import Wrapper from "@/components/Wrapper";
 
 import { useModal } from "@/components/hooks/useModal";
 import { MdOutlineViewInAr } from "react-icons/md";
+import { IoArrowBack } from "react-icons/io5";
+import { useRouter } from "next/router";
+import MainLayout from "../layout";
 
 const SingleCollectionItem = () => {
   const { data } = useCollection();
   const { setData } = useNearByPin();
   const { onOpen } = useModal();
+  const router = useRouter();
   if (!data.collections) return null;
 
   return (
-    <Wrapper>
+    <MainLayout>
       <View style={styles.container}>
         <Appbar.Header style={styles.appbar}>
-          <Appbar.BackAction color="white" />
+          <Button onPress={() => router.back()}>
+            <IoArrowBack color="white" size={25} />
+          </Button>
           <Appbar.Content
             title={data.collections.title}
             titleStyle={styles.appbarTitle}
@@ -64,12 +70,30 @@ const SingleCollectionItem = () => {
               </Paragraph>
 
               <View style={styles.chipContainer}>
-                <Chip icon="map-marker" style={styles.chip}>
-                  {data.collections.lat.toFixed(4)},{" "}
-                  {data.collections.lng.toFixed(4)}
+                <Chip style={styles.chip}>
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: "row",
+                      gap: 2,
+                    }}
+                  >
+                    <FaMapPin size={20} />
+                    {data.collections.lat.toFixed(4)},
+                    {data.collections.lng.toFixed(4)}
+                  </View>
                 </Chip>
-                <Chip icon="tag" style={styles.chip}>
-                  ID: {data.collections.id}
+                <Chip style={styles.chip}>
+                  <View
+                    style={{
+                      flex: 1,
+                      flexDirection: "row",
+                      gap: 2,
+                    }}
+                  >
+                    <FaHashtag size={20} />
+                    ID: {data.collections.id}
+                  </View>
                 </Chip>
               </View>
               <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY!}>
@@ -171,7 +195,7 @@ const SingleCollectionItem = () => {
           label={"Claim"}
         />
       </View>
-    </Wrapper>
+    </MainLayout>
   );
 };
 

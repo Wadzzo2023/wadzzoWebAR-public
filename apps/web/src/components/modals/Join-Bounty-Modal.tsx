@@ -6,12 +6,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { JoinBounty } from "@api/routes/join-bounty";
 import { useRouter } from "next/router";
 import { Color } from "@app/utils/Colors";
+import { useBounty } from "../hooks/useBounty";
 
 const JoinBountyModal = () => {
   const { isOpen, onClose, type, data } = useModal();
   const isModalOpen = isOpen && type === "JoinBounty";
   const router = useRouter();
-
+  const { setData } = useBounty();
   const queryClient = useQueryClient();
   const handleClose = () => {
     onClose();
@@ -25,8 +26,8 @@ const JoinBountyModal = () => {
       queryClient.invalidateQueries({
         queryKey: ["bounties"],
       });
-
-      router.push(`/bounty/${data.bounty?.id}`);
+      setData({ item: data.bounty });
+      router.push(`/(tabs)/bounty/${data.bounty?.id}`);
     },
     onError: () => {
       ToastAndroid.show("Failed to join bounty", ToastAndroid.SHORT);

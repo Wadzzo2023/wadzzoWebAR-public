@@ -1,5 +1,6 @@
 import { getUser } from "@api/routes/get-user";
 import { WalletType } from "@auth/types";
+import { useRouter } from "next/router";
 import {
   createContext,
   FC,
@@ -31,13 +32,15 @@ export const AuthWebProvider: FC<AuthProviderProps> = ({
 }: AuthProviderProps): JSX.Element => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const router = useRouter();
   useEffect(() => {
     checkAuth();
   }, []);
   const checkAuth = async () => {
     try {
       const user = await getUser();
-      if (user) {
+
+      if (user?.id) {
         setIsAuthenticated(true);
         setUser(user);
       }
@@ -47,14 +50,19 @@ export const AuthWebProvider: FC<AuthProviderProps> = ({
   };
   const login = async (): Promise<void> => {
     try {
+      document.cookie.split(";").forEach((cookie) => {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      });
       await checkAuth();
-      // Save token
     } catch (error) {
       console.error("Failed to log in:", error);
     }
   };
   const logout = async (): Promise<void> => {
     try {
+      console.log("Logging out");
       setIsAuthenticated(false);
       setUser(null);
 
@@ -63,6 +71,19 @@ export const AuthWebProvider: FC<AuthProviderProps> = ({
       console.error("Failed to log out:", error);
     }
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/(tabs)/map");
+    }
+  }, [isAuthenticated]);
+
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
       {children}

@@ -257,7 +257,7 @@ const HomeScreen = () => {
     }
   }, [isFocused]);
 
-  if (!response.isLoading) {
+  if (response.isLoading) {
     return <LoadingScreen />;
   }
 

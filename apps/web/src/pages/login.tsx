@@ -1,5 +1,12 @@
 import React, { useEffect } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { Color } from "app/utils/Colors";
 // import { BASE_URL, CALLBACK_URL } from "@app/utils/constants/Common";
@@ -12,6 +19,9 @@ import { BASE_URL, CALLBACK_URL } from "@app/utils/Common";
 import Image from "next/image";
 import Wrapper from "@/components/Wrapper";
 import { useAuth } from "@/components/provider/AuthProvider";
+import { googleLogin } from "@/components/wallet_clients/google_login";
+import { appleLogin } from "@/components/wallet_clients/apple_login";
+import { albedoLogin } from "@/components/wallet_clients/albedo_login";
 
 const LoginScreen = () => {
   const [email, setEmail] = React.useState("");
@@ -44,7 +54,7 @@ const LoginScreen = () => {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        credentials: "include",
+
         body: new URLSearchParams({
           email,
           password,
@@ -53,6 +63,7 @@ const LoginScreen = () => {
           walletType: "emailPass",
           json: "true",
         }).toString(),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -78,6 +89,7 @@ const LoginScreen = () => {
     mutation.mutate();
   };
   console.log("isAuthenticated", isAuthenticated);
+
   useEffect(() => {
     if (isAuthenticated) {
       router.push("/(tabs)/map");
@@ -147,9 +159,44 @@ const LoginScreen = () => {
                     Login {loading && <ActivityIndicator size={12} />}
                   </Button>
 
-                  <View style={styles.newAccountContainer}>
+                  {/* <View style={styles.newAccountContainer}>
                     <Text style={styles.newAccountText}>New here?</Text>
                     <Button>Create an account</Button>
+                  </View> */}
+                  <View style={styles.socialContainer}>
+                    <TouchableOpacity onPress={async () => await googleLogin()}>
+                      <View style={styles.login_social_button}>
+                        <Image
+                          height={30}
+                          width={30}
+                          alt="google"
+                          style={styles.login_social_icon}
+                          src="/assets/icons/google.png"
+                        />
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={async () => await appleLogin()}>
+                      <View style={styles.login_social_button}>
+                        <Image
+                          height={30}
+                          width={30}
+                          alt="google"
+                          style={styles.login_social_icon}
+                          src="/assets/icons/apple.png"
+                        />
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={async () => await albedoLogin()}>
+                      <View style={styles.login_social_button}>
+                        <Image
+                          height={30}
+                          width={30}
+                          alt="albedo"
+                          style={styles.login_social_icon}
+                          src="/assets/icons/albedo.png"
+                        />
+                      </View>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -165,6 +212,23 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
+  },
+  socialContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  login_social_button: {
+    margin: 10,
+    width: 60,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 30,
+  },
+  login_social_icon: {
+    width: 30,
+    height: 30,
   },
   mainContainer: {
     flex: 1,

@@ -1,28 +1,6 @@
-import { extraSchema, WalletType } from "../../auth/types";
-
-export function addrShort(addr: string, size?: number) {
-    if (!addr) return "No address";
-    const cropSize = size ?? 3;
-    return `${addr.substring(0, cropSize)}...${addr.substring(addr.length - cropSize, addr.length)}`;
-}
-
-export function checkPubkey(pubkey: string): boolean {
-    return !pubkey || pubkey.trim() === "" || !(pubkey.length === 56);
-}
-
-
-export function needSign(walletType: WalletType) {
-    if (
-        walletType == WalletType.emailPass ||
-        walletType == WalletType.facebook ||
-        walletType == WalletType.google
-    )
-        return true;
-    return false;
-}
-
 import { z } from "zod";
 import toast from "react-hot-toast";
+import { extraSchema } from "../../auth/types";
 import { submitSignedXDRToServer4User } from "./submitSignedXDRtoServer4User";
 
 

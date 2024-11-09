@@ -7,6 +7,7 @@ import {
   View,
 } from "react-native";
 import { Appbar, Button, Card, Chip, Text, Title } from "react-native-paper";
+import parse from "html-react-parser";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -72,15 +73,19 @@ export default function BountyScreen() {
             minHeight: 150,
           }}
         >
-          {/* <RenderHtml
-            contentWidth={Dimensions.get("window").width}
-            source={{
-              html:
-                item.description.length > 200
-                  ? item.description.slice(0, 200)
-                  : "",
+          <Text
+            style={{
+              color: "black",
             }}
-          /> */}
+          >
+            {
+              parse(
+                item.description.length > 100
+                  ? item.description.substring(0, 100)
+                  : item.description
+              ) // Parse HTML content
+            }
+          </Text>
         </View>
         <View style={styles.detailsContainer}>
           <Chip
