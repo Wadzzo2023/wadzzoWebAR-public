@@ -15,7 +15,7 @@ import { IoIosInformationCircle } from "react-icons/io";
 import { FaMapPin } from "react-icons/fa";
 import { CiGift } from "react-icons/ci";
 
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 
 interface LocationData {
   id: string;

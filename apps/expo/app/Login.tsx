@@ -10,7 +10,7 @@ import {
 } from "react-native";
 
 import { useMutation } from "@tanstack/react-query";
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import { BASE_URL, CALLBACK_URL } from "app/utils/Common";
 import * as Google from "expo-auth-session/providers/google";
 import { useRouter } from "expo-router";

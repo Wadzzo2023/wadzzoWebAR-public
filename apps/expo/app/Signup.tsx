@@ -16,7 +16,7 @@ import { useMutation } from "@tanstack/react-query";
 import { BASE_URL } from "app/utils/Common";
 import { useRouter } from "expo-router";
 
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import { Button, TextInput } from "react-native-paper";
 
 const screenWidth = Dimensions.get("window").width;

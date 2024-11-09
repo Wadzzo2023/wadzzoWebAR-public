@@ -29,7 +29,7 @@ import { useModal } from "@/components/hooks/useModal";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import { getMapAllPins } from "@api/routes/get-Map-all-pins";
 import { ConsumedLocation } from "@app/types/CollectionTypes";
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import { BASE_URL } from "app/utils/Common";
 import { useRouter } from "expo-router";
 

@@ -18,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAccountAction } from "@/components/hooks/useAccountAction";
 import LoadingScreen from "@/components/Loading";
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 
 import { useAuth } from "@/components/provider/AuthProvider";
 import { getTokenUser } from "@api/routes/get-token-user";

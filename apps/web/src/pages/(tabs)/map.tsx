@@ -14,7 +14,7 @@ import { getMapAllPins } from "@api/routes/get-Map-all-pins";
 import { ConsumedLocation } from "@app/types/CollectionTypes";
 import { MdOutlineViewInAr } from "react-icons/md";
 
-import { Color } from "@app/utils/colors";
+import { Color } from "app/utils/all-colors";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 
 import { useExtraInfo } from "@/components/hooks/useExtraInfo";

@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 
-import { Color } from "@app/utils/colors";
+import { Color } from "app/utils/all-colors";
 import { useMutation } from "@tanstack/react-query";
 
 import { ActivityIndicator, Button } from "react-native-paper";
@@ -93,7 +93,7 @@ const LoginScreen = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/(tabs)/ar");
+      router.push("/(tabs)/map");
     }
   }, [isAuthenticated]);
 

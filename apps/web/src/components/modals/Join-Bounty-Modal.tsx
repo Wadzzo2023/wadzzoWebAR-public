@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { JoinBounty } from "@api/routes/join-bounty";
 import { useRouter } from "next/router";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import { useBounty } from "../hooks/useBounty";
 
 const JoinBountyModal = () => {

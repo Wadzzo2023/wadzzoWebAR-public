@@ -8,7 +8,7 @@ import { AuthProvider } from "@auth/Provider";
 
 import ModalProvider from "@/components/provider/modal-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import merge from "deepmerge";
 import { useColorScheme } from "react-native";
 import {

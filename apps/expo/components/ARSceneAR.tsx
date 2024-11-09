@@ -24,7 +24,7 @@ import {
   ViroTrackingReason,
 } from "@reactvision/react-viro";
 import { ConsumedLocation } from "@app/types/CollectionTypes";
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import { useWinnerAnimation } from "./hooks/useWinnerAnimation";
 import { useRouter } from "expo-router";
 const { width, height } = Dimensions.get("window");

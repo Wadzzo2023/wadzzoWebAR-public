@@ -1,47 +1,29 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import ARSceneAR from "@/components/ARSceneAR";
+import { useNearByPin } from "@/components/hooks/useNearbyPin";
+import { useWinnerAnimation } from "@/components/hooks/useWinnerAnimation";
+import { ConsumedLocation } from "@app/types/CollectionTypes";
+import { ViroARSceneNavigator, ViroAnimations } from "@reactvision/react-viro";
+import { useQueryClient } from "@tanstack/react-query";
+import { Color } from "app/utils/all-colors";
+import { BASE_URL } from "app/utils/Common";
+import { useRouter } from "expo-router";
+import React, { useRef, useState } from "react";
+import {
+  Animated,
+  Dimensions,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Vibration,
+  View,
+} from "react-native";
+import { Appbar, Text } from "react-native-paper";
 import Svg, {
-  Defs,
   ClipPath,
-  Path,
+  Defs,
   Polygon,
   Image as SvgImage,
 } from "react-native-svg";
-import {
-  StyleSheet,
-  Animated,
-  View,
-  TouchableOpacity,
-  Image,
-  Dimensions,
-  Vibration,
-} from "react-native";
-import {
-  ViroARScene,
-  ViroText,
-  Viro3DObject,
-  ViroTrackingStateConstants,
-  ViroARSceneNavigator,
-  ViroAmbientLight,
-  ViroSpotLight,
-  ViroNode,
-  ViroAnimations,
-  ViroImage,
-  ViroFlexView,
-  ViroButton,
-  ViroParticleEmitter,
-  ViroTrackingReason,
-  ViroMaterials,
-} from "@reactvision/react-viro";
-import { ConsumedLocation } from "@app/types/CollectionTypes";
-import { BASE_URL } from "app/utils/Common";
-import { useNearByPin } from "@/components/hooks/useNearbyPin";
-import { Appbar, Text } from "react-native-paper";
-import { useFocusEffect, useRouter } from "expo-router";
-import { Color } from "app/utils/Colors";
-import { useQueryClient } from "@tanstack/react-query";
-import ARSceneAR from "@/components/ARSceneAR";
-import { useWinnerAnimation } from "@/components/hooks/useWinnerAnimation";
-import { opacity } from "react-native-reanimated/lib/typescript/reanimated2/Colors";
 const { width, height } = Dimensions.get("window");
 ViroAnimations.registerAnimations({
   rotate: {

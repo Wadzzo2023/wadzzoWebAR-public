@@ -12,7 +12,7 @@ import {
   Divider,
 } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 
 interface LocationData {
   id: string;

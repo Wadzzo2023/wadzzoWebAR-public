@@ -78,7 +78,7 @@ export const AuthWebProvider: FC<AuthProviderProps> = ({
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/(tabs)/ar");
+      router.push("/(tabs)/map");
     }
   }, [isAuthenticated]);
 

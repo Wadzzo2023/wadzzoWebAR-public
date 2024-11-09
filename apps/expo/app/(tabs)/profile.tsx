@@ -1,35 +1,33 @@
+import { getCurrentUser } from "@api/routes/get-current-user";
+import { useQuery } from "@tanstack/react-query";
+import * as Clipboard from "expo-clipboard";
 import React, { useState } from "react";
 import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   Linking,
+  ScrollView,
+  StyleSheet,
   ToastAndroid,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
   Avatar,
-  Text,
   Button,
-  Divider,
-  useTheme,
-  IconButton,
-  Portal,
-  Dialog,
   Card,
+  Dialog,
+  Divider,
+  Portal,
   Switch,
+  Text,
+  useTheme,
 } from "react-native-paper";
-import * as Clipboard from "expo-clipboard";
-import { useQuery } from "@tanstack/react-query";
-import { getCurrentUser } from "@api/routes/get-current-user";
 
-import { SafeAreaView } from "react-native-safe-area-context";
-import { EvilIcons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import LoadingScreen from "@/components/Loading";
-import { Color } from "app/utils/Colors";
 import { useAccountAction } from "@/components/hooks/useAccountAction";
+import LoadingScreen from "@/components/Loading";
 import { useAuth } from "@auth/Provider";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Color } from "app/utils/all-colors";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingScreen() {
   const theme = useTheme();
