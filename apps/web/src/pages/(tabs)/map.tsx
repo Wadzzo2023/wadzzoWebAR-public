@@ -6,13 +6,13 @@ import {
   TouchableOpacity,
   Animated,
 } from "react-native";
-import { APIProvider, AdvancedMarker, Map } from "@vis.gl/react-google-maps";
+import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
 
 import { useQuery } from "@tanstack/react-query";
-import { TbZoomScan } from "react-icons/tb";
 
 import { getMapAllPins } from "@api/routes/get-Map-all-pins";
 import { ConsumedLocation } from "@app/types/CollectionTypes";
+import { MdOutlineViewInAr } from "react-icons/md";
 
 import { Color } from "@app/utils/colors";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
@@ -26,9 +26,10 @@ import {
 import Image from "next/image";
 import LoadingScreen from "@/components/Loading";
 import { useModal } from "@/components/hooks/useModal";
-import Wrapper from "@/components/Wrapper";
+
 import { FaLocationCrosshairs } from "react-icons/fa6";
 import { FiRefreshCcw } from "react-icons/fi";
+import MainLayout from "./layout";
 
 type userLocationType = {
   latitude: number;
@@ -228,9 +229,11 @@ const HomeScreen = () => {
     }
   }, [data.mode, userLocation, locations]);
 
-  console.log("locations", locations);
+  if (response.isLoading) {
+    return <LoadingScreen />;
+  }
   return (
-    <Wrapper>
+    <MainLayout>
       <View style={styles.container}>
         {loading ? (
           <LoadingScreen />
@@ -256,7 +259,13 @@ const HomeScreen = () => {
                   style={styles.map}
                   zoomControl={false}
                 >
-                  <Marker locations={locations} />
+                  <Marker
+                    position={{
+                      lat: userLocation.latitude,
+                      lng: userLocation.longitude,
+                    }}
+                  />
+                  <MyPins locations={locations} />
                 </Map>
                 {/* Recenter button */}
                 <TouchableOpacity style={styles.recenterButton}>
@@ -266,7 +275,7 @@ const HomeScreen = () => {
                   style={styles.AR}
                   onPress={() => handleARPress(userLocation, locations)}
                 >
-                  <TbZoomScan size={30} color="white" />
+                  <MdOutlineViewInAr size={30} color="white" />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.Refresh}
@@ -297,50 +306,42 @@ const HomeScreen = () => {
                     src={"/assets/images/wadzzo.png"}
                     style={styles.pinImage}
                   />
-                </Animated.View>{" "}
+                </Animated.View>
               </APIProvider>
             </>
           )
         )}
       </View>
-    </Wrapper>
+    </MainLayout>
   );
 };
 
-const Marker = ({ locations }: { locations: ConsumedLocation[] }) => {
+const MyPins = ({ locations }: { locations: ConsumedLocation[] }) => {
   const { onOpen } = useModal();
+
   return (
     <>
       {locations.map((location: ConsumedLocation, index: number) => (
-        <AdvancedMarker
-          key={`${index}-${location.id}`}
-          position={{
-            lat: location.lng,
-            lng: location.lat,
+        <Marker
+          key={index}
+          onClick={() =>
+            onOpen("LocationInformation", {
+              Collection: location,
+            })
+          }
+          icon={{
+            url: location.image_url,
+            scaledSize: {
+              width: 30,
+              height: 30,
+              equals: () => true,
+            },
           }}
-        >
-          <TouchableOpacity
-            onPress={() =>
-              onOpen("LocationInformation", {
-                Collection: location,
-              })
-            }
-          >
-            <Image
-              src={location.brand_image_url}
-              height={30}
-              width={30}
-              alt="Pin"
-              className={`h-10 w-10 bg-white ${
-                !location.auto_collect ? "rounded-full " : ""
-              } ${
-                location.collection_limit_remaining <= 0
-                  ? "opacity-50"
-                  : "opacity-100"
-              }`}
-            />
-          </TouchableOpacity>
-        </AdvancedMarker>
+          position={{
+            lat: location.lat,
+            lng: location.lng,
+          }}
+        />
       ))}
     </>
   );

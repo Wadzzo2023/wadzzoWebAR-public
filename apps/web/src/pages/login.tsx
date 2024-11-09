@@ -1,8 +1,14 @@
-import React from "react";
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useEffect } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import { Color } from "@app/utils/colors";
-// import { BASE_URL, CALLBACK_URL } from "@app/utils/constants/Common";
 import { useMutation } from "@tanstack/react-query";
 
 import { ActivityIndicator, Button } from "react-native-paper";
@@ -11,7 +17,11 @@ import Wrapper from "@/components/Wrapper";
 import { BASE_URL, CALLBACK_URL } from "@app/utils/Common";
 import Image from "next/image";
 
-import { getUser } from "@api/routes/get-user";
+import { albedoLogin } from "@/components/wallet_clients/albedo_login";
+import { appleLogin } from "@/components/wallet_clients/apple_login";
+import { googleLogin } from "@/components/wallet_clients/google_login";
+import { useAuth } from "@auth/Provider";
+import { useRouter } from "next/router";
 
 const LoginScreen = () => {
   const [email, setEmail] = React.useState("");
@@ -19,7 +29,8 @@ const LoginScreen = () => {
   const [error, setError] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const requestName = "api/auth/callback/credentials";
-
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
   const mutation = useMutation({
     mutationFn: async () => {
       setLoading(true);
@@ -43,6 +54,7 @@ const LoginScreen = () => {
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
+
         body: new URLSearchParams({
           email,
           password,
@@ -61,13 +73,8 @@ const LoginScreen = () => {
         setLoading(false);
         throw new Error(error.message);
       } else {
-        const user = await getUser();
-
-        if (user) {
-          console.log("User", user);
-        }
-
-        // router.push("/(tabs)/map");
+        console.log("response", await response.json());
+        router.push("/(tabs)/map");
       }
     },
     onError: (error) => {
@@ -81,6 +88,14 @@ const LoginScreen = () => {
     console.log("Login button clicked");
     mutation.mutate();
   };
+  console.log("isAuthenticated", isAuthenticated);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/(tabs)/map");
+    }
+  }, [isAuthenticated]);
+
   return (
     <Wrapper>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -144,9 +159,44 @@ const LoginScreen = () => {
                     Login {loading && <ActivityIndicator size={12} />}
                   </Button>
 
-                  <View style={styles.newAccountContainer}>
+                  {/* <View style={styles.newAccountContainer}>
                     <Text style={styles.newAccountText}>New here?</Text>
                     <Button>Create an account</Button>
+                  </View> */}
+                  <View style={styles.socialContainer}>
+                    <TouchableOpacity onPress={async () => await googleLogin()}>
+                      <View style={styles.login_social_button}>
+                        <Image
+                          height={30}
+                          width={30}
+                          alt="google"
+                          style={styles.login_social_icon}
+                          src="/assets/icons/google.png"
+                        />
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={async () => await appleLogin()}>
+                      <View style={styles.login_social_button}>
+                        <Image
+                          height={30}
+                          width={30}
+                          alt="google"
+                          style={styles.login_social_icon}
+                          src="/assets/icons/apple.png"
+                        />
+                      </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={async () => await albedoLogin()}>
+                      <View style={styles.login_social_button}>
+                        <Image
+                          height={30}
+                          width={30}
+                          alt="albedo"
+                          style={styles.login_social_icon}
+                          src="/assets/icons/albedo.png"
+                        />
+                      </View>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -162,6 +212,23 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     justifyContent: "center",
+  },
+  socialContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  login_social_button: {
+    margin: 10,
+    width: 60,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 30,
+  },
+  login_social_icon: {
+    width: 30,
+    height: 30,
   },
   mainContainer: {
     flex: 1,

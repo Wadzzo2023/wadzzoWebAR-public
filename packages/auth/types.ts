@@ -52,6 +52,15 @@ export const appleAuthSchema = z.object({
   email: z.string(),
   appleToken: z.string().optional(),
 });
+export const extraSchema = z.object({
+  isAccActive: z.boolean(),
+  xdr: z.string().optional(),
+});
+
+export const getPublicKeyAPISchema = z.object({
+  publicKey: z.string().min(56),
+  extra: extraSchema,
+});
 
 export const authCredentialSchema = z.union([
   albedoSchema,
