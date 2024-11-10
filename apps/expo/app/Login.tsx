@@ -141,6 +141,7 @@ const LoginScreen = () => {
           walletType: "emailPass",
           json: "true",
         }).toString(),
+        credentials: "include",
       });
 
       if (!response.ok) {

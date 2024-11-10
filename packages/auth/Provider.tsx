@@ -69,7 +69,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({
       const user = await getUser();
       console.log(user, "user");
 
-      if (user) {
+      if (user?.id) {
         setIsAuthenticated(true);
         await AsyncStorage.setItem("auth_cookies", cookie.toString());
         await AsyncStorage.setItem("user", JSON.stringify(user));
