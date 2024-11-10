@@ -1,4 +1,4 @@
-// pages/ar.js
+/* eslint-disable  */
 import { useEffect, useState } from "react";
 
 import Head from "next/head";

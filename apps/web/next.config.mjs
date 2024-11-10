@@ -7,7 +7,7 @@ const nextConfig = withExpo(
   // withImages(
   withFonts({
     reactStrictMode: true,
-    
+
     transpilePackages: [
       // NOTE: you need to list `react-native` because `react-native-web` is aliased to `react-native`.
       "react-native",
@@ -18,12 +18,12 @@ const nextConfig = withExpo(
       "react-native-paper",
       "react-native-vector-icons",
       "react-native-safe-area-context",
+      "react-native-svg",
 
       // Add other packages that need transpiling
     ],
-    images:{
-      domains: ["utfs.io","app.wadzzo.com"], // Add the domain here
-
+    images: {
+      domains: ["utfs.io", "app.wadzzo.com"], // Add the domain here
     },
     webpack: (config) => {
       config.resolve.alias = {
@@ -41,7 +41,7 @@ const nextConfig = withExpo(
         ...config.resolve.extensions,
       ];
       return config;
-    }
+    },
   })
 
   // )

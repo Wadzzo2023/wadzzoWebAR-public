@@ -1,6 +1,6 @@
 import { Button, Text, Portal, Dialog, Modal, Card } from "react-native-paper";
 import { useModal } from "../hooks/useModal";
-import { StyleSheet, ToastAndroid, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { JoinBounty } from "@api/routes/join-bounty";
@@ -30,7 +30,8 @@ const JoinBountyModal = () => {
       router.push(`/(tabs)/bounty/${data.bounty?.id}`);
     },
     onError: () => {
-      ToastAndroid.show("Failed to join bounty", ToastAndroid.SHORT);
+      // ToastAndroid.show("Failed to join bounty", ToastAndroid.SHORT);
+      alert("Failed to join bounty");
     },
   });
 

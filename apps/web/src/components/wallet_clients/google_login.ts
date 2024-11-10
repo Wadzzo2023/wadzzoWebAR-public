@@ -11,7 +11,6 @@ import { auth } from "@auth/web/webfirebaseconfig";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { getTokenUser } from "@api/routes/get-token-user";
 
 export const ACTION_STELLAR_ACCOUNT_URL = "https://accounts.action-tokens.com/";
 
