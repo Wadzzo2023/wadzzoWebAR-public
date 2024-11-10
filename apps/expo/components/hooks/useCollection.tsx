@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { ConsumedLocation } from "../../types/CollectionTypes";
+import { ConsumedLocation } from "@app/types/CollectionTypes";
 
 export interface CollectionData {
   collections?: ConsumedLocation;

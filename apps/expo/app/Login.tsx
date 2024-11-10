@@ -141,6 +141,7 @@ const LoginScreen = () => {
           walletType: "emailPass",
           json: "true",
         }).toString(),
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -171,7 +172,7 @@ const LoginScreen = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/(tabs)/");
+      router.replace("/(tabs)/");
     }
   }, [isAuthenticated]);
 

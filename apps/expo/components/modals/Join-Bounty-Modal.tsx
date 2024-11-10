@@ -19,11 +19,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { JoinBounty } from "@api/routes/join-bounty";
 import { useRouter } from "expo-router";
+import { useBounty } from "../hooks/useBounty";
 
 const JoinBountyModal = () => {
   const { isOpen, onClose, type, data } = useModal();
   const isModalOpen = isOpen && type === "JoinBounty";
   const router = useRouter();
+  const { setData } = useBounty();
+
   const [joinBountyId, setJoinBountyId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const handleClose = () => {
@@ -40,6 +43,8 @@ const JoinBountyModal = () => {
         queryKey: ["bounties"],
       });
       setJoinBountyId(null);
+      setData({ item: data.bounty });
+      handleClose();
       router.push(`/bounty/${data.bounty?.id}`);
     },
     onError: (error) => {

@@ -88,11 +88,11 @@ export default function CreatorPage() {
           if (res) {
             await FollowBrand({ brand_id });
           } else {
-            Alert.alert("Trust transaction failed");
+            Alert.alert("You haven't enough wadzzo to follow this brand");
             setFollowLoadingId(null);
           }
         } else {
-          Alert.alert("Failed to get XDR");
+          Alert.alert("This brand doesn't have page asset");
           setFollowLoadingId(null);
         }
       } else {

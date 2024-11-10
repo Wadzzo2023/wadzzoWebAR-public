@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@api/routes/get-current-user";
 import { useQuery } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Linking,
   ScrollView,
@@ -28,20 +28,19 @@ import { useAuth } from "@auth/Provider";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Color } from "app/utils/all-colors";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 
 export default function SettingScreen() {
   const theme = useTheme();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
+  const router = useRouter();
 
   const { data: pinMode, setData } = useAccountAction();
   const { data, isLoading, error } = useQuery({
     queryKey: ["currentUserInfo"],
     queryFn: getCurrentUser,
   });
-
-  if (isLoading) return <LoadingScreen />;
-  if (error) return <Text>Error: {error.message}</Text>;
 
   const copyPublicKey = async () => {
     await Clipboard.setStringAsync(data?.id);
@@ -71,6 +70,14 @@ export default function SettingScreen() {
       }`
     );
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/Login");
+    }
+  }, [isAuthenticated]);
+  if (isLoading) return <LoadingScreen />;
+  if (error) return <Text>Error: {error.message}</Text>;
 
   return (
     <SafeAreaView style={styles.container}>

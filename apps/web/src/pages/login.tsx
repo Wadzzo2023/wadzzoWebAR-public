@@ -316,6 +316,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 44,
     borderRadius: 10,
+    color: "#2d3748", // Gray-900
     backgroundColor: "#f7fafc", // Gray-100
     paddingLeft: 8,
   },
