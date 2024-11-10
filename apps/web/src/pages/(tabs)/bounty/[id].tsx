@@ -21,7 +21,7 @@ import { storage } from "@auth/web/webfirebaseconfig";
 import ProgressBar from "@/components/ProgressBar";
 import { Bounty } from "@app/types/BountyTypes";
 import { addrShort } from "@app/utils/AddrShort";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import { useRouter } from "next/router";
 import toast from "react-hot-toast";
 import MainLayout from "../layout";

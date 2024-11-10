@@ -27,7 +27,7 @@ import { useModal } from "@/components/hooks/useModal";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import { ConsumedLocation } from "@app/types/CollectionTypes";
 import { BASE_URL } from "@app/utils/Common";
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import { useRouter } from "next/router";
 
 import MainLayout from "../layout";

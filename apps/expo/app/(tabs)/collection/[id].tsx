@@ -14,7 +14,7 @@ import {
 import { useCollection } from "@/components/hooks/useCollection";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import Mapbox, { Camera, MapView, MarkerView } from "@rnmapbox/maps";
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import { BASE_URL } from "app/utils/Common";
 import { useRouter } from "expo-router";
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);

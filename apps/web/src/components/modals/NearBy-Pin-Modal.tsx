@@ -1,7 +1,7 @@
 import { Button, Text, Portal, Modal, Card } from "react-native-paper";
 import { useModal } from "../hooks/useModal";
 import { StyleSheet, View } from "react-native";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 
 const NearbyPinModal = () => {
   const { isOpen, onClose, type } = useModal();

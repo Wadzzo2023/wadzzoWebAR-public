@@ -12,7 +12,7 @@ import { submitSignedXDRToServer4User } from "@app/utils/submitSignedXDRtoServer
 import { useAuth } from "@auth/Provider";
 import { WalletType } from "@auth/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {

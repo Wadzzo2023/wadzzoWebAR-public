@@ -1,17 +1,20 @@
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
-import axios from "axios";
-import toast from "react-hot-toast";
-import { auth } from "@auth/web/webfirebaseconfig";
-import { getPublicKeyAPISchema, providerAuthShema, WalletType } from "@auth/types";
 import { submitActiveAcountXdr } from "@app/utils/AddrShort";
 import { SignIn } from "@auth/sign-in";
+import {
+  getPublicKeyAPISchema,
+  providerAuthShema,
+  WalletType,
+} from "@auth/types";
+import { auth } from "@auth/web/webfirebaseconfig";
+import axios from "axios";
+import toast from "react-hot-toast";
 import { z } from "zod";
 
 export const ACTION_STELLAR_ACCOUNT_URL = "https://accounts.action-tokens.com/";
 
 export const USER_ACCOUNT_URL = ACTION_STELLAR_ACCOUNT_URL + "api/account";
-
 
 export async function googleLogin() {
   const provider = new GoogleAuthProvider();
@@ -30,15 +33,15 @@ export async function googleLogin() {
           token: idToken,
           walletType: WalletType.google,
         }),
-        { error: "Login error", loading: "Please Wait", success: null },
+        { error: "Login error", loading: "Please Wait", success: null }
       );
-
 
       // console.log(loginRes);
 
       // await auth.signOut();
       if (loginRes?.ok) {
         if (loginRes?.ok) toast.success("Login Successfull");
+
         const res = await toast.promise(
           axios.get(USER_ACCOUNT_URL, {
             params: {
@@ -50,20 +53,16 @@ export async function googleLogin() {
             loading: "Getting public key...",
             success: "Received public key",
             error: "Unable to get public key",
-          },
+          }
         );
 
-        const { extra } = await getPublicKeyAPISchema.parseAsync(
-          res.data,
-        );
+        const { extra } = await getPublicKeyAPISchema.parseAsync(res.data);
 
         await submitActiveAcountXdr(extra);
       }
     } else {
       toast.error("Email dont exist");
     }
-
-
   } catch (error) {
     console.error(error);
     // toast.error(error.message)
@@ -79,8 +78,7 @@ export async function ProviderNextLogin({
       email,
       token,
       walletType,
-
-    }
+    },
   });
   return response;
 }

@@ -32,7 +32,7 @@ import { storage } from "@/components/lib/firebase/config";
 import ProgressBar from "@/components/ProgressBar";
 import { Bounty } from "@app/types/BountyTypes";
 import { addrShort } from "@app/utils/AddrShort";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import RenderHTML from "react-native-render-html";
 
 interface DocumentPickerAsset extends DocumentPicker.DocumentPickerAsset {

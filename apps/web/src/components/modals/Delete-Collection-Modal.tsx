@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { BASE_URL } from "app/utils/Common";
 import { useModal } from "../hooks/useModal";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 
 const DeleteCollectionModal = () => {
   const { isOpen, onClose, type, data } = useModal();

@@ -8,29 +8,29 @@ import {
   View,
 } from "react-native";
 
-import { Color } from "app/utils/Colors";
-// import { BASE_URL, CALLBACK_URL } from "@app/utils/constants/Common";
+import { Color } from "app/utils/all-colors";
 import { useMutation } from "@tanstack/react-query";
 
 import { ActivityIndicator, Button } from "react-native-paper";
 
-import { useRouter } from "next/router";
+import Wrapper from "@/components/Wrapper";
 import { BASE_URL, CALLBACK_URL } from "@app/utils/Common";
 import Image from "next/image";
-import Wrapper from "@/components/Wrapper";
-import { useAuth } from "@/components/provider/AuthProvider";
-import { googleLogin } from "@/components/wallet_clients/google_login";
-import { appleLogin } from "@/components/wallet_clients/apple_login";
+
 import { albedoLogin } from "@/components/wallet_clients/albedo_login";
+import { appleLogin } from "@/components/wallet_clients/apple_login";
+import { googleLogin } from "@/components/wallet_clients/google_login";
+import { useAuth } from "@/components/provider/AuthProvider";
+import { useRouter } from "next/router";
 
 const LoginScreen = () => {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
-  const router = useRouter();
   const [error, setError] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const requestName = "api/auth/callback/credentials";
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, login } = useAuth();
+  const router = useRouter();
   const mutation = useMutation({
     mutationFn: async () => {
       setLoading(true);
@@ -74,6 +74,7 @@ const LoginScreen = () => {
         throw new Error(error.message);
       } else {
         console.log("response", await response.json());
+        login();
         router.push("/(tabs)/map");
       }
     },
@@ -95,6 +96,24 @@ const LoginScreen = () => {
       router.push("/(tabs)/map");
     }
   }, [isAuthenticated]);
+
+  async function handleAlbedoLogin() {
+    try {
+      setLoading(true);
+      const result = await albedoLogin();
+      if (result) {
+        login();
+        router.push("/(tabs)/map");
+      } else {
+        setError(true);
+      }
+    } catch (error) {
+      console.error("Albedo login failed", error);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <Wrapper>
@@ -186,7 +205,7 @@ const LoginScreen = () => {
                         />
                       </View>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={async () => await albedoLogin()}>
+                    <TouchableOpacity onPress={handleAlbedoLogin}>
                       <View style={styles.login_social_button}>
                         <Image
                           height={30}

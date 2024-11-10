@@ -18,7 +18,7 @@ import { getAllBounties } from "@api/routes/get-all-bounties";
 import { getUserPlatformAsset } from "@api/routes/get-user-platformAsset";
 import { Bounty } from "@app/types/BountyTypes";
 import { addrShort } from "@app/utils/AddrShort";
-import { Color } from "@app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import { useRouter } from "next/router";
 import MainLayout from "../layout";
 

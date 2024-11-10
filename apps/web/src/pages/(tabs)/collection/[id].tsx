@@ -17,7 +17,7 @@ import { FaMapPin, FaHashtag } from "react-icons/fa";
 import { useCollection } from "@/components/hooks/useCollection";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 
-import { Color } from "app/utils/Colors";
+import { Color } from "app/utils/all-colors";
 import { BASE_URL } from "app/utils/Common";
 
 import { useModal } from "@/components/hooks/useModal";

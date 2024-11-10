@@ -1,4 +1,4 @@
-import { getUser } from "@api/routes/get-user";
+import { getTokenUser } from "@api/routes/get-token-user";
 import { WalletType } from "@auth/types";
 import { useRouter } from "next/router";
 import {
@@ -9,6 +9,7 @@ import {
   useEffect,
   useState,
 } from "react";
+
 export type User = {
   name?: string | null;
   email?: string | null;
@@ -17,12 +18,14 @@ export type User = {
   walletType: WalletType;
   emailVerified: boolean;
 };
+
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
-  login: (cookie: string) => Promise<void>;
+  login: () => Promise<void>;
   logout: () => Promise<void>;
 };
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 interface AuthProviderProps {
   children: ReactNode;
@@ -38,7 +41,7 @@ export const AuthWebProvider: FC<AuthProviderProps> = ({
   }, []);
   const checkAuth = async () => {
     try {
-      const user = await getUser();
+      const user = await getTokenUser();
 
       if (user?.id) {
         setIsAuthenticated(true);
@@ -50,11 +53,6 @@ export const AuthWebProvider: FC<AuthProviderProps> = ({
   };
   const login = async (): Promise<void> => {
     try {
-      document.cookie.split(";").forEach((cookie) => {
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substring(0, eqPos) : cookie;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      });
       await checkAuth();
     } catch (error) {
       console.error("Failed to log in:", error);
