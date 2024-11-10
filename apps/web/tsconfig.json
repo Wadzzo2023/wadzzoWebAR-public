@@ -27,7 +27,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "src/pages/(tabs)/ar.jsx",
+    "src/pages/ar.jsx",
     "src/pages/map.jsx"
   ],
   "exclude": ["node_modules"]
