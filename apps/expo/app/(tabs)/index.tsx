@@ -177,19 +177,25 @@ const HomeScreen = () => {
     ]).start();
   };
 
+  const handleRecenter = () => {
+    if (userLocation && cameraRef.current) {
+      cameraRef.current.setCamera({
+        centerCoordinate: [userLocation.longitude, userLocation.latitude],
+        zoomLevel: 16,
+        animationDuration: 1000,
+      });
+      setFollowUser(true); // Enable following again
+    }
+  };
   const response = useQuery({
-    queryKey: ["MapsAllPins"],
-    queryFn: () =>
+    queryKey: ["MapsAllPins", accountActionData.brandMode],
+    queryFn: async () =>
       getMapAllPins({
         filterID: accountActionData.brandMode === BrandMode.FOLLOW ? "1" : "0",
       }),
   });
 
   const locations = response.data?.locations ?? [];
-
-  useEffect(() => {
-    autoCollectModeRef.current = data.mode;
-  }, [data.mode]);
 
   useEffect(() => {
     (async () => {
@@ -240,22 +246,9 @@ const HomeScreen = () => {
     }
   }, [data.mode, userLocation, locations]);
 
-  const handleRecenter = () => {
-    if (userLocation && cameraRef.current) {
-      cameraRef.current.setCamera({
-        centerCoordinate: [userLocation.longitude, userLocation.latitude],
-        zoomLevel: 16,
-        animationDuration: 1000,
-      });
-      setFollowUser(true); // Enable following again
-    }
-  };
-
   useEffect(() => {
-    if (isFocused) {
-      handleRecenter();
-    }
-  }, [isFocused]);
+    autoCollectModeRef.current = data.mode;
+  }, [data.mode]);
 
   if (response.isLoading) {
     return <LoadingScreen />;

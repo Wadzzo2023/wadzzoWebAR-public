@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { Bounty } from "@/types/BountyTypes";
+import { Bounty } from "@app/types/BountyTypes";
 
 export interface BountyData {
   item?: Bounty;

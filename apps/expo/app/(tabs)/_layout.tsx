@@ -6,17 +6,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@auth/Provider";
 
 export default function _layout() {
-  const { isAuthenticated } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/Login");
-    }
-  }, [isAuthenticated]);
   return (
     <Tabs
-      initialRouteName="index"
       screenOptions={{
         headerShown: false,
         tabBarLabelPosition: "below-icon",

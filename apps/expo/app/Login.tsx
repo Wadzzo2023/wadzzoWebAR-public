@@ -171,7 +171,7 @@ const LoginScreen = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/(tabs)/");
+      router.replace("/(tabs)/");
     }
   }, [isAuthenticated]);
 

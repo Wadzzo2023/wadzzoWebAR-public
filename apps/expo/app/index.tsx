@@ -22,7 +22,7 @@ const OnboardingScreen = () => {
   const { isAuthenticated } = useAuth();
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/(tabs)/");
+      router.replace("/(tabs)/");
     }
   }, [isAuthenticated]);
 
