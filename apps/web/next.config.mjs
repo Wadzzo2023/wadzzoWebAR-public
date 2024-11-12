@@ -23,7 +23,7 @@ const nextConfig = withExpo(
       // Add other packages that need transpiling
     ],
     images: {
-      domains: ["utfs.io", "app.wadzzo.com"], // Add the domain here
+      domains: ["utfs.io", "app.wadzzo.com", "picsum.photos"], // Add the domain here
     },
     webpack: (config) => {
       config.resolve.alias = {

@@ -28,7 +28,8 @@
     "**/*.ts",
     "**/*.tsx",
     "src/pages/ar.jsx",
-    "src/pages/map.jsx"
+    "src/pages/map.jsx",
+    "src/components/ArLoading.jsx"
   ],
   "exclude": ["node_modules"]
 }
