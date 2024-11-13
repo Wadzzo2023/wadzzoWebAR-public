@@ -32,6 +32,8 @@ import { ConsumedLocation } from "@app/types/CollectionTypes";
 import { Color } from "app/utils/all-colors";
 import { BASE_URL } from "app/utils/Common";
 import { useRouter } from "expo-router";
+import { getUserPlatformAsset } from "@api/routes/get-user-platformAsset";
+import { Text } from "react-native-paper";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
@@ -194,7 +196,10 @@ const HomeScreen = () => {
         filterID: accountActionData.brandMode === BrandMode.FOLLOW ? "1" : "0",
       }),
   });
-
+  const balanceRes = useQuery({
+    queryKey: ["balance"],
+    queryFn: getUserPlatformAsset,
+  });
   const locations = response.data?.locations ?? [];
 
   useEffect(() => {
@@ -207,10 +212,7 @@ const HomeScreen = () => {
 
       setLocationPermission(true);
 
-      let location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-        distanceInterval: 1,
-      });
+      let location = await Location.getCurrentPositionAsync();
       setUserLocation({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
@@ -253,6 +255,7 @@ const HomeScreen = () => {
   if (response.isLoading) {
     return <LoadingScreen />;
   }
+  console.log("userloaation", userLocation);
 
   return (
     <View style={styles.container}>
@@ -271,13 +274,13 @@ const HomeScreen = () => {
             >
               <UserLocation visible={true} />
               <Camera
+                animationDuration={5000}
                 defaultSettings={{
                   centerCoordinate: [
                     userLocation.longitude,
                     userLocation.latitude,
                   ],
                 }}
-                animationMode="none"
                 zoomLevel={16}
                 pitch={0}
                 ref={cameraRef}
@@ -290,6 +293,24 @@ const HomeScreen = () => {
             </MapView>
 
             {/* Recenter button */}
+            <View style={styles.balance}>
+              <Image
+                style={{
+                  height: 20,
+                  width: 20,
+                }}
+                source={require("../../assets/images/wadzzo.png")}
+                height={100}
+                width={100}
+              />
+              <Text
+                style={{
+                  color: "white",
+                }}
+              >
+                {Number(balanceRes.data).toFixed(2)}
+              </Text>
+            </View>
             <TouchableOpacity
               style={styles.recenterButton}
               onPress={handleRecenter}
@@ -425,11 +446,25 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
   },
+
   recenterButton: {
     position: "absolute",
     bottom: 80,
     right: 10,
     backgroundColor: Color.white,
+    padding: 12,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+  balance: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    position: "absolute",
+    gap: 4,
+    top: 40,
+    right: 10,
+    backgroundColor: Color.wadzzo,
     padding: 12,
     borderRadius: 8,
     zIndex: 10,

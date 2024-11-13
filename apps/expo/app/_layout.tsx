@@ -10,7 +10,7 @@ import ModalProvider from "@/components/provider/modal-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Color } from "app/utils/all-colors";
 import merge from "deepmerge";
-import { useColorScheme } from "react-native";
+import { Dimensions, useColorScheme } from "react-native";
 import {
   MD3DarkTheme,
   MD3LightTheme,
@@ -25,7 +25,8 @@ import {
 
 const customDarkTheme = { ...MD3DarkTheme, colors: Color.dark };
 const customLightTheme = { ...MD3LightTheme, colors: Color.light };
-
+const MARGIN = 8;
+const WIDTH = Dimensions.get("window").width - 2 * MARGIN;
 const { LightTheme, DarkTheme } = adaptNavigationTheme({
   reactNavigationLight: NavigationDefaultTheme,
   reactNavigationDark: NavigationDarkTheme,
@@ -57,6 +58,7 @@ export default function RootLayout() {
       <AuthProvider>
         <PaperProvider theme={CombinedLightTheme}>
           <ModalProvider />
+
           <Stack
             initialRouteName="index"
             screenOptions={{ headerShown: false }}

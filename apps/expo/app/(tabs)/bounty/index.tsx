@@ -1,13 +1,30 @@
-import React, { useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Dimensions,
+  findNodeHandle,
   FlatList,
+  LayoutChangeEvent,
   RefreshControl,
   StyleSheet,
   View,
 } from "react-native";
-import { Appbar, Button, Card, Chip, Text, Title } from "react-native-paper";
+import {
+  Appbar,
+  Button,
+  Card,
+  Chip,
+  Menu,
+  Text,
+  Title,
+} from "react-native-paper";
 import RenderHtml from "react-native-render-html";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // import AsyncStorage
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -19,16 +36,69 @@ import { getUserPlatformAsset } from "@api/routes/get-user-platformAsset";
 import { Bounty } from "@app/types/BountyTypes";
 import { addrShort } from "@app/utils/AddrShort";
 import { Color } from "app/utils/all-colors";
-import { useRouter } from "expo-router";
 
+import { useRouter } from "expo-router";
+import { useAuth } from "@auth/Provider";
+import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
+import { useWalkThrough } from "@/components/hooks/useWalkThrough";
+type ButtonLayout = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 export default function BountyScreen() {
   const [bounties, setBounties] = useState<Bounty[]>([]);
   const [selectedBounty, setSelectedBounty] = useState<Bounty | null>(null);
+  const [selectedFilter, setSelectedFilter] = useState("All");
+  const scrollViewRef = useRef(null);
+  const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const { data: walkthroughData } = useWalkThrough();
   const [refreshing, setRefreshing] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
   const { setData } = useBounty();
   const { onOpen } = useModal();
   const router = useRouter();
+
+  const steps = [
+    {
+      target: buttonLayouts[0],
+      title: "Filter Bounty",
+      content:
+        "User can filter bounty between Joined and Not Joined Bounty List.",
+    },
+  ];
+  const onButtonLayout = useCallback(
+    (event: LayoutChangeEvent, index: number) => {
+      if (scrollViewRef.current) {
+        const scrollViewHandle = findNodeHandle(scrollViewRef.current);
+        if (scrollViewHandle) {
+          event.target.measureLayout(
+            scrollViewHandle,
+            (x, y, width, height) => {
+              setButtonLayouts((prevLayouts) => {
+                const newLayouts = [...prevLayouts];
+                newLayouts[index] = { x, y, width, height };
+                return newLayouts;
+              });
+            },
+            () => console.error("Failed to measure layout")
+          );
+        }
+      }
+    },
+    []
+  );
+  const checkFirstTimeSignIn = async () => {
+    console.log(showWalkthrough);
+    if (walkthroughData.showWalkThrough) {
+      setShowWalkthrough(true);
+    } else {
+      setShowWalkthrough(false);
+    }
+  };
   const response = useQuery({
     queryKey: ["bounties"],
     queryFn: getAllBounties,
@@ -45,9 +115,24 @@ export default function BountyScreen() {
     setRefreshing(false);
   };
 
-  if (response.isLoading) return <LoadingScreen />;
   const bountyList = response.data?.allBounty || [];
+  const filteredBounties = useMemo(() => {
+    return bountyList.filter((bounty: Bounty) => {
+      if (selectedFilter === "Joined") return bounty.isJoined;
+      if (selectedFilter === "Not Joined") return !bounty.isJoined;
+      return true; // "All"
+    });
+  }, [selectedFilter, bountyList]);
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/Login");
+    } else {
+      checkFirstTimeSignIn(); // Check if it's the first sign-in
+    }
+  }, [isAuthenticated, walkthroughData]);
+
+  if (response.isLoading) return <LoadingScreen />;
   const toggleJoin = (id: string, isAlreadyJoin: boolean, bounty: Bounty) => {
     if (isAlreadyJoin) {
       setData({ item: bounty });
@@ -123,38 +208,8 @@ export default function BountyScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} ref={scrollViewRef}>
       <Appbar.Header style={styles.header}>
-        {/* <Menu
-          visible={menuVisible}
-          onDismiss={() => setMenuVisible(false)}
-          anchor={
-            <Appbar.Action
-              icon="sort"
-              iconColor="white"
-              onPress={() => setMenuVisible(true)}
-            />
-          }
-        >
-          <Menu.Item
-            onPress={() => {
-              setMenuVisible(false);
-            }}
-            title="All"
-          />
-          <Menu.Item
-            onPress={() => {
-              setMenuVisible(false);
-            }}
-            title="Joined"
-          />
-          <Menu.Item
-            onPress={() => {
-              setMenuVisible(false);
-            }}
-            title="Not Joined"
-          />
-        </Menu> */}
         <Appbar.Content
           titleStyle={{
             color: "white",
@@ -162,6 +217,42 @@ export default function BountyScreen() {
           title="Bounty"
           style={styles.title}
         />
+
+        <Menu
+          visible={menuVisible}
+          onDismiss={() => setMenuVisible(false)}
+          anchor={
+            <Appbar.Action
+              icon="sort"
+              onLayout={(event) => onButtonLayout(event, 0)}
+              iconColor="white"
+              onPress={() => setMenuVisible(true)}
+            />
+          }
+        >
+          <Menu.Item
+            onPress={() => {
+              setSelectedFilter("All");
+              setMenuVisible(false);
+            }}
+            title="All"
+          />
+          <Menu.Item
+            onPress={() => {
+              setSelectedFilter("Joined");
+              setMenuVisible(false);
+            }}
+            title="Joined"
+          />
+          <Menu.Item
+            onPress={() => {
+              setSelectedFilter("Not Joined");
+              setMenuVisible(false);
+            }}
+            title="Not Joined"
+          />
+        </Menu>
+
         {/* <Appbar.Action
           iconColor="white"
           icon="dots-vertical"
@@ -176,7 +267,7 @@ export default function BountyScreen() {
         </View>
       )}
       <FlatList
-        data={bountyList}
+        data={filteredBounties}
         renderItem={renderBountyItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[styles.listContainer, { paddingBottom: 80 }]}
@@ -185,6 +276,9 @@ export default function BountyScreen() {
         }
         style={styles.flatList}
       />
+      {showWalkthrough && (
+        <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
+      )}
     </View>
   );
 }

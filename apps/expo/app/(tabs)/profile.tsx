@@ -1,8 +1,11 @@
 import { getCurrentUser } from "@api/routes/get-current-user";
 import { useQuery } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
+  Dimensions,
+  findNodeHandle,
+  LayoutChangeEvent,
   Linking,
   ScrollView,
   StyleSheet,
@@ -29,13 +32,29 @@ import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Color } from "app/utils/all-colors";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import * as MailComposer from "expo-mail-composer";
+import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // import AsyncStorage
+import { useWalkThrough } from "@/components/hooks/useWalkThrough";
+
+type ButtonLayout = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 export default function SettingScreen() {
   const theme = useTheme();
+
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { logout, isAuthenticated } = useAuth();
   const router = useRouter();
-
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
+  const scrollViewRef = useRef(null);
+  const { data: walkthroughData, setData: setWalkThroughData } =
+    useWalkThrough();
   const { data: pinMode, setData } = useAccountAction();
   const { data, isLoading, error } = useQuery({
     queryKey: ["currentUserInfo"],
@@ -46,14 +65,92 @@ export default function SettingScreen() {
     await Clipboard.setStringAsync(data?.id);
     ToastAndroid.show("Public key copied to clipboard", ToastAndroid.SHORT);
   };
+  const onButtonLayout = useCallback(
+    (event: LayoutChangeEvent, index: number) => {
+      if (scrollViewRef.current) {
+        const scrollViewHandle = findNodeHandle(scrollViewRef.current);
+        if (scrollViewHandle) {
+          event.target.measureLayout(
+            scrollViewHandle,
+            (x, y, width, height) => {
+              setButtonLayouts((prevLayouts) => {
+                const newLayouts = [...prevLayouts];
+                newLayouts[index] = { x, y, width, height };
+                return newLayouts;
+              });
+            },
+            () => console.error("Failed to measure layout")
+          );
+        }
+      }
+    },
+    []
+  );
 
-  const resetTutorial = () => {
+  const steps = [
+    {
+      target: buttonLayouts[0],
+      title: "Visit Wadzzo.com",
+      content: "Click here to visit our website and explore our services.",
+    },
+    {
+      target: buttonLayouts[1],
+      title: "Auto Collection",
+      content:
+        "Enable Auto Collection to automatically collect pins. Disable it to stop auto collection of pins.",
+    },
+    {
+      target: buttonLayouts[2],
+      title: "Reset Tutorial",
+      content: "Click here to restart the tutorial and view it again.",
+    },
+    {
+      target: buttonLayouts[3],
+      title: "Delete Data",
+      content:
+        "Confirm to delete your account. A request will be sent to our support team to manually process the deletion.",
+    },
+    {
+      target: buttonLayouts[4],
+      title: "Sign Out",
+      content: "Click here to log out of your account.",
+    },
+  ];
+
+  const resetTutorial = async () => {
     console.log("Resetting tutorial");
+    await AsyncStorage.setItem("isFirstSignIn", "true");
+    setShowWalkthrough(true);
+    setWalkThroughData({
+      showWalkThrough: true,
+    });
   };
 
-  const deleteData = () => {
+  const deleteData = async () => {
     console.log("Deleting data");
     setShowDeleteDialog(false);
+    const userInfo = `
+User ID: ${data?.id}
+Name: ${data?.name}
+Email: ${data?.email}
+  `;
+
+    const options = {
+      recipients: ["support@wadzzo.com"],
+      subject: "User Data Deletion Request",
+      body: `Hello Support,\n\nThe following user has requested data deletion:\n\n${userInfo}\n\nBest regards,\nYour App Team`,
+    };
+
+    try {
+      const result = await MailComposer.composeAsync(options);
+      if (result.status === "sent") {
+        console.log("Support email sent successfully");
+      } else {
+        console.log("Support email not sent");
+      }
+    } catch (error) {
+      console.error("Failed to send email", error);
+    }
   };
 
   const signOut = async () => {
@@ -70,17 +167,28 @@ export default function SettingScreen() {
       }`
     );
   };
+  const checkFirstTimeSignIn = async () => {
+    console.log(showWalkthrough);
+    if (walkthroughData.showWalkThrough) {
+      setShowWalkthrough(true);
+    } else {
+      setShowWalkthrough(false);
+    }
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace("/Login");
+    } else {
+      checkFirstTimeSignIn();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, walkthroughData]);
+
   if (isLoading) return <LoadingScreen />;
   if (error) return <Text>Error: {error.message}</Text>;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} ref={scrollViewRef}>
       <ScrollView>
         <Card style={styles.profileCard}>
           <View style={styles.profileContent}>
@@ -95,6 +203,7 @@ export default function SettingScreen() {
             <View style={styles.profileInfo}>
               <Text style={styles.name}>{data.name}</Text>
               <Text style={styles.email}>{data.email}</Text>
+
               <TouchableOpacity
                 onPress={copyPublicKey}
                 style={styles.copyIdButton}
@@ -109,6 +218,7 @@ export default function SettingScreen() {
         <Card style={styles.section}>
           <Card.Content>
             <Button
+              onLayout={(event) => onButtonLayout(event, 0)}
               mode="contained"
               style={[styles.button, { backgroundColor: Color.wadzzo }]}
               onPress={() => Linking.openURL("https://wadzzo.com")}
@@ -125,7 +235,10 @@ export default function SettingScreen() {
           <Card.Content>
             <Text style={styles.sectionTitle}>Account Actions</Text>
 
-            <View style={styles.pinCollectionContainer}>
+            <View
+              style={styles.pinCollectionContainer}
+              onLayout={(event) => onButtonLayout(event, 1)}
+            >
               <View style={styles.pinCollectionTextContainer}>
                 <Text style={styles.pinCollectionTitle}>Auto Collection</Text>
               </View>
@@ -157,6 +270,7 @@ export default function SettingScreen() {
             <Divider style={styles.divider} />
 
             <Button
+              onLayout={(event) => onButtonLayout(event, 2)}
               mode="outlined"
               onPress={resetTutorial}
               style={styles.button}
@@ -164,17 +278,21 @@ export default function SettingScreen() {
             >
               Reset Tutorial
             </Button>
+
             <Button
               mode="outlined"
+              onLayout={(event) => onButtonLayout(event, 3)}
               onPress={() => setShowDeleteDialog(true)}
               style={styles.button}
               icon="delete"
               textColor={theme.colors.error}
             >
-              Delete Data
+              <Text> Delete Data</Text>
             </Button>
+
             <Button
               mode="contained"
+              onLayout={(event) => onButtonLayout(event, 4)}
               onPress={signOut}
               style={[styles.button, { backgroundColor: Color.wadzzo }]}
               icon="logout"
@@ -184,7 +302,6 @@ export default function SettingScreen() {
           </Card.Content>
         </Card>
       </ScrollView>
-
       <Portal>
         <Dialog
           visible={showDeleteDialog}
@@ -205,6 +322,10 @@ export default function SettingScreen() {
           </Dialog.Actions>
         </Dialog>
       </Portal>
+
+      {showWalkthrough && buttonLayouts.length === 5 && (
+        <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
+      )}
     </SafeAreaView>
   );
 }

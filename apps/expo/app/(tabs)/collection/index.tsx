@@ -1,9 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
+  findNodeHandle,
   FlatList,
   Image,
+  LayoutChangeEvent,
   RefreshControl,
   StyleSheet,
   Text,
@@ -14,6 +22,7 @@ import {
   Badge,
   Button,
   Card,
+  Menu,
   Paragraph,
   Title,
 } from "react-native-paper";
@@ -27,15 +36,57 @@ import { ConsumedLocation } from "@app/types/CollectionTypes";
 import { BASE_URL } from "@app/utils/Common";
 import { Color } from "app/utils/all-colors";
 import { useRouter } from "expo-router";
-
+import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
+import { useWalkThrough } from "@/components/hooks/useWalkThrough";
+import { useAuth } from "@auth/Provider";
+type ButtonLayout = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 export default function MyCollectionScreen() {
   const [sortBy, setSortBy] = useState("title");
   const [sortMenuVisible, setSortMenuVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+  const scrollViewRef = useRef(null);
+  const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
   const { onOpen } = useModal();
+  const { data: walkthroughData } = useWalkThrough();
+  const { user, isAuthenticated } = useAuth();
+
   const { setData } = useCollection();
   const { setData: setNearByPinData } = useNearByPin();
+  const steps = [
+    {
+      target: buttonLayouts[0],
+      title: "Filter Collection",
+      content: "User can filter Collection between Title and Remaining Limit",
+    },
+  ];
+  const onButtonLayout = useCallback(
+    (event: LayoutChangeEvent, index: number) => {
+      if (scrollViewRef.current) {
+        const scrollViewHandle = findNodeHandle(scrollViewRef.current);
+        if (scrollViewHandle) {
+          event.target.measureLayout(
+            scrollViewHandle,
+            (x, y, width, height) => {
+              setButtonLayouts((prevLayouts) => {
+                const newLayouts = [...prevLayouts];
+                newLayouts[index] = { x, y, width, height };
+                return newLayouts;
+              });
+            },
+            () => console.error("Failed to measure layout")
+          );
+        }
+      }
+    },
+    []
+  );
   const getCollections = async () => {
     try {
       const response = await fetch(
@@ -66,12 +117,48 @@ export default function MyCollectionScreen() {
     queryKey: ["collection"],
     queryFn: getCollections,
   });
+  const onARPress = (item: ConsumedLocation) => {
+    setNearByPinData({
+      nearbyPins: item ? [item] : [],
+      singleAR: true,
+    });
+    router.push("/ARScreen");
+  };
+  const checkFirstTimeSignIn = async () => {
+    console.log(showWalkthrough);
+    if (walkthroughData.showWalkThrough) {
+      setShowWalkthrough(true);
+    } else {
+      setShowWalkthrough(false);
+    }
+  };
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/Login");
+    } else {
+      checkFirstTimeSignIn(); // Check if it's the first sign-in
+    }
+  }, [isAuthenticated, walkthroughData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await response.refetch();
     setRefreshing(false);
   };
+  const sortLocations = (locations: ConsumedLocation[]) => {
+    return [...locations].sort((a, b) => {
+      if (sortBy === "title") {
+        return a.title.localeCompare(b.title);
+      } else if (sortBy === "remaining") {
+        return b.collection_limit_remaining - a.collection_limit_remaining;
+      }
+      return 0;
+    });
+  };
+  const sortedLocations = useMemo(
+    () => sortLocations(response.data?.locations ?? []),
+    [response.data?.locations, sortBy]
+  );
   if (response.isLoading) {
     return (
       <View style={styles.container}>
@@ -102,16 +189,6 @@ export default function MyCollectionScreen() {
       </View>
     );
   }
-
-  const locations = response.data?.locations ?? [];
-
-  const onARPress = (item: ConsumedLocation) => {
-    setNearByPinData({
-      nearbyPins: item ? [item] : [],
-      singleAR: true,
-    });
-    router.push("/ARScreen");
-  };
 
   const renderCollectionItem = ({ item }: { item: ConsumedLocation }) => (
     <Card style={styles.card}>
@@ -182,7 +259,7 @@ export default function MyCollectionScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} ref={scrollViewRef}>
       <Appbar.Header
         style={{
           backgroundColor: Color.wadzzo,
@@ -199,11 +276,12 @@ export default function MyCollectionScreen() {
             textAlign: "center",
           }}
         />
-        {/* <Menu
+        <Menu
           visible={sortMenuVisible}
           onDismiss={() => setSortMenuVisible(false)}
           anchor={
             <Appbar.Action
+              onLayout={(event) => onButtonLayout(event, 0)}
               icon="sort"
               iconColor="white"
               onPress={() => setSortMenuVisible(true)}
@@ -219,16 +297,16 @@ export default function MyCollectionScreen() {
           />
           <Menu.Item
             onPress={() => {
-              setSortBy("category");
+              setSortBy("remaining");
               setSortMenuVisible(false);
             }}
-            title="Sort by Category"
+            title="Sort by Limit Remaining"
           />
-        </Menu> */}
+        </Menu>
       </Appbar.Header>
 
       <FlatList
-        data={locations}
+        data={sortedLocations}
         showsVerticalScrollIndicator={false}
         renderItem={renderCollectionItem}
         keyExtractor={(item, index) => `${item.id}-${index}`}
@@ -238,12 +316,15 @@ export default function MyCollectionScreen() {
         }
       />
 
-      {locations.length === 0 && (
+      {sortedLocations.length === 0 && (
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
           <Text>No collections found</Text>
         </View>
+      )}
+      {showWalkthrough && (
+        <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
       )}
     </View>
   );

@@ -14,12 +14,15 @@ import { WalletType } from "@auth/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Color } from "app/utils/all-colors";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
+  findNodeHandle,
   FlatList,
   Image,
+  LayoutChangeEvent,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   View,
 } from "react-native";
@@ -32,6 +35,9 @@ import {
   Switch,
   Text,
 } from "react-native-paper";
+import AsyncStorage from "@react-native-async-storage/async-storage"; // import AsyncStorage
+import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
+import { useWalkThrough } from "@/components/hooks/useWalkThrough";
 
 type Brand = {
   id: string;
@@ -40,9 +46,14 @@ type Brand = {
   last_name: string;
   logo: string;
 };
-
+type ButtonLayout = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 export default function CreatorPage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("available");
@@ -52,17 +63,71 @@ export default function CreatorPage() {
     null
   );
 
+  const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const { data: walkthroughData } = useWalkThrough();
   const router = useRouter();
+  const scrollViewRef = useRef(null);
 
   const { data: accountActionData, setData: setAccountActionData } =
     useAccountAction();
   const [refreshing, setRefreshing] = useState(false);
   const queryClient = useQueryClient();
+  const steps = [
+    {
+      target: buttonLayouts[0],
+      title: "Follow Mode",
+      content:
+        "In Follow Mode, you'll only see pins for the brands you've followed on the map and AR screens. Switch to General Mode to view all brand pins.",
+    },
+    {
+      target: buttonLayouts[1],
+      title: "Search for Brands",
+      content:
+        "Search for brands by entering text here to find specific brands quickly.",
+    },
+    {
+      target: buttonLayouts[2],
+      title: "Brand Lists",
+      content:
+        "Click on 'Available Brands' to view all brands, or 'Followed Brands' to see the ones you've followed.",
+    },
+  ];
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["AllBrands"],
     queryFn: getAllBrands,
   });
+
+  const onButtonLayout = useCallback(
+    (event: LayoutChangeEvent, index: number) => {
+      if (scrollViewRef.current) {
+        const scrollViewHandle = findNodeHandle(scrollViewRef.current);
+        if (scrollViewHandle) {
+          event.target.measureLayout(
+            scrollViewHandle,
+            (x, y, width, height) => {
+              setButtonLayouts((prevLayouts) => {
+                const newLayouts = [...prevLayouts];
+                newLayouts[index] = { x, y, width, height };
+                return newLayouts;
+              });
+            },
+            () => console.error("Failed to measure layout")
+          );
+        }
+      }
+    },
+    []
+  );
+  const checkFirstTimeSignIn = async () => {
+    console.log(showWalkthrough);
+    if (walkthroughData.showWalkThrough) {
+      setShowWalkthrough(true);
+    } else {
+      setShowWalkthrough(false);
+    }
+  };
 
   const followMutation = useMutation({
     mutationFn: async ({
@@ -88,11 +153,11 @@ export default function CreatorPage() {
           if (res) {
             await FollowBrand({ brand_id });
           } else {
-            Alert.alert("You haven't enough wadzzo to follow this brand");
+            Alert.alert("Not enough Wadzzo, need minimum 25 wadzzo to follow");
             setFollowLoadingId(null);
           }
         } else {
-          Alert.alert("This brand doesn't have page asset");
+          Alert.alert("Creator has not setup page asset yet");
           setFollowLoadingId(null);
         }
       } else {
@@ -168,6 +233,16 @@ export default function CreatorPage() {
     }
     return matchesSearch;
   });
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/Login");
+    } else {
+      checkFirstTimeSignIn(); // Check if it's the first sign-in
+    }
+  }, [isAuthenticated, walkthroughData]);
+
+  if (isLoading) return <LoadingScreen />;
+  if (error) return <Text>Error: {error.message}</Text>;
 
   if (isLoading) return <LoadingScreen />;
   if (error) return <Text>Error loading brands</Text>;
@@ -198,7 +273,7 @@ export default function CreatorPage() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} ref={scrollViewRef}>
       <Appbar.Header
         style={{
           backgroundColor: Color.wadzzo,
@@ -216,7 +291,10 @@ export default function CreatorPage() {
           }}
         />
         <View style={styles.pinCollectionContainer}>
-          <View style={styles.switchWrapper}>
+          <View
+            style={styles.switchWrapper}
+            onLayout={(event) => onButtonLayout(event, 0)}
+          >
             <Text
               style={[
                 styles.switchLabel,
@@ -247,16 +325,18 @@ export default function CreatorPage() {
           </View>
         </View>
       </Appbar.Header>
-
       <View style={styles.content}>
         <Searchbar
+          onLayout={(event) => onButtonLayout(event, 1)}
           placeholder="Search creators"
           onChangeText={setSearchQuery}
           value={searchQuery}
           style={styles.searchBar}
         />
-
-        <View style={styles.tabContainer}>
+        <View
+          style={styles.tabContainer}
+          onLayout={(event) => onButtonLayout(event, 2)}
+        >
           <Chip
             selected={activeTab === "available"}
             onPress={() => setActiveTab("available")}
@@ -272,8 +352,8 @@ export default function CreatorPage() {
             Followed Brands
           </Chip>
         </View>
-
         <FlatList
+          showsVerticalScrollIndicator={false}
           data={filteredBrands}
           renderItem={renderBrandItem}
           keyExtractor={(item) => item.id}
@@ -286,6 +366,9 @@ export default function CreatorPage() {
           }
         />
       </View>
+      {showWalkthrough && (
+        <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
+      )}
     </View>
   );
 }
