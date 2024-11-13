@@ -8,7 +8,6 @@ export function ArLoading({ pin }) {
   const [progress, setProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const pressTimer = useRef(null);
   const animationRef = useRef(null);
 
   const startFilling = () => {
