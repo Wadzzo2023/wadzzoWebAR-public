@@ -30,6 +30,7 @@ import { useModal } from "@/components/hooks/useModal";
 import { FaLocationCrosshairs } from "react-icons/fa6";
 import { FiRefreshCcw } from "react-icons/fi";
 import MainLayout from "./layout";
+import { useRouter } from "next/router";
 
 type userLocationType = {
   latitude: number;
@@ -42,7 +43,7 @@ const HomeScreen = () => {
     null
   );
   const [pinAnim] = useState(new Animated.Value(0));
-
+  const router = useRouter();
   const { setData: setExtraInfo } = useExtraInfo();
   const [loading, setLoading] = useState(true);
 
@@ -94,12 +95,13 @@ const HomeScreen = () => {
     userLocation: userLocationType,
     locations: ConsumedLocation[]
   ) => {
-    const nearbyPins = getNearbyPins(userLocation, locations, 1000);
+    const nearbyPins = getNearbyPins(userLocation, locations, 50000);
     if (nearbyPins.length > 0) {
       setData({
         nearbyPins: nearbyPins,
         singleAR: false,
       });
+      router.push("/(tabs)/ar2");
     } else {
       onOpen("NearbyPin");
     }
