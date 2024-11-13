@@ -128,7 +128,7 @@ export default function ARPage() {
         <div id="coinCard" class="coin-card">
           <h3>Gold Coin 1945</h3>
           <p>Issue: Royal Mint</p>
-          <p>Description: Rare collector's edition</p>
+          <p>Description: Rare collector&apos;s edition</p>
         </div>
       </div>
     </>
