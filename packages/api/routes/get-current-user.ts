@@ -14,14 +14,14 @@ export const getCurrentUser = async () => {
 
 
         if (!response.ok) {
-            throw new Error("Failed to fetch collections");
+            throw new Error("Failed to fetch current user");
         }
 
         const data = await response.json();
 
         return data;
     } catch (error) {
-        console.error("Error fetching collections:", error);
+        console.error("Error fetching current user:", error);
         throw error;
     }
 };

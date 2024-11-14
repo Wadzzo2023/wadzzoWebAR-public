@@ -118,7 +118,7 @@ const SingleBountyItem = () => {
 
         const storageRef = ref(
           storage,
-          `bounty/${bounty.id}/${fileName}/${new Date().getTime()}`
+          `wadzzo/bounty/${bounty.id}/${fileName}/${new Date().getTime()}`
         );
         const uploadTask = uploadBytesResumable(storageRef, blob);
 

@@ -137,10 +137,10 @@ const SingleBountyItem = () => {
         ) {
           return; // Skip this file
         }
-
+        console.log("uploading file", fileName);
         const storageRef = ref(
           storage,
-          `bounty/${bounty.id}/${fileName}/${new Date().getTime()}`
+          `wadzzo/bounty/${bounty.id}/${fileName}/${new Date().getTime()}`
         );
         const uploadTask = uploadBytesResumable(storageRef, blob);
 
@@ -164,10 +164,11 @@ const SingleBountyItem = () => {
             }
           },
           (error) => {
-            // Handle unsuccessful uploads
+            console.log("error", error.message);
           },
           () => {
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              console.log("downlaodblelink", downloadURL);
               setUploadFiles((prevFiles) =>
                 prevFiles.map((f) =>
                   f.name === file.name

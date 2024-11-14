@@ -106,6 +106,7 @@ const styles = StyleSheet.create({
     marginBottom: 150,
   },
   itemText: {
+    paddingHorizontal: 15,
     textAlign: "center",
     fontSize: 44,
     fontWeight: "bold",

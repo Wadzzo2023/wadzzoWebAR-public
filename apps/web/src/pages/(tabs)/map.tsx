@@ -33,8 +33,8 @@ import MainLayout from "./layout";
 import { useRouter } from "next/router";
 
 type userLocationType = {
-  latitude: number;
-  longitude: number;
+  lat: number;
+  lng: number;
 };
 
 const HomeScreen = () => {
@@ -46,7 +46,7 @@ const HomeScreen = () => {
   const router = useRouter();
   const { setData: setExtraInfo } = useExtraInfo();
   const [loading, setLoading] = useState(true);
-
+  const [center, setCenter] = useState<userLocationType | null>(null);
   const { setData } = useNearByPin();
   const { data } = useAccountAction();
   const autoCollectModeRef = useRef(data.mode);
@@ -63,8 +63,8 @@ const HomeScreen = () => {
       if (location.auto_collect || location.collection_limit_remaining <= 0)
         return false;
       const distance = getDistanceFromLatLonInMeters(
-        userLocation.latitude,
-        userLocation.longitude,
+        userLocation.lat,
+        userLocation.lng,
         location.lat,
         location.lng
       );
@@ -106,7 +106,14 @@ const HomeScreen = () => {
       onOpen("NearbyPin");
     }
   };
-
+  const handleRecenter = () => {
+    if (userLocation) {
+      setCenter({
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+      });
+    }
+  };
   const getAutoCollectPins = (
     userLocation: userLocationType,
     locations: ConsumedLocation[],
@@ -116,8 +123,8 @@ const HomeScreen = () => {
       if (location.collection_limit_remaining <= 0) return false;
       if (location.auto_collect) {
         const distance = getDistanceFromLatLonInMeters(
-          userLocation.latitude,
-          userLocation.longitude,
+          userLocation.lat,
+          userLocation.lng,
           location.lat,
           location.lng
         );
@@ -197,8 +204,8 @@ const HomeScreen = () => {
       (position) => {
         setLocationPermission(true);
         setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
         });
         setExtraInfo({
           useCurrentLocation: {
@@ -224,7 +231,6 @@ const HomeScreen = () => {
   useEffect(() => {
     if (data.mode && userLocation && locations) {
       const autoCollectPins = getAutoCollectPins(userLocation, locations, 100);
-
       if (autoCollectPins.length > 0) {
         collectPinsSequentially(autoCollectPins);
       }
@@ -247,14 +253,28 @@ const HomeScreen = () => {
                 <Map
                   minZoom={4}
                   defaultZoom={10}
+                  onCenterChanged={(center) =>
+                    setCenter({
+                      lat: center.detail.center.lat,
+                      lng: center.detail.center.lng,
+                    })
+                  }
                   onZoomChanged={(zoom) => console.log("Zoom changed", zoom)}
                   defaultCenter={
                     userLocation
                       ? {
-                          lat: userLocation.latitude,
-                          lng: userLocation.longitude,
+                          lat: userLocation.lat,
+                          lng: userLocation.lng,
                         }
                       : { lat: 0, lng: 0 }
+                  }
+                  center={
+                    center?.lat && center?.lng
+                      ? center
+                      : {
+                          lat: userLocation.lat,
+                          lng: userLocation.lng,
+                        }
                   }
                   mapId={"bf51eea910020fa25a"}
                   gestureHandling={"greedy"}
@@ -263,14 +283,17 @@ const HomeScreen = () => {
                 >
                   <Marker
                     position={{
-                      lat: userLocation.latitude,
-                      lng: userLocation.longitude,
+                      lat: userLocation.lat,
+                      lng: userLocation.lng,
                     }}
                   />
                   <MyPins locations={locations} />
                 </Map>
                 {/* Recenter button */}
-                <TouchableOpacity style={styles.recenterButton}>
+                <TouchableOpacity
+                  onPress={handleRecenter}
+                  style={styles.recenterButton}
+                >
                   <FaLocationCrosshairs size={20} color="black" />
                 </TouchableOpacity>
                 <TouchableOpacity

@@ -57,7 +57,7 @@ export function AlbedoWebViewAuth({
           if (setCookies) {
             login(setCookies);
 
-            Alert.alert("Login sucessfull");
+            Alert.alert("Login successfully");
             router.back();
           }
         }
@@ -77,9 +77,9 @@ export function AlbedoWebViewAuth({
           if (res) {
             console.log(brandId, "brand_id");
             await FollowBrand({ brand_id: brandId });
-            Alert.alert("Submitted the transection");
+            Alert.alert("Submitted the trust transaction successfully");
           } else {
-            Alert.alert("Trust transaction failed");
+            Alert.alert("Not enough Wadzzo, need minimum 25 wadzzo to follow");
           }
         }
 

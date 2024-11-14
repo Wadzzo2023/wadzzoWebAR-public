@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import {
+  Appbar,
   Avatar,
   Button,
   Card,
@@ -90,30 +91,30 @@ export default function SettingScreen() {
   const steps = [
     {
       target: buttonLayouts[0],
+      title: "Sign Out",
+      content: "Click here to log out of your account.",
+    },
+    {
+      target: buttonLayouts[1],
       title: "Visit Wadzzo.com",
       content: "Click here to visit our website and explore our services.",
     },
     {
-      target: buttonLayouts[1],
+      target: buttonLayouts[2],
       title: "Auto Collection",
       content:
         "Enable Auto Collection to automatically collect pins. Disable it to stop auto collection of pins.",
     },
     {
-      target: buttonLayouts[2],
+      target: buttonLayouts[3],
       title: "Reset Tutorial",
       content: "Click here to restart the tutorial and view it again.",
     },
     {
-      target: buttonLayouts[3],
+      target: buttonLayouts[4],
       title: "Delete Data",
       content:
         "Confirm to delete your account. A request will be sent to our support team to manually process the deletion.",
-    },
-    {
-      target: buttonLayouts[4],
-      title: "Sign Out",
-      content: "Click here to log out of your account.",
     },
   ];
 
@@ -188,120 +189,151 @@ Email: ${data?.email}
   if (error) return <Text>Error: {error.message}</Text>;
 
   return (
-    <SafeAreaView style={styles.container} ref={scrollViewRef}>
-      <ScrollView>
-        <Card style={styles.profileCard}>
-          <View style={styles.profileContent}>
-            <Avatar.Image
-              size={80}
-              source={{
-                uri:
-                  data.image ??
-                  "https://app.wadzzo.com/images/icons/avatar-icon.png",
-              }}
-            />
-            <View style={styles.profileInfo}>
-              <Text style={styles.name}>{data.name}</Text>
-              <Text style={styles.email}>{data.email}</Text>
+    <View style={styles.container} ref={scrollViewRef}>
+      <Appbar.Header style={styles.header}>
+        <Appbar.Content
+          titleStyle={{
+            color: "white",
+          }}
+          title="Profile"
+          style={styles.title}
+        />
+        <View
+          onLayout={(event) => onButtonLayout(event, 0)}
+          style={{
+            flexDirection: "column",
+            alignItems: "center",
+            padding: 10,
+            justifyContent: "flex-start",
+          }}
+        >
+          <TouchableOpacity onPress={signOut}>
+            <Feather name="log-out" size={20} color="white" />
+          </TouchableOpacity>
+          <Text
+            style={{
+              fontSize: 10,
+              padding: 0,
+              margin: 0,
+              color: "white",
+            }}
+          >
+            Signout
+          </Text>
+        </View>
+      </Appbar.Header>
+      <Card style={styles.profileCard}>
+        <View style={styles.profileContent}>
+          <Avatar.Image
+            size={80}
+            source={{
+              uri:
+                data.image ??
+                "https://app.wadzzo.com/images/icons/avatar-icon.png",
+            }}
+          />
+          <View style={styles.profileInfo}>
+            <Text style={styles.name}>{data.name}</Text>
+            <Text style={styles.email}>{data.email}</Text>
 
-              <TouchableOpacity
-                onPress={copyPublicKey}
-                style={styles.copyIdButton}
+            <TouchableOpacity
+              onPress={copyPublicKey}
+              style={styles.copyIdButton}
+            >
+              <Feather name="copy" size={14} color={theme.colors.primary} />
+              <Text style={styles.copyIdText}>Copy ID</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Card>
+
+      <Card style={styles.section}>
+        <Card.Content>
+          <Button
+            onLayout={(event) => onButtonLayout(event, 1)}
+            mode="contained"
+            style={[styles.button, { backgroundColor: Color.wadzzo }]}
+            onPress={() => Linking.openURL("https://wadzzo.com")}
+            icon={({ size, color }) => (
+              <MaterialCommunityIcons name="web" size={size} color={color} />
+            )}
+          >
+            Visit Wadzzo.com
+          </Button>
+        </Card.Content>
+      </Card>
+
+      <Card style={styles.section}>
+        <Card.Content>
+          <Text style={styles.sectionTitle}>Account Actions</Text>
+
+          <View
+            style={styles.pinCollectionContainer}
+            onLayout={(event) => onButtonLayout(event, 2)}
+          >
+            <View style={styles.pinCollectionTextContainer}>
+              <Text style={styles.pinCollectionTitle}>Auto Collection</Text>
+            </View>
+            <View style={styles.switchWrapper}>
+              <Text
+                style={[
+                  styles.switchLabel,
+                  !pinMode.mode && styles.activeSwitchLabel,
+                ]}
               >
-                <Feather name="copy" size={14} color={theme.colors.primary} />
-                <Text style={styles.copyIdText}>Copy ID</Text>
-              </TouchableOpacity>
+                Off
+              </Text>
+              <Switch
+                value={pinMode.mode}
+                onValueChange={togglePinCollectionMode}
+                color={theme.colors.primary}
+              />
+              <Text
+                style={[
+                  styles.switchLabel,
+                  pinMode.mode && styles.activeSwitchLabel,
+                ]}
+              >
+                On
+              </Text>
             </View>
           </View>
-        </Card>
 
-        <Card style={styles.section}>
-          <Card.Content>
-            <Button
-              onLayout={(event) => onButtonLayout(event, 0)}
-              mode="contained"
-              style={[styles.button, { backgroundColor: Color.wadzzo }]}
-              onPress={() => Linking.openURL("https://wadzzo.com")}
-              icon={({ size, color }) => (
-                <MaterialCommunityIcons name="web" size={size} color={color} />
-              )}
-            >
-              Visit Wadzzo.com
-            </Button>
-          </Card.Content>
-        </Card>
+          <Divider style={styles.divider} />
 
-        <Card style={styles.section}>
-          <Card.Content>
-            <Text style={styles.sectionTitle}>Account Actions</Text>
+          <Button
+            onLayout={(event) => onButtonLayout(event, 3)}
+            mode="outlined"
+            onPress={resetTutorial}
+            style={styles.button}
+            icon="refresh"
+          >
+            Reset Tutorial
+          </Button>
 
-            <View
-              style={styles.pinCollectionContainer}
-              onLayout={(event) => onButtonLayout(event, 1)}
-            >
-              <View style={styles.pinCollectionTextContainer}>
-                <Text style={styles.pinCollectionTitle}>Auto Collection</Text>
-              </View>
-              <View style={styles.switchWrapper}>
-                <Text
-                  style={[
-                    styles.switchLabel,
-                    !pinMode.mode && styles.activeSwitchLabel,
-                  ]}
-                >
-                  Off
-                </Text>
-                <Switch
-                  value={pinMode.mode}
-                  onValueChange={togglePinCollectionMode}
-                  color={theme.colors.primary}
-                />
-                <Text
-                  style={[
-                    styles.switchLabel,
-                    pinMode.mode && styles.activeSwitchLabel,
-                  ]}
-                >
-                  On
-                </Text>
-              </View>
-            </View>
+          <Button
+            mode="outlined"
+            onLayout={(event) => onButtonLayout(event, 4)}
+            onPress={() => setShowDeleteDialog(true)}
+            style={styles.button}
+            icon="delete"
+            textColor={theme.colors.error}
+          >
+            <Text> Delete Data</Text>
+          </Button>
 
-            <Divider style={styles.divider} />
+          {/* <Button
+            mode="contained"
+            onLayout={(event) => onButtonLayout(event, 4)}
+            onPress={signOut}
+            style={[styles.button, { backgroundColor: Color.wadzzo }]}
+            icon="logout"
+          >
+            Sign Out
+          </Button> */}
+        </Card.Content>
+      </Card>
 
-            <Button
-              onLayout={(event) => onButtonLayout(event, 2)}
-              mode="outlined"
-              onPress={resetTutorial}
-              style={styles.button}
-              icon="refresh"
-            >
-              Reset Tutorial
-            </Button>
-
-            <Button
-              mode="outlined"
-              onLayout={(event) => onButtonLayout(event, 3)}
-              onPress={() => setShowDeleteDialog(true)}
-              style={styles.button}
-              icon="delete"
-              textColor={theme.colors.error}
-            >
-              <Text> Delete Data</Text>
-            </Button>
-
-            <Button
-              mode="contained"
-              onLayout={(event) => onButtonLayout(event, 4)}
-              onPress={signOut}
-              style={[styles.button, { backgroundColor: Color.wadzzo }]}
-              icon="logout"
-            >
-              Sign Out
-            </Button>
-          </Card.Content>
-        </Card>
-      </ScrollView>
       <Portal>
         <Dialog
           visible={showDeleteDialog}
@@ -323,10 +355,10 @@ Email: ${data?.email}
         </Dialog>
       </Portal>
 
-      {showWalkthrough && buttonLayouts.length === 5 && (
+      {showWalkthrough && (
         <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -387,6 +419,14 @@ const styles = StyleSheet.create({
   pinCollectionTitle: {
     fontSize: 16,
     fontWeight: "600",
+  },
+  header: {
+    backgroundColor: Color.wadzzo,
+    borderBottomRightRadius: 8,
+    borderBottomLeftRadius: 8,
+  },
+  title: {
+    alignItems: "center",
   },
   pinCollectionDescription: {
     fontSize: 12,

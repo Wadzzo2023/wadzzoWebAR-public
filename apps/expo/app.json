@@ -13,7 +13,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "buildNumber": "7",
+      "buildNumber": "10",
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "infoPlist": {

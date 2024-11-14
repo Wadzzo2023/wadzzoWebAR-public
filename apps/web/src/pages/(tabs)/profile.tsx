@@ -23,7 +23,7 @@ import { Color } from "app/utils/all-colors";
 import { useAuth } from "@/components/provider/AuthProvider";
 import { getTokenUser } from "@api/routes/get-token-user";
 import { addrShort } from "@app/utils/AddrShort";
-import { Copy, GlobeLock, LogOut, RefreshCcw, Trash } from "lucide-react";
+import { Copy, GlobeLock, LogOut, Trash } from "lucide-react";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import toast from "react-hot-toast";
 import MainLayout from "./layout";
@@ -41,10 +41,6 @@ export default function SettingScreen() {
 
   if (isLoading) return <LoadingScreen />;
   if (error) return <Text>Error: {error.message}</Text>;
-
-  const resetTutorial = () => {
-    console.log("Resetting tutorial");
-  };
 
   const deleteData = () => {
     console.log("Deleting data");
@@ -152,7 +148,7 @@ export default function SettingScreen() {
 
                 <Divider style={styles.divider} />
 
-                <Button
+                {/* <Button
                   mode="outlined"
                   onPress={resetTutorial}
                   style={styles.button}
@@ -169,8 +165,8 @@ export default function SettingScreen() {
                     </Text>
                     <Text>Reset Tutorial</Text>
                   </View>
-                </Button>
-                <Button
+                </Button> */}
+                {/* <Button
                   mode="outlined"
                   onPress={() => setShowDeleteDialog(true)}
                   style={styles.button}
@@ -188,7 +184,7 @@ export default function SettingScreen() {
                     </Text>
                     <Text>Delete Data</Text>
                   </View>
-                </Button>
+                </Button> */}
                 <Button
                   mode="contained"
                   onPress={async () => await logout()}
