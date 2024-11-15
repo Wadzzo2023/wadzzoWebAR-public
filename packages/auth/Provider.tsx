@@ -6,7 +6,6 @@ import React, {
   ReactNode,
   FC,
 } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { WalletType } from "./types";
 import { getUser } from "@api/routes/get-user";
 
@@ -45,53 +44,36 @@ export const AuthProvider: FC<AuthProviderProps> = ({
 
   const checkAuth = async () => {
     try {
-      const storedCookies = await AsyncStorage.getItem("auth_cookies");
-      if (storedCookies) {
-        setIsAuthenticated(true);
-      }
-
       if (!user) {
-        const userString = await AsyncStorage.getItem("user");
-
-        if (userString) {
-          const user = JSON.parse(userString) as User;
-
+        const user = await getUser();
+        if (user?.id) {
           setUser(user);
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
         }
       }
     } catch (error) {
-      console.error("Failed to check authentication:", error);
+      setUser(null);
+      setIsAuthenticated(false);
     }
   };
 
   const login = async (cookie: string): Promise<void> => {
     try {
-      const user = await getUser();
-      console.log(user, "user");
-
-      if (user?.id) {
-        setIsAuthenticated(true);
-        await AsyncStorage.setItem("auth_cookies", cookie.toString());
-        await AsyncStorage.setItem("user", JSON.stringify(user));
-      }
-
       await checkAuth();
-
-      // Save token
     } catch (error) {
-      console.error("Failed to log in:", error);
+      console.log("Failed to log in:", error);
     }
   };
 
   const logout = async (): Promise<void> => {
     try {
-      await AsyncStorage.removeItem("auth_cookies");
-      await AsyncStorage.removeItem("user");
-
       setUser(null);
       setIsAuthenticated(false);
     } catch (error) {
-      console.error("Failed to log out:", error);
+      console.log("Failed to log out:", error);
     }
   };
 

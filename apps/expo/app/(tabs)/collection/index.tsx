@@ -294,6 +294,7 @@ export default function MyCollectionScreen() {
               setSortMenuVisible(false);
             }}
             title="Sort by Title"
+            style={sortBy === "title" ? styles.selectedMenuItem : null} // Highlight selected option
           />
           <Menu.Item
             onPress={() => {
@@ -301,10 +302,17 @@ export default function MyCollectionScreen() {
               setSortMenuVisible(false);
             }}
             title="Sort by Limit Remaining"
+            style={sortBy === "remaining" ? styles.selectedMenuItem : null} // Highlight selected option
           />
         </Menu>
       </Appbar.Header>
-
+      {sortedLocations.length === 0 && (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <Text>No collections found</Text>
+        </View>
+      )}
       <FlatList
         data={sortedLocations}
         showsVerticalScrollIndicator={false}
@@ -316,13 +324,6 @@ export default function MyCollectionScreen() {
         }
       />
 
-      {sortedLocations.length === 0 && (
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <Text>No collections found</Text>
-        </View>
-      )}
       {showWalkthrough && (
         <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
       )}
@@ -383,5 +384,11 @@ const styles = StyleSheet.create({
   deleteButton: {
     flex: 1,
     borderRadius: 8,
+  },
+  selectedMenuItem: {
+    fontWeight: "bold", // Bold text for selected option
+    backgroundColor: Color.dark.primary, // Background color for selected option
+    fontStyle: "italic", // Italic text for selected option
+    borderRadius: 8, // Rounded corners for selected option
   },
 });

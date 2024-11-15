@@ -51,7 +51,6 @@ export default function BountyScreen() {
     if (isAlreadyJoin) {
       setData({ item: bounty });
       router.push(`/(tabs)/bounty/${bounty.id}`);
-      // navigation.navigate("SingleBountyItem", { item: bounty });
     } else {
       onOpen("JoinBounty", { bounty: bounty, balance: balanceRes.data });
     }

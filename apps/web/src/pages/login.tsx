@@ -13,7 +13,6 @@ import { useMutation } from "@tanstack/react-query";
 
 import { ActivityIndicator, Button } from "react-native-paper";
 
-import Wrapper from "@/components/Wrapper";
 import { BASE_URL, CALLBACK_URL } from "@app/utils/Common";
 import Image from "next/image";
 
@@ -116,114 +115,112 @@ const LoginScreen = () => {
   }
 
   return (
-    <Wrapper>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.mainContainer}>
-          <View style={styles.container}>
-            <View style={styles.card}>
-              <View style={styles.rotatedCardBlue} />
-              <View
-                style={[
-                  styles.rotatedCardColor,
-                  { backgroundColor: Color.wadzzo },
-                ]}
-              />
-              <View style={styles.innerContainer}>
-                <View style={styles.logoContainer}>
-                  <Image
-                    alt="Wadzzo"
-                    height={100}
-                    width={100}
-                    src={"/assets/images/wadzzo.png"}
-                    style={styles.logo}
-                  />
-                  <Text style={styles.loginText}>
-                    Login to your account to collect and earn rewards
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.mainContainer}>
+        <View style={styles.container}>
+          <View style={styles.card}>
+            <View style={styles.rotatedCardBlue} />
+            <View
+              style={[
+                styles.rotatedCardColor,
+                { backgroundColor: Color.wadzzo },
+              ]}
+            />
+            <View style={styles.innerContainer}>
+              <View style={styles.logoContainer}>
+                <Image
+                  alt="Wadzzo"
+                  height={100}
+                  width={100}
+                  src={"/assets/images/wadzzo.png"}
+                  style={styles.logo}
+                />
+                <Text style={styles.loginText}>
+                  Login to your account to collect and earn rewards
+                </Text>
+              </View>
+              <View style={styles.inputContainer}>
+                {error && (
+                  <Text
+                    style={{
+                      textAlign: "left",
+                      color: "red",
+                    }}
+                  >
+                    Invalid credentials!!
                   </Text>
-                </View>
-                <View style={styles.inputContainer}>
-                  {error && (
-                    <Text
-                      style={{
-                        textAlign: "left",
-                        color: "red",
-                      }}
-                    >
-                      Invalid credentials!!
-                    </Text>
-                  )}
-                  <TextInput
-                    value={email}
-                    onChangeText={(text) => setEmail(text)}
-                    placeholder="Email"
-                    style={styles.input}
-                  />
-                  <TextInput
-                    value={password}
-                    onChangeText={(text) => setPassword(text)}
-                    placeholder="Password"
-                    secureTextEntry
-                    style={styles.input}
-                  />
-                  {/* <View style={styles.forgotPasswordContainer}>
+                )}
+                <TextInput
+                  value={email}
+                  onChangeText={(text) => setEmail(text)}
+                  placeholder="Email"
+                  style={styles.input}
+                />
+                <TextInput
+                  value={password}
+                  onChangeText={(text) => setPassword(text)}
+                  placeholder="Password"
+                  secureTextEntry
+                  style={styles.input}
+                />
+                {/* <View style={styles.forgotPasswordContainer}>
                   <Text style={styles.forgotPasswordText}>
                     Forgot your password?
                   </Text>
                 </View> */}
-                  <Button
-                    onPress={handleLogin}
-                    style={{ backgroundColor: Color.wadzzo, marginTop: 20 }}
-                    disabled={loading}
-                  >
-                    Login {loading && <ActivityIndicator size={12} />}
-                  </Button>
+                <Button
+                  onPress={handleLogin}
+                  style={{ backgroundColor: Color.wadzzo, marginTop: 20 }}
+                  disabled={loading}
+                >
+                  Login {loading && <ActivityIndicator size={12} />}
+                </Button>
 
-                  {/* <View style={styles.newAccountContainer}>
+                {/* <View style={styles.newAccountContainer}>
                     <Text style={styles.newAccountText}>New here?</Text>
                     <Button>Create an account</Button>
                   </View> */}
-                  <View style={styles.socialContainer}>
-                    <TouchableOpacity onPress={async () => await googleLogin()}>
-                      <View style={styles.login_social_button}>
-                        <Image
-                          height={30}
-                          width={30}
-                          alt="google"
-                          style={styles.login_social_icon}
-                          src="/assets/icons/google.png"
-                        />
-                      </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={async () => await appleLogin()}>
-                      <View style={styles.login_social_button}>
-                        <Image
-                          height={30}
-                          width={30}
-                          alt="google"
-                          style={styles.login_social_icon}
-                          src="/assets/icons/apple.png"
-                        />
-                      </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={handleAlbedoLogin}>
-                      <View style={styles.login_social_button}>
-                        <Image
-                          height={30}
-                          width={30}
-                          alt="albedo"
-                          style={styles.login_social_icon}
-                          src="/assets/icons/albedo.png"
-                        />
-                      </View>
-                    </TouchableOpacity>
-                  </View>
+                <View style={styles.socialContainer}>
+                  <TouchableOpacity onPress={async () => await googleLogin()}>
+                    <View style={styles.login_social_button}>
+                      <Image
+                        height={30}
+                        width={30}
+                        alt="google"
+                        style={styles.login_social_icon}
+                        src="/assets/icons/google.png"
+                      />
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={async () => await appleLogin()}>
+                    <View style={styles.login_social_button}>
+                      <Image
+                        height={30}
+                        width={30}
+                        alt="google"
+                        style={styles.login_social_icon}
+                        src="/assets/icons/apple.png"
+                      />
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleAlbedoLogin}>
+                    <View style={styles.login_social_button}>
+                      <Image
+                        height={30}
+                        width={30}
+                        alt="albedo"
+                        style={styles.login_social_icon}
+                        src="/assets/icons/albedo.png"
+                      />
+                    </View>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
           </View>
         </View>
-      </ScrollView>
-    </Wrapper>
+      </View>
+    </ScrollView>
   );
 };
 

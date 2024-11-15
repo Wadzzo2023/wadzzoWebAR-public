@@ -1,25 +1,22 @@
 import { BASE_URL } from "app/utils/Common";
-
-export const getCurrentUser = async () => {
-
+export const deleteCurrentUser = async () => {
     try {
         const response = await fetch(
-            new URL("api/game/user", BASE_URL).toString(),
+            new URL("api/game/user/delete-user", BASE_URL).toString(),
             {
                 method: "GET",
                 credentials: "include",
             }
         );
 
-        if (response.ok) {
-
-            throw new Error("Failed to fetch current user");
+        if (!response.ok) {
+            throw new Error("Error deleting");
         }
-
         const data = await response.json();
-
         return data;
+
     } catch (error) {
+        console.error("Error deleting user:", error);
         throw error;
     }
 };
