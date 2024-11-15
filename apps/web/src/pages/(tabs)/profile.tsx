@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Linking, ScrollView, StyleSheet, View } from "react-native";
 import {
   Avatar,
@@ -28,17 +28,23 @@ import { CopyToClipboard } from "react-copy-to-clipboard";
 import toast from "react-hot-toast";
 import { BASE_URL } from "@app/utils/Common";
 import MainLayout from "./layout";
+import { useRouter } from "next/router";
 
 export default function SettingScreen() {
   const theme = useTheme();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const { logout } = useAuth();
-
+  const { logout, isAuthenticated } = useAuth();
+  const router = useRouter();
   const { data: pinMode, setData } = useAccountAction();
   const { data, isLoading, error } = useQuery({
     queryKey: ["currentUserInfo"],
     queryFn: getTokenUser,
   });
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated]);
 
   if (isLoading) return <LoadingScreen />;
   if (error) return <Text>Error: {error.message}</Text>;

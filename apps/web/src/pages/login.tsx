@@ -96,24 +96,6 @@ const LoginScreen = () => {
     }
   }, [isAuthenticated]);
 
-  async function handleAlbedoLogin() {
-    try {
-      setLoading(true);
-      const result = await albedoLogin();
-      if (result) {
-        login();
-        router.push("/(tabs)/map");
-      } else {
-        setError(true);
-      }
-    } catch (error) {
-      console.error("Albedo login failed", error);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
       <View style={styles.mainContainer}>
@@ -173,7 +155,14 @@ const LoginScreen = () => {
                   style={{ backgroundColor: Color.wadzzo, marginTop: 20 }}
                   disabled={loading}
                 >
-                  Login {loading && <ActivityIndicator size={12} />}
+                  <Text
+                    style={{
+                      color: "white",
+                    }}
+                  >
+                    Login
+                  </Text>
+                  {loading && <ActivityIndicator size={12} />}
                 </Button>
 
                 {/* <View style={styles.newAccountContainer}>
@@ -181,7 +170,12 @@ const LoginScreen = () => {
                     <Button>Create an account</Button>
                   </View> */}
                 <View style={styles.socialContainer}>
-                  <TouchableOpacity onPress={async () => await googleLogin()}>
+                  <TouchableOpacity
+                    onPress={async () => {
+                      await googleLogin();
+                      login();
+                    }}
+                  >
                     <View style={styles.login_social_button}>
                       <Image
                         height={30}
@@ -192,7 +186,12 @@ const LoginScreen = () => {
                       />
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={async () => await appleLogin()}>
+                  <TouchableOpacity
+                    onPress={async () => {
+                      await appleLogin();
+                      login();
+                    }}
+                  >
                     <View style={styles.login_social_button}>
                       <Image
                         height={30}
@@ -203,7 +202,12 @@ const LoginScreen = () => {
                       />
                     </View>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={handleAlbedoLogin}>
+                  <TouchableOpacity
+                    onPress={async () => {
+                      await albedoLogin();
+                      login();
+                    }}
+                  >
                     <View style={styles.login_social_button}>
                       <Image
                         height={30}
@@ -226,7 +230,7 @@ const LoginScreen = () => {
 
 const styles = StyleSheet.create({
   scrollContainer: {
-    flexGrow: 1,
+    flex: 1,
     justifyContent: "center",
   },
   socialContainer: {

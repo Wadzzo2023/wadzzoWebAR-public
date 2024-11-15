@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Linking, ScrollView, StyleSheet, View } from "react-native";
 import {
   Appbar,
@@ -25,12 +25,20 @@ import { MdOutlineViewInAr } from "react-icons/md";
 import { IoArrowBack } from "react-icons/io5";
 import { useRouter } from "next/router";
 import MainLayout from "../layout";
+import { useAuth } from "@/components/provider/AuthProvider";
 
 const SingleCollectionItem = () => {
   const { data } = useCollection();
   const { setData } = useNearByPin();
   const { onOpen } = useModal();
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated]);
   if (!data.collections) return null;
 
   return (

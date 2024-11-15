@@ -45,7 +45,7 @@ type Brand = {
 };
 
 export default function CreatorPage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("available");
@@ -137,7 +137,6 @@ export default function CreatorPage() {
       unfollowMutation.mutate({ brand_id: brandId });
     } else {
       if (user) {
-        console.log("user", user);
         setFollowLoadingId(brandId);
         followMutation.mutate({ brand_id: brandId, wallate: user.walletType });
       } else {
@@ -172,6 +171,11 @@ export default function CreatorPage() {
     }
     return matchesSearch;
   });
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated]);
 
   if (isLoading) return <LoadingScreen />;
   if (error) return <Text>Error loading brands</Text>;

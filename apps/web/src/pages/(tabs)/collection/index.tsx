@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -31,10 +31,13 @@ import { Color } from "app/utils/all-colors";
 import { useRouter } from "next/router";
 
 import MainLayout from "../layout";
+import { useAuth } from "@/components/provider/AuthProvider";
 
 export default function MyCollectionScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
   const { onOpen } = useModal();
   const { setData } = useCollection();
   const { setData: setNearByPinData } = useNearByPin();
@@ -74,6 +77,13 @@ export default function MyCollectionScreen() {
     await response.refetch();
     setRefreshing(false);
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated]);
+
   if (response.isLoading) {
     return (
       <MainLayout>

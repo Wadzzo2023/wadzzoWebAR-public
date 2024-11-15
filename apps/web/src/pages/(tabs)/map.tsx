@@ -31,6 +31,7 @@ import { FaLocationCrosshairs } from "react-icons/fa6";
 import { FiRefreshCcw } from "react-icons/fi";
 import MainLayout from "./layout";
 import { useRouter } from "next/router";
+import { useAuth } from "@/components/provider/AuthProvider";
 
 type userLocationType = {
   lat: number;
@@ -42,6 +43,7 @@ const HomeScreen = () => {
   const [userLocation, setUserLocation] = useState<userLocationType | null>(
     null
   );
+  const { isAuthenticated } = useAuth();
   const [pinAnim] = useState(new Animated.Value(0));
   const router = useRouter();
   const { setData: setExtraInfo } = useExtraInfo();
@@ -236,6 +238,12 @@ const HomeScreen = () => {
       }
     }
   }, [data.mode, userLocation, locations]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated]);
 
   if (response.isLoading) {
     return <LoadingScreen />;

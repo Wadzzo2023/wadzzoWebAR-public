@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -21,9 +21,11 @@ import { addrShort } from "@app/utils/AddrShort";
 import { Color } from "app/utils/all-colors";
 import { useRouter } from "next/router";
 import MainLayout from "../layout";
+import { useAuth } from "@/components/provider/AuthProvider";
 
 export default function BountyScreen() {
   const [refreshing, setRefreshing] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const { setData } = useBounty();
   const { onOpen } = useModal();
@@ -43,6 +45,12 @@ export default function BountyScreen() {
     await response.refetch();
     setRefreshing(false);
   };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated]);
 
   if (response.isLoading) return <LoadingScreen />;
   const bountyList = response.data?.allBounty || [];

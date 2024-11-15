@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import {
   Appbar,
@@ -27,6 +27,7 @@ import toast from "react-hot-toast";
 import MainLayout from "../layout";
 
 import { IoArrowBack } from "react-icons/io5";
+import { useAuth } from "@/components/provider/AuthProvider";
 
 interface UploadProgress {
   [fileName: string]: number;
@@ -37,6 +38,8 @@ type FileItem =
 
 const SingleBountyItem = () => {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+
   const [activeTab, setActiveTab] = useState("information");
   const [solution, setSolution] = useState("");
   const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
@@ -81,6 +84,13 @@ const SingleBountyItem = () => {
       console.error("Error following bounty:", error);
     },
   });
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated]);
+
   if (!bounty) return null;
 
   const handleSubmitSolution = () => {
