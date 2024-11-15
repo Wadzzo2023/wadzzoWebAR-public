@@ -15,7 +15,6 @@ import { BASE_URL } from "@app/utils/Common";
 import { Color } from "app/utils/all-colors";
 import { Button } from "react-native-paper";
 import Image from "next/image";
-import Wrapper from "@/components/Wrapper";
 
 const SignUpScreen = () => {
   const [email, setEmail] = useState("");
@@ -59,83 +58,81 @@ const SignUpScreen = () => {
   };
 
   return (
-    <Wrapper>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.mainContainer}>
-          <View style={styles.container}>
-            <View style={styles.card}>
-              <View style={styles.rotatedCardBlue} />
-              <View
-                style={[
-                  styles.rotatedCardColor,
-                  { backgroundColor: Color.wadzzo },
-                ]}
-              />
-              <View style={styles.innerContainer}>
-                <View style={styles.logoContainer}>
-                  <Image
-                    alt="Wadzzo"
-                    height={100}
-                    width={100}
-                    src={"/assets/images/wadzzo.png"}
-                    style={styles.logo}
-                  />
-                  <Text style={styles.loginText}>
-                    Sign up to begin collecting and earning rewards
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.mainContainer}>
+        <View style={styles.container}>
+          <View style={styles.card}>
+            <View style={styles.rotatedCardBlue} />
+            <View
+              style={[
+                styles.rotatedCardColor,
+                { backgroundColor: Color.wadzzo },
+              ]}
+            />
+            <View style={styles.innerContainer}>
+              <View style={styles.logoContainer}>
+                <Image
+                  alt="Wadzzo"
+                  height={100}
+                  width={100}
+                  src={"/assets/images/wadzzo.png"}
+                  style={styles.logo}
+                />
+                <Text style={styles.loginText}>
+                  Sign up to begin collecting and earning rewards
+                </Text>
+              </View>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  placeholder="Email"
+                  style={styles.input}
+                  value={email}
+                  onChangeText={(text) => setEmail(text)}
+                />
+                <TextInput
+                  placeholder="Username"
+                  secureTextEntry
+                  value={userName}
+                  onChangeText={(text) => setUserName(text)}
+                  style={styles.input}
+                />
+                <TextInput
+                  placeholder="Password"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={(text) => setPassword(text)}
+                  style={styles.input}
+                />
+                <TextInput
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChangeText={(text) => setConfirmPassword(text)}
+                  secureTextEntry
+                  style={styles.input}
+                />
+
+                <Button
+                  onPress={handleSignUp}
+                  style={{
+                    marginTop: 20,
+                    backgroundColor: Color.wadzzo,
+                  }}
+                >
+                  Sign up
+                </Button>
+
+                <View style={styles.alreadyHaveAccountContainer}>
+                  <Text style={styles.alreadyHaveAccountText}>
+                    Already have an account?
                   </Text>
-                </View>
-                <View style={styles.inputContainer}>
-                  <TextInput
-                    placeholder="Email"
-                    style={styles.input}
-                    value={email}
-                    onChangeText={(text) => setEmail(text)}
-                  />
-                  <TextInput
-                    placeholder="Username"
-                    secureTextEntry
-                    value={userName}
-                    onChangeText={(text) => setUserName(text)}
-                    style={styles.input}
-                  />
-                  <TextInput
-                    placeholder="Password"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={(text) => setPassword(text)}
-                    style={styles.input}
-                  />
-                  <TextInput
-                    placeholder="Confirm Password"
-                    value={confirmPassword}
-                    onChangeText={(text) => setConfirmPassword(text)}
-                    secureTextEntry
-                    style={styles.input}
-                  />
-
-                  <Button
-                    onPress={handleSignUp}
-                    style={{
-                      marginTop: 20,
-                      backgroundColor: Color.wadzzo,
-                    }}
-                  >
-                    Sign up
-                  </Button>
-
-                  <View style={styles.alreadyHaveAccountContainer}>
-                    <Text style={styles.alreadyHaveAccountText}>
-                      Already have an account?
-                    </Text>
-                    <Button>Login</Button>
-                  </View>
+                  <Button>Login</Button>
                 </View>
               </View>
             </View>
           </View>
         </View>
-      </ScrollView>
-    </Wrapper>
+      </View>
+    </ScrollView>
   );
 };
 
