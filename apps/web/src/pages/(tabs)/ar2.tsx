@@ -3,15 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 // @ts-ignore
-import * as LocAR from "locar";
-import { ArLoading } from "../components/ArLoading";
+import {
+  ClickHandler,
+  DeviceOrientationControls,
+  LocationBased,
+  WebcamRenderer,
+} from "lib/main";
 
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
-import { ConsumedLocation } from "@app/types/CollectionTypes";
-import { Coins, ShoppingBasket, Wallet } from "lucide-react";
 import useWindowWidth from "@/components/hooks/useWindowWidth";
+import { ConsumedLocation } from "@app/types/CollectionTypes";
 import { BASE_URL } from "@app/utils/Common";
-import Capture from "@/components/Capture";
+import { Coins, ShoppingBasket, Wallet } from "lucide-react";
 
 const ARPage = () => {
   const [selectedPin, setPin] = useState<ConsumedLocation>();
@@ -73,12 +76,10 @@ const ARPage = () => {
     rendererRef.current = renderer;
 
     const scene = new THREE.Scene();
-    const locar = new LocAR.LocationBased(scene, camera);
-    const cam = new LocAR.WebcamRenderer(renderer);
-    const clickHandler = new LocAR.ClickHandler(renderer);
-    const deviceOrientationControls = new LocAR.DeviceOrientationControls(
-      camera
-    );
+    const locar = new LocationBased(scene, camera);
+    const cam = new WebcamRenderer(renderer);
+    const clickHandler = new ClickHandler(renderer);
+    const deviceOrientationControls = new DeviceOrientationControls(camera);
 
     window.addEventListener("resize", () => {
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -209,6 +210,7 @@ const ARPage = () => {
 
         // Set color change on object
         // intersect.object.material.color.set(0xff0000);
+        // @ts-ignore
         previousIntersectedObject.current = intersect.object;
 
         // Hide info box after 3 seconds
