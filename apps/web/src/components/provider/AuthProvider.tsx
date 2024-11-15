@@ -1,6 +1,5 @@
-import { getTokenUser } from "@api/routes/get-token-user";
+import { getUser } from "@api/routes/get-user";
 import { WalletType } from "@auth/types";
-import { useRouter } from "next/router";
 import {
   createContext,
   FC,
@@ -35,27 +34,33 @@ export const AuthWebProvider: FC<AuthProviderProps> = ({
 }: AuthProviderProps): JSX.Element => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const router = useRouter();
+
   useEffect(() => {
     checkAuth();
   }, []);
   const checkAuth = async () => {
     try {
-      const user = await getTokenUser();
-
-      if (user?.id) {
-        setIsAuthenticated(true);
-        setUser(user);
+      if (!user) {
+        const user = await getUser();
+        if (user?.id) {
+          setUser(user);
+          setIsAuthenticated(true);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       }
     } catch (error) {
-      console.error("Failed to check authentication:", error);
+      console.log("Failed to check auth:", error);
+      setUser(null);
+      setIsAuthenticated(false);
     }
   };
   const login = async (): Promise<void> => {
     try {
       await checkAuth();
     } catch (error) {
-      console.error("Failed to log in:", error);
+      console.log("Failed to log in:", error);
     }
   };
   const logout = async (): Promise<void> => {
@@ -63,24 +68,10 @@ export const AuthWebProvider: FC<AuthProviderProps> = ({
       console.log("Logging out");
       setIsAuthenticated(false);
       setUser(null);
-
-      // Remove cookies
     } catch (error) {
-      console.error("Failed to log out:", error);
+      console.log("Failed to log out:", error);
     }
   };
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login");
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.push("/(tabs)/map");
-    }
-  }, [isAuthenticated]);
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>

@@ -1,4 +1,3 @@
-import { getCurrentUser } from "@api/routes/get-current-user";
 import { useQuery } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -37,6 +36,7 @@ import * as MailComposer from "expo-mail-composer";
 import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // import AsyncStorage
 import { useWalkThrough } from "@/components/hooks/useWalkThrough";
+import { getUser } from "@api/routes/get-user";
 
 type ButtonLayout = {
   x: number;
@@ -59,11 +59,11 @@ export default function SettingScreen() {
   const { data: pinMode, setData } = useAccountAction();
   const { data, isLoading, error } = useQuery({
     queryKey: ["currentUserInfo"],
-    queryFn: getCurrentUser,
+    queryFn: getUser,
   });
 
   const copyPublicKey = async () => {
-    await Clipboard.setStringAsync(data?.id);
+    await Clipboard.setStringAsync(data?.id ?? "");
     ToastAndroid.show("Public key copied to clipboard", ToastAndroid.SHORT);
   };
   const onButtonLayout = useCallback(
@@ -228,13 +228,13 @@ Email: ${data?.email}
             size={80}
             source={{
               uri:
-                data.image ??
+                data?.image ??
                 "https://app.wadzzo.com/images/icons/avatar-icon.png",
             }}
           />
           <View style={styles.profileInfo}>
-            <Text style={styles.name}>{data.name}</Text>
-            <Text style={styles.email}>{data.email}</Text>
+            <Text style={styles.name}>{data?.name}</Text>
+            <Text style={styles.email}>{data?.email}</Text>
 
             <TouchableOpacity
               onPress={copyPublicKey}

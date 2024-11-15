@@ -19,7 +19,7 @@ const customLightTheme = { ...MD3LightTheme, colors: Color.light };
 export function Provider({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <PaperProvider>{children}</PaperProvider>
+      <PaperProvider theme={customLightTheme}>{children}</PaperProvider>
     </QueryClientProvider>
   );
 }

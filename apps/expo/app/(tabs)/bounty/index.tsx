@@ -236,6 +236,7 @@ export default function BountyScreen() {
               setMenuVisible(false);
             }}
             title="All"
+            style={selectedFilter === "All" ? styles.selectedMenuItem : null} // Highlight selected option
           />
           <Menu.Item
             onPress={() => {
@@ -243,6 +244,7 @@ export default function BountyScreen() {
               setMenuVisible(false);
             }}
             title="Joined"
+            style={selectedFilter === "Joined" ? styles.selectedMenuItem : null} // Highlight selected option
           />
           <Menu.Item
             onPress={() => {
@@ -250,6 +252,9 @@ export default function BountyScreen() {
               setMenuVisible(false);
             }}
             title="Not Joined"
+            style={
+              selectedFilter === "Not Joined" ? styles.selectedMenuItem : null
+            } // Highlight selected option
           />
         </Menu>
 
@@ -259,7 +264,7 @@ export default function BountyScreen() {
           onPress={() => {}}
         /> */}
       </Appbar.Header>
-      {bountyList.length === 0 && (
+      {filteredBounties.length === 0 && (
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
@@ -325,6 +330,12 @@ const styles = StyleSheet.create({
   },
   statusChip: {
     alignSelf: "flex-start",
+  },
+  selectedMenuItem: {
+    fontWeight: "bold", // Bold text for selected option
+    backgroundColor: Color.dark.primary, // Background color for selected option
+    fontStyle: "italic", // Italic text for selected option
+    borderRadius: 8, // Rounded corners for selected option
   },
   prizeText: {
     fontSize: 14,

@@ -8,13 +8,16 @@ import { AuthWebProvider } from "@/components/provider/AuthProvider";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <Provider>
-      <AuthWebProvider>
-        <Toaster />
-
-        <ModalProvider />
-        <Component {...pageProps} />
-      </AuthWebProvider>
-    </Provider>
+    <div className="flex flex-col items-center justify-center h-full w-full  bg-gray-100">
+      <div className="flex w-full  md:w-[30%] h-full">
+        <Provider>
+          <AuthWebProvider>
+            <Toaster />
+            <ModalProvider />
+            <Component {...pageProps} />
+          </AuthWebProvider>
+        </Provider>
+      </div>
+    </div>
   );
 }

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 // @ts-ignore
 import * as LocAR from "locar";
-import { ArLoading } from "../components/ArLoading";
 
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import { ConsumedLocation } from "@app/types/CollectionTypes";

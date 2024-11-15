@@ -26,6 +26,7 @@ import { addrShort } from "@app/utils/AddrShort";
 import { Copy, GlobeLock, LogOut, Trash } from "lucide-react";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import toast from "react-hot-toast";
+import { BASE_URL } from "@app/utils/Common";
 import MainLayout from "./layout";
 
 export default function SettingScreen() {
@@ -42,8 +43,26 @@ export default function SettingScreen() {
   if (isLoading) return <LoadingScreen />;
   if (error) return <Text>Error: {error.message}</Text>;
 
-  const deleteData = () => {
-    console.log("Deleting data");
+  const deleteData = async () => {
+    try {
+      const response = await fetch(
+        new URL("api/game/user/delete-user", BASE_URL).toString(),
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        toast.error("Error deleting");
+      }
+      await response.json();
+      toast.success("Data deleted successfully");
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      throw error;
+    }
     setShowDeleteDialog(false);
   };
 
@@ -166,7 +185,7 @@ export default function SettingScreen() {
                     <Text>Reset Tutorial</Text>
                   </View>
                 </Button> */}
-                {/* <Button
+                <Button
                   mode="outlined"
                   onPress={() => setShowDeleteDialog(true)}
                   style={styles.button}
@@ -184,7 +203,7 @@ export default function SettingScreen() {
                     </Text>
                     <Text>Delete Data</Text>
                   </View>
-                </Button> */}
+                </Button>
                 <Button
                   mode="contained"
                   onPress={async () => await logout()}
