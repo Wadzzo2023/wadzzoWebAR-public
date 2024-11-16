@@ -162,7 +162,7 @@ const LoginScreen = () => {
                   >
                     Login
                   </Text>
-                  {loading && <ActivityIndicator size={12} />}
+                  {loading && <ActivityIndicator size={12} color="white" />}
                 </Button>
 
                 {/* <View style={styles.newAccountContainer}>

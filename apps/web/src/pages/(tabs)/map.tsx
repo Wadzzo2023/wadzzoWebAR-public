@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   Animated,
 } from "react-native";
-import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -16,6 +15,7 @@ import { MdOutlineViewInAr } from "react-icons/md";
 
 import { Color } from "app/utils/all-colors";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
+import Map, { Marker } from "react-map-gl";
 
 import { useExtraInfo } from "@/components/hooks/useExtraInfo";
 import { BASE_URL } from "@app/utils/Common";
@@ -32,6 +32,7 @@ import { FiRefreshCcw } from "react-icons/fi";
 import MainLayout from "./layout";
 import { useRouter } from "next/router";
 import { useAuth } from "@/components/provider/AuthProvider";
+import { MapPin } from "lucide-react";
 
 type userLocationType = {
   lat: number;
@@ -209,6 +210,10 @@ const HomeScreen = () => {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
+        setCenter({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
         setExtraInfo({
           useCurrentLocation: {
             latitude: position.coords.latitude,
@@ -257,90 +262,76 @@ const HomeScreen = () => {
           locationPermission &&
           userLocation && (
             <>
-              <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY!}>
-                <Map
-                  minZoom={4}
-                  defaultZoom={10}
-                  onCenterChanged={(center) =>
-                    setCenter({
-                      lat: center.detail.center.lat,
-                      lng: center.detail.center.lng,
-                    })
-                  }
-                  onZoomChanged={(zoom) => console.log("Zoom changed", zoom)}
-                  defaultCenter={
-                    userLocation
-                      ? {
-                          lat: userLocation.lat,
-                          lng: userLocation.lng,
-                        }
-                      : { lat: 0, lng: 0 }
-                  }
-                  center={
-                    center?.lat && center?.lng
-                      ? center
-                      : {
-                          lat: userLocation.lat,
-                          lng: userLocation.lng,
-                        }
-                  }
-                  mapId={"bf51eea910020fa25a"}
-                  gestureHandling={"greedy"}
-                  style={styles.map}
-                  zoomControl={false}
+              <Map
+                mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_API}
+                initialViewState={{
+                  latitude: userLocation.lat,
+                  longitude: userLocation.lng,
+                  zoom: 12,
+                }}
+                latitude={center?.lat}
+                longitude={center?.lng}
+                onDrag={(e) => {
+                  setCenter({
+                    lat: e.viewState.latitude ?? 0,
+                    lng: e.viewState.longitude ?? 0,
+                  });
+                }}
+                style={styles.map}
+                mapStyle="mapbox://styles/mapbox/streets-v9"
+              >
+                <Marker
+                  latitude={userLocation.lat}
+                  longitude={userLocation.lng}
+                  anchor="center"
                 >
-                  <Marker
-                    position={{
-                      lat: userLocation.lat,
-                      lng: userLocation.lng,
-                    }}
-                  />
-                  <MyPins locations={locations} />
-                </Map>
-                {/* Recenter button */}
-                <TouchableOpacity
-                  onPress={handleRecenter}
-                  style={styles.recenterButton}
-                >
-                  <FaLocationCrosshairs size={20} color="black" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.AR}
-                  onPress={() => handleARPress(userLocation, locations)}
-                >
-                  <MdOutlineViewInAr size={30} color="white" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.Refresh}
-                  onPress={async () => await response.refetch()}
-                >
-                  <FiRefreshCcw size={20} color="black" />
-                </TouchableOpacity>
-                <Animated.View
-                  style={[
-                    styles.pinCollectedAnim,
-                    {
-                      opacity: pinAnim,
-                      transform: [
-                        {
-                          scale: pinAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [1, 1.5], // Scale effect from 1 to 1.5
-                          }),
-                        },
-                      ],
-                    },
-                  ]}
-                >
-                  <Image
-                    height={100}
-                    width={100}
-                    alt="Wadzzo"
-                    src={"/assets/images/wadzzo.png"}
-                    style={styles.pinImage}
-                  />
-                </Animated.View>
-              </APIProvider>
+                  <MapPin size={40} color={"red"} />
+                </Marker>
+                <MyPins locations={locations} />
+              </Map>
+              {/* Recenter button */}
+              <TouchableOpacity
+                onPress={handleRecenter}
+                style={styles.recenterButton}
+              >
+                <FaLocationCrosshairs size={20} color="black" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.AR}
+                onPress={() => handleARPress(userLocation, locations)}
+              >
+                <MdOutlineViewInAr size={30} color="white" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.Refresh}
+                onPress={async () => await response.refetch()}
+              >
+                <FiRefreshCcw size={20} color="black" />
+              </TouchableOpacity>
+              <Animated.View
+                style={[
+                  styles.pinCollectedAnim,
+                  {
+                    opacity: pinAnim,
+                    transform: [
+                      {
+                        scale: pinAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [1, 1.5], // Scale effect from 1 to 1.5
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <Image
+                  height={30}
+                  width={30}
+                  alt="Wadzzo"
+                  src={"/assets/images/wadzzo.png"}
+                  style={styles.pinImage}
+                />
+              </Animated.View>
             </>
           )
         )}
@@ -362,19 +353,17 @@ const MyPins = ({ locations }: { locations: ConsumedLocation[] }) => {
               Collection: location,
             })
           }
-          icon={{
-            url: location.image_url,
-            scaledSize: {
-              width: 30,
-              height: 30,
-              equals: () => true,
-            },
-          }}
-          position={{
-            lat: location.lat,
-            lng: location.lng,
-          }}
-        />
+          latitude={location.lat}
+          longitude={location.lng}
+          anchor="center"
+        >
+          <Image
+            height={40}
+            width={40}
+            alt="Wadzzo"
+            src={location.brand_image_url}
+          />
+        </Marker>
       ))}
     </>
   );

@@ -104,9 +104,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
     marginBottom: 150,
+    paddingHorizontal: 20,
   },
   itemText: {
-    paddingHorizontal: 15,
     textAlign: "center",
     fontSize: 44,
     fontWeight: "bold",

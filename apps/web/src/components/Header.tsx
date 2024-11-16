@@ -28,7 +28,7 @@ export const Header = () => {
   return (
     <header className="py-6   fixed -bottom-6  w-full  md:w-[30%]  z-50">
       <div className="container">
-        <div className="flex justify-between p-2 items-center bg-[#38C02B] md:border  rounded-t-xl ">
+        <div className="flex  justify-between p-2 items-center bg-[#38C02B] md:border  rounded-t-xl ">
           <div className="w-full">
             <nav
               className="flex justify-center gap-8 text-sm bg-[#38C02B] rounded-t-xl p-2 md:p-0 md:rounded-none "

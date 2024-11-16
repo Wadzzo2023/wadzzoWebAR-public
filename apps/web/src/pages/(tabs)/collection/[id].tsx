@@ -10,9 +10,9 @@ import {
   Paragraph,
   Title,
 } from "react-native-paper";
-import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
 import { LuExternalLink } from "react-icons/lu";
 import { FaMapPin, FaHashtag } from "react-icons/fa";
+import Map, { Marker } from "react-map-gl";
 
 import { useCollection } from "@/components/hooks/useCollection";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
@@ -26,6 +26,7 @@ import { IoArrowBack } from "react-icons/io5";
 import { useRouter } from "next/router";
 import MainLayout from "../layout";
 import { useAuth } from "@/components/provider/AuthProvider";
+import Image from "next/image";
 
 const SingleCollectionItem = () => {
   const { data } = useCollection();
@@ -104,43 +105,35 @@ const SingleCollectionItem = () => {
                   </View>
                 </Chip>
               </View>
-              <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY!}>
-                <Map
-                  minZoom={4}
-                  defaultZoom={10}
-                  onZoomChanged={(zoom) => console.log("Zoom changed", zoom)}
-                  defaultCenter={{
-                    lat: data.collections.lat,
-                    lng: data.collections.lng,
-                  }}
-                  mapId={"bf51eea910020fa25a"}
-                  gestureHandling={"greedy"}
-                  style={styles.map}
-                  zoomControl={false}
-                >
-                  {/* <MyPins location={data.collections} /> */}
 
-                  <Marker
-                    onClick={() =>
-                      onOpen("LocationInformation", {
-                        Collection: data.collections,
-                      })
-                    }
-                    icon={{
-                      url: data.collections.image_url,
-                      scaledSize: {
-                        width: 20,
-                        height: 20,
-                        equals: () => true,
-                      },
-                    }}
-                    position={{
-                      lat: data.collections.lat,
-                      lng: data.collections.lng,
-                    }}
+              <Map
+                mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_API}
+                initialViewState={{
+                  latitude: data.collections.lat,
+                  longitude: data.collections.lng,
+                }}
+                style={styles.map}
+                mapStyle="mapbox://styles/mapbox/streets-v9"
+              >
+                {/* <MyPins location={data.collections} /> */}
+
+                <Marker
+                  onClick={() =>
+                    onOpen("LocationInformation", {
+                      Collection: data.collections,
+                    })
+                  }
+                  latitude={data.collections.lat}
+                  longitude={data.collections.lng}
+                >
+                  <Image
+                    height={20}
+                    width={20}
+                    alt="Wadzzo"
+                    src={data.collections.brand_image_url}
                   />
-                </Map>
-              </APIProvider>
+                </Marker>
+              </Map>
 
               <View style={styles.linkContainer}>
                 <Button

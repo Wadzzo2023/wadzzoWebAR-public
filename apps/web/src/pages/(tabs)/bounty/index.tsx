@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Dimensions,
   FlatList,
   RefreshControl,
   StyleSheet,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { Appbar, Button, Card, Chip, Text, Title } from "react-native-paper";
@@ -22,10 +23,13 @@ import { Color } from "app/utils/all-colors";
 import { useRouter } from "next/router";
 import MainLayout from "../layout";
 import { useAuth } from "@/components/provider/AuthProvider";
+import { ArrowUpZA } from "lucide-react";
 
 export default function BountyScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const { isAuthenticated } = useAuth();
+  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [menuVisible, setMenuVisible] = useState(false);
 
   const { setData } = useBounty();
   const { onOpen } = useModal();
@@ -39,7 +43,11 @@ export default function BountyScreen() {
     queryKey: ["balance"],
     queryFn: getUserPlatformAsset,
   });
-
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter);
+    setMenuVisible(false);
+    // Update filteredBounties based on selected filter
+  };
   const handleRefresh = async () => {
     setRefreshing(true);
     await response.refetch();
@@ -52,8 +60,15 @@ export default function BountyScreen() {
     }
   }, [isAuthenticated]);
 
-  if (response.isLoading) return <LoadingScreen />;
   const bountyList = response.data?.allBounty || [];
+  const filteredBounties = useMemo(() => {
+    return bountyList.filter((bounty: Bounty) => {
+      if (selectedFilter === "Joined") return bounty.isJoined;
+      if (selectedFilter === "Not Joined") return !bounty.isJoined;
+      return true; // "All"
+    });
+  }, [selectedFilter, bountyList]);
+  if (response.isLoading) return <LoadingScreen />;
 
   const toggleJoin = (id: string, isAlreadyJoin: boolean, bounty: Bounty) => {
     if (isAlreadyJoin) {
@@ -136,36 +151,6 @@ export default function BountyScreen() {
     <MainLayout>
       <View style={styles.container}>
         <Appbar.Header style={styles.header}>
-          {/* <Menu
-          visible={menuVisible}
-          onDismiss={() => setMenuVisible(false)}
-          anchor={
-            <Appbar.Action
-              icon="sort"
-              iconColor="white"
-              onPress={() => setMenuVisible(true)}
-            />
-          }
-        >
-          <Menu.Item
-            onPress={() => {
-              setMenuVisible(false);
-            }}
-            title="All"
-          />
-          <Menu.Item
-            onPress={() => {
-              setMenuVisible(false);
-            }}
-            title="Joined"
-          />
-          <Menu.Item
-            onPress={() => {
-              setMenuVisible(false);
-            }}
-            title="Not Joined"
-          />
-        </Menu> */}
           <Appbar.Content
             titleStyle={{
               color: "white",
@@ -173,13 +158,32 @@ export default function BountyScreen() {
             title="Bounty"
             style={styles.title}
           />
-          {/* <Appbar.Action
-          iconColor="white"
-          icon="dots-vertical"
-          onPress={() => {}}
-        /> */}
+          <TouchableOpacity
+            style={{
+              paddingHorizontal: 20,
+            }}
+            onPress={() => setMenuVisible((prev) => !prev)}
+          >
+            <ArrowUpZA />
+          </TouchableOpacity>
         </Appbar.Header>
-        {bountyList.length === 0 && (
+        {menuVisible && (
+          <View style={styles.dropdown}>
+            {["All", "Joined", "Not Joined"].map((filter) => (
+              <TouchableOpacity
+                key={filter}
+                style={[
+                  styles.dropdownItem,
+                  selectedFilter === filter && styles.selectedDropdownItem,
+                ]}
+                onPress={() => handleFilterChange(filter)}
+              >
+                <Text style={styles.dropdownItemText}>{filter}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {filteredBounties.length === 0 && (
           <View
             style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
@@ -187,7 +191,7 @@ export default function BountyScreen() {
           </View>
         )}
         <FlatList
-          data={bountyList}
+          data={filteredBounties}
           renderItem={renderBountyItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={[styles.listContainer, { paddingBottom: 80 }]}
@@ -219,6 +223,29 @@ const styles = StyleSheet.create({
     flex: 1,
     height: Dimensions.get("window").height,
   },
+  dropdown: {
+    position: "absolute",
+    top: 60,
+    right: 20,
+    backgroundColor: "white",
+    borderRadius: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 1000,
+  },
+  dropdownItem: {
+    padding: 12,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: "black",
+  },
+  selectedDropdownItem: {
+    backgroundColor: "#eeeeee",
+  },
   header: {
     backgroundColor: Color.wadzzo,
     borderBottomRightRadius: 8,
@@ -230,6 +257,12 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingVertical: 16,
     paddingHorizontal: 8,
+  },
+  selectedMenuItem: {
+    fontWeight: "bold", // Bold text for selected option
+    backgroundColor: Color.dark.primary, // Background color for selected option
+    fontStyle: "italic", // Italic text for selected option
+    borderRadius: 8, // Rounded corners for selected option
   },
   card: {
     marginBottom: 16,

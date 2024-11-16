@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -8,6 +8,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import {
@@ -32,11 +33,14 @@ import { useRouter } from "next/router";
 
 import MainLayout from "../layout";
 import { useAuth } from "@/components/provider/AuthProvider";
+import { ArrowUpZA } from "lucide-react";
 
 export default function MyCollectionScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [sortBy, setSortBy] = useState("title");
 
   const { onOpen } = useModal();
   const { setData } = useCollection();
@@ -77,7 +81,25 @@ export default function MyCollectionScreen() {
     await response.refetch();
     setRefreshing(false);
   };
-
+  const sortLocations = (locations: ConsumedLocation[]) => {
+    return [...locations].sort((a, b) => {
+      if (sortBy === "Title") {
+        return a.title.localeCompare(b.title);
+      } else if (sortBy === "Limit Remaining") {
+        return b.collection_limit_remaining - a.collection_limit_remaining;
+      }
+      return 0;
+    });
+  };
+  const handleFilterChange = (filter: string) => {
+    setSortBy(filter);
+    setMenuVisible(false);
+    // Update filteredBounties based on selected filter
+  };
+  const sortedLocations = useMemo(
+    () => sortLocations(response.data?.locations ?? []),
+    [response.data?.locations, sortBy]
+  );
   useEffect(() => {
     if (!isAuthenticated) {
       router.push("/login");
@@ -119,14 +141,12 @@ export default function MyCollectionScreen() {
     );
   }
 
-  const locations = response.data?.locations ?? [];
-
   const onARPress = (item: ConsumedLocation) => {
     setNearByPinData({
       nearbyPins: item ? [item] : [],
       singleAR: true,
     });
-    router.push("/ARScreen");
+    router.push("/(tabs)/ar2");
   };
 
   const renderCollectionItem = ({ item }: { item: ConsumedLocation }) => (
@@ -226,52 +246,49 @@ export default function MyCollectionScreen() {
               textAlign: "center",
             }}
           />
-          {/* <Menu
-          visible={sortMenuVisible}
-          onDismiss={() => setSortMenuVisible(false)}
-          anchor={
-            <Appbar.Action
-              icon="sort"
-              iconColor="white"
-              onPress={() => setSortMenuVisible(true)}
-            />
-          }
-        >
-          <Menu.Item
-            onPress={() => {
-              setSortBy("title");
-              setSortMenuVisible(false);
+
+          <TouchableOpacity
+            style={{
+              paddingHorizontal: 20,
             }}
-            title="Sort by Title"
-          />
-          <Menu.Item
-            onPress={() => {
-              setSortBy("category");
-              setSortMenuVisible(false);
-            }}
-            title="Sort by Category"
-          />
-        </Menu> */}
+            onPress={() => setMenuVisible((prev) => !prev)}
+          >
+            <ArrowUpZA />
+          </TouchableOpacity>
         </Appbar.Header>
-
-        <FlatList
-          data={locations}
-          showsVerticalScrollIndicator={false}
-          renderItem={renderCollectionItem}
-          keyExtractor={(item, index) => `${item.id}-${index}`}
-          contentContainerStyle={[styles.list, { paddingBottom: 80 }]}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
-        />
-
-        {locations.length === 0 && (
+        {menuVisible && (
+          <View style={styles.dropdown}>
+            {["Title", "Limit Remaining"].map((filter) => (
+              <TouchableOpacity
+                key={filter}
+                style={[
+                  styles.dropdownItem,
+                  sortBy === filter && styles.selectedDropdownItem,
+                ]}
+                onPress={() => handleFilterChange(filter)}
+              >
+                <Text style={styles.dropdownItemText}>{filter}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {sortedLocations.length === 0 && (
           <View
             style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
           >
             <Text>No collections found</Text>
           </View>
         )}
+        <FlatList
+          data={sortedLocations}
+          showsVerticalScrollIndicator={false}
+          renderItem={renderCollectionItem}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
+          contentContainerStyle={[{ paddingBottom: 80 }]}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+        />
       </View>
     </MainLayout>
   );
@@ -285,7 +302,29 @@ const styles = StyleSheet.create({
   searchBar: {
     margin: 8,
   },
-  list: {},
+  dropdown: {
+    position: "absolute",
+    top: 60,
+    right: 20,
+    backgroundColor: "white",
+    borderRadius: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 1000,
+  },
+  dropdownItem: {
+    padding: 12,
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: "black",
+  },
+  selectedDropdownItem: {
+    backgroundColor: "#eeeeee",
+  },
   card: {
     margin: 6,
     elevation: 4,
