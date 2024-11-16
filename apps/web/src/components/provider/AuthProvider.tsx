@@ -1,3 +1,4 @@
+import { getTokenUser } from "@api/routes/get-token-user";
 import { getUser } from "@api/routes/get-user";
 import { WalletType } from "@auth/types";
 import {
@@ -41,7 +42,7 @@ export const AuthWebProvider: FC<AuthProviderProps> = ({
   const checkAuth = async () => {
     try {
       if (!user) {
-        const user = await getUser();
+        const user = await getTokenUser();
         if (user?.id) {
           setUser(user);
           setIsAuthenticated(true);

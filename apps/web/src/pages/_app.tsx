@@ -15,11 +15,11 @@ export default function App({ Component, pageProps }: AppProps) {
       <div className="flex w-full  md:w-[30%] h-full">
         <MapProvider>
           <Provider>
-            <AuthWebProvider>
-              <Toaster />
-              <ModalProvider />
-              <Component {...pageProps} />
-            </AuthWebProvider>
+            {/* <AuthWebProvider> */}
+            <Toaster />
+            <ModalProvider />
+            <Component {...pageProps} />
+            {/* </AuthWebProvider> */}
           </Provider>
         </MapProvider>
       </div>

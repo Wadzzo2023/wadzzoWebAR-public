@@ -8,6 +8,7 @@ import { Color } from "app/utils/all-colors";
 import { BASE_URL } from "app/utils/Common";
 import { useRouter } from "expo-router";
 import React, { useRef, useState } from "react";
+
 import {
   Animated,
   Dimensions,
@@ -25,6 +26,7 @@ import Svg, {
   Image as SvgImage,
 } from "react-native-svg";
 const { width, height } = Dimensions.get("window");
+
 ViroAnimations.registerAnimations({
   rotate: {
     properties: {
@@ -81,6 +83,7 @@ ViroAnimations.registerAnimations({
     easing: "EaseInEaseOut",
   },
 });
+
 const HexagonalImage = ({ source }: { source: string; style?: any }) => {
   return (
     <View style={styles.HexContainer}>
@@ -346,7 +349,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     left: 0,
-    // for testing purposes// for testing purposes
+    // for testing purposes // for testing purposes
   },
   f1: {
     flex: 1,
