@@ -96,7 +96,7 @@ const ARPage = () => {
       if (firstLocation) {
         const { latitude, longitude } = pos.coords;
 
-        // alert(`GPS location found! ${latitude}, ${longitude}`);
+        // alert(`GPS location found! ${latitude}, ${longitude}`); fd
 
         // Generate random box positions around initial location
         // const boxPositions = generateRandomBoxPositions(latitude, longitude);
