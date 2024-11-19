@@ -1,13 +1,17 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strictNullChecks": true,
-    "noUncheckedIndexedAccess": true,
+    "strict": true,
     "paths": {
-      "@ui/*": ["./packages/ui/*"],
-      "@app/*": ["./packages/app/*"],
-      "@api/*": ["./packages/api/*"],
-      "@auth/*": ["./packages/auth"],
+      "@/*": [
+        "./*"
+      ]
     }
   },
-  "extends": "expo/tsconfig.base"
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
 }

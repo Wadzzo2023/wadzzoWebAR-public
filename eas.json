@@ -1,12 +1,15 @@
 {
   "cli": {
-    "version": ">= 13.2.0",
+    "version": ">= 12.5.3",
     "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "simulator": true
+      }
     },
     "preview": {
       "distribution": "internal"
@@ -16,6 +19,12 @@
     }
   },
   "submit": {
-    "production": {}
+    "development": {
+      "ios": {
+        "appleId": "billboardcollector@gmail.com",
+        "ascAppId": "1639649037",
+        "appleTeamId": "L5747V2LKA"
+      }
+    }
   }
 }
