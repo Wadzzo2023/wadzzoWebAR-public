@@ -154,7 +154,7 @@ const renderItemDetail = (
           width={0.8}
         />
         <ViroText
-          text={renderItemDetail.title}
+          text={renderItemDetail.title || "No title"}
           style={styles.itemDetailTitle}
           height={0.5}
           width={1}
@@ -173,7 +173,9 @@ const renderItemDetail = (
         width={3.5}
       />
       <ViroText
-        text={`Description: ${renderItemDetail.description}`}
+        text={
+          `Description: ${renderItemDetail.description}` || "No description"
+        }
         style={styles.itemDetailText}
         height={0.4}
         width={1}
@@ -226,7 +228,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
 
   console.log("showWinnerAnimation", data.showWinnerAnimation);
   const itemPositions = useMemo(() => {
-    return items.slice(0, 30).map(() => {
+    return items.map(() => {
       const angleY = Math.random() * Math.PI * 2; // Random angle for horizontal (360 degrees)
       const angleX = Math.random() * Math.PI - Math.PI / 2; // Random angle for vertical
       const radius = 5; // Distance from the camera
@@ -265,7 +267,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
       />
 
       {trackingStatus == ViroTrackingStateConstants.TRACKING_NORMAL &&
-        items.slice(0, 30).map((item, index) => (
+        items.map((item, index) => (
           <ViroNode
             key={`${index}-${item.id}`}
             animation={{
@@ -298,6 +300,18 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
                 onItemBlur();
               }
             }}
+            onClick={() => {
+              onItemFocus(item);
+              setPosition(
+                singleAR
+                  ? [0, 2.3, -5]
+                  : [
+                      itemPositions[index][0],
+                      itemPositions[index][1] + 2.5,
+                      itemPositions[index][2],
+                    ]
+              );
+            }}
           >
             <Viro3DObject
               rotation={[0, 0, 0]}
@@ -313,7 +327,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
               width={1}
               rotation={[0, 180, 0]}
               scale={[0.4, 0.4, 0]} // Larger scale for better visibility
-              position={[0, 0.5, -0.025]}
+              position={[0, 0.5, -0.022]}
             />
             {/* Back Side Image */}
             <ViroImage
@@ -322,7 +336,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
               width={1}
               rotation={[0, 0, 0]}
               scale={[0.4, 0.4, 0]} // Larger scale for back image as well
-              position={[0, 0.5, 0.025]}
+              position={[0, 0.5, 0.022]}
             />
 
             <ViroText

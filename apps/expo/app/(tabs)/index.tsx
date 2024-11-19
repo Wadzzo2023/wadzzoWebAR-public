@@ -274,7 +274,7 @@ const HomeScreen = () => {
             >
               <UserLocation visible={true} />
               <Camera
-                animationDuration={6000}
+                animationDuration={5000}
                 defaultSettings={{
                   centerCoordinate: [
                     userLocation.longitude,
