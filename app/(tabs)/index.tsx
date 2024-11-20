@@ -1,5 +1,4 @@
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useIsFocused } from "@react-navigation/native"; // Import the hook
 import Mapbox, {
   Camera,
   MapView,
@@ -7,11 +6,13 @@ import Mapbox, {
   UserLocation,
 } from "@rnmapbox/maps";
 import * as Location from "expo-location";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
+  findNodeHandle,
   Image,
+  LayoutChangeEvent,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -35,6 +36,9 @@ import { getMapAllPins } from "../api/routes/get-Map-all-pins";
 import { getUserPlatformAsset } from "../api/routes/get-user-platformAsset";
 import LoadingScreen from "@/components/Loading";
 import { Color } from "@/components/utils/all-colors";
+import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
+import { useWalkThrough } from "@/components/hooks/useWalkThrough";
+import { useAuth } from "@/components/lib/auth/Provider";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
@@ -42,7 +46,12 @@ type userLocationType = {
   latitude: number;
   longitude: number;
 };
-
+type ButtonLayout = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 const HomeScreen = () => {
   const [locationPermission, setLocationPermission] = useState(false);
   const [userLocation, setUserLocation] = useState<userLocationType | null>(
@@ -59,10 +68,77 @@ const HomeScreen = () => {
   const autoCollectModeRef = useRef(data.mode);
   const { onOpen } = useModal();
   const cameraRef = useRef<Camera>(null);
+  const { isAuthenticated } = useAuth();
+
+  const scrollViewRef = useRef(null);
+  const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
   const { data: accountActionData, setData: setAccountActionData } =
     useAccountAction();
-  const isFocused = useIsFocused();
+  const { data: walkthroughData } = useWalkThrough();
 
+  const steps = [
+    {
+      target: buttonLayouts[0],
+      title: "Welcome to the Wadzzo app!",
+      content:
+        "This tutorial will show you how to use Wadzzo to find pins around you, follow your favorite brands, and collect rewards.",
+    },
+    {
+      target: buttonLayouts[1],
+      title: "Wadzzo Balance",
+      content:
+        "The Wadzzo Balance displays your Wadzzo count. Check the Bounty Board for the latest ways to earn more Wadzzo!",
+    },
+    {
+      target: buttonLayouts[2],
+      title: "Refresh Button",
+      content:
+        "If you need to refresh your map, press the refresh button. This will reload your entire map with all up to date app data.",
+    },
+    {
+      target: buttonLayouts[3],
+      title: "Re-center button",
+      content:
+        "Press the Re-center button to center your map view to your current location",
+    },
+    {
+      target: buttonLayouts[4],
+      title: "AR button",
+      content:
+        "To collect manual pins, press the AR button on your map to view your surroundings. Locate the icon on your screen, then tap Claim to add the item to your collection.",
+    },
+  ];
+  const onButtonLayout = useCallback(
+    (event: LayoutChangeEvent, index: number) => {
+      if (scrollViewRef.current) {
+        const scrollViewHandle = findNodeHandle(scrollViewRef.current);
+        if (scrollViewHandle) {
+          event.target.measureLayout(
+            scrollViewHandle,
+            (x, y, width, height) => {
+              setButtonLayouts((prevLayouts) => {
+                const newLayouts = [...prevLayouts];
+                newLayouts[index] = { x, y, width, height };
+                console.log(newLayouts);
+                return newLayouts;
+              });
+            },
+            () => console.error("Failed to measure layout")
+          );
+        }
+      }
+    },
+    []
+  );
+  const checkFirstTimeSignIn = async () => {
+    console.log(showWalkthrough);
+    if (walkthroughData.showWalkThrough) {
+      setShowWalkthrough(true);
+    } else {
+      setShowWalkthrough(false);
+    }
+  };
   const getNearbyPins = (
     userLocation: userLocationType,
     locations: ConsumedLocation[],
@@ -238,6 +314,13 @@ const HomeScreen = () => {
       });
     }
   }, [userLocation]);
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/Login");
+    } else {
+      checkFirstTimeSignIn(); // Check if it's the first sign-in
+    }
+  }, [isAuthenticated, walkthroughData]);
 
   useEffect(() => {
     if (data.mode && userLocation && locations) {
@@ -256,10 +339,13 @@ const HomeScreen = () => {
   if (response.isLoading) {
     return <LoadingScreen />;
   }
-  console.log("userloaation", userLocation);
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      ref={scrollViewRef}
+      onLayout={(event) => onButtonLayout(event, 0)}
+    >
       {loading ? (
         <LoadingScreen />
       ) : (
@@ -294,7 +380,10 @@ const HomeScreen = () => {
             </MapView>
 
             {/* Recenter button */}
-            <View style={styles.balance}>
+            <View
+              style={styles.balance}
+              onLayout={(event) => onButtonLayout(event, 1)}
+            >
               <Image
                 style={{
                   height: 20,
@@ -315,6 +404,7 @@ const HomeScreen = () => {
             <TouchableOpacity
               style={styles.recenterButton}
               onPress={handleRecenter}
+              onLayout={(event) => onButtonLayout(event, 3)}
             >
               <MaterialCommunityIcons
                 name="crosshairs-gps"
@@ -323,6 +413,7 @@ const HomeScreen = () => {
               />
             </TouchableOpacity>
             <TouchableOpacity
+              onLayout={(event) => onButtonLayout(event, 4)}
               style={styles.AR}
               onPress={() => handleARPress(userLocation, locations)}
             >
@@ -333,6 +424,7 @@ const HomeScreen = () => {
               />
             </TouchableOpacity>
             <TouchableOpacity
+              onLayout={(event) => onButtonLayout(event, 2)}
               style={styles.Refresh}
               onPress={async () => await response.refetch()}
             >
@@ -361,6 +453,9 @@ const HomeScreen = () => {
             </Animated.View>
           </>
         )
+      )}
+      {showWalkthrough && (
+        <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
       )}
     </View>
   );

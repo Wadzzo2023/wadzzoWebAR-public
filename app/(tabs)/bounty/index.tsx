@@ -48,8 +48,6 @@ type ButtonLayout = {
   height: number;
 };
 export default function BountyScreen() {
-  const [bounties, setBounties] = useState<Bounty[]>([]);
-  const [selectedBounty, setSelectedBounty] = useState<Bounty | null>(null);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const scrollViewRef = useRef(null);
   const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
@@ -68,6 +66,12 @@ export default function BountyScreen() {
       title: "Filter Bounty",
       content:
         "User can filter bounty between Joined and Not Joined Bounty List.",
+    },
+    {
+      target: buttonLayouts[1],
+      title: "View/Join Bounty",
+      content:
+        "Clicking 'Join Bounty' lets users view details and join. If already joined, they can view details only.",
     },
   ];
   const onButtonLayout = useCallback(
@@ -142,70 +146,86 @@ export default function BountyScreen() {
       onOpen("JoinBounty", { bounty: bounty, balance: balanceRes.data });
     }
   };
-  const renderBountyItem = ({ item }: { item: Bounty }) => (
-    <Card style={styles.card}>
-      <Card.Cover
-        source={{
-          uri: item.imageUrls[0] ?? "https://app.wadzzo.com/images/loading.png",
-        }}
-        style={styles.cardCover}
-      />
-      <Card.Content>
-        <Title>{item.title}</Title>
-        <View
-          style={{
-            marginBottom: 8,
-            maxHeight: 150,
-            minHeight: 150,
+  const renderBountyItem = ({
+    item,
+    index,
+  }: {
+    item: Bounty;
+    index: number;
+  }) => {
+    console.log(item.description.length);
+    return (
+      <Card style={styles.card}>
+        <Card.Cover
+          source={{
+            uri:
+              item.imageUrls[0] ?? "https://app.wadzzo.com/images/loading.png",
           }}
-        >
-          <RenderHtml
-            contentWidth={Dimensions.get("window").width}
-            source={{
-              html:
-                item.description.length > 200
-                  ? item.description.slice(0, 200)
-                  : "",
+          style={styles.cardCover}
+        />
+        <Card.Content>
+          <Title>{item.title}</Title>
+          <View
+            style={{
+              marginBottom: 8,
+              maxHeight: 150,
+              minHeight: 150,
             }}
-          />
-        </View>
-        <View style={styles.detailsContainer}>
-          <Chip
-            style={[
-              styles.statusChip,
-              { backgroundColor: getStatusColor(item.status) },
-            ]}
           >
-            {item.status}
-          </Chip>
-          <Text style={styles.prizeText}>
-            Prize: {item.priceInUSD.toFixed(2)}$
+            <RenderHtml
+              contentWidth={Dimensions.get("window").width}
+              source={{
+                html:
+                  item.description.length > 200
+                    ? item.description.slice(0, 200)
+                    : "",
+              }}
+            />
+          </View>
+          <View style={styles.detailsContainer}>
+            <Chip
+              style={[
+                styles.statusChip,
+                { backgroundColor: getStatusColor(item.status) },
+              ]}
+            >
+              {item.status}
+            </Chip>
+            <Text style={styles.prizeText}>
+              Prize: {item.priceInUSD.toFixed(2)}$
+            </Text>
+            <Text style={styles.prizeText}>
+              Prize : {item.priceInBand.toFixed(2)} Wadzzo
+            </Text>
+          </View>
+          <Text style={styles.participantsText}>
+            Participants: {item._count.participants}
           </Text>
-          <Text style={styles.prizeText}>
-            Prize : {item.priceInBand.toFixed(2)} Wadzzo
-          </Text>
-        </View>
-        <Text style={styles.participantsText}>
-          Participants: {item._count.participants}
-        </Text>
-        {item.winnerId && (
-          <Text style={styles.winnerText}>
-            Winner: {addrShort(item.winnerId, 15)}
-          </Text>
-        )}
-      </Card.Content>
-      <Card.Actions>
-        <Button
-          style={{ flex: 1 }}
-          disabled={item.status === "REJECTED"}
-          mode={item.isJoined ? "outlined" : "contained"}
-          onPress={() => toggleJoin(item.id, item.isJoined, item)}
-        >
-          {item.isJoined ? "View Bounty" : "Join Bounty"}
-        </Button>
-      </Card.Actions>
-    </Card>
-  );
+          {item.winnerId && (
+            <Text style={styles.winnerText}>
+              Winner: {addrShort(item.winnerId, 15)}
+            </Text>
+          )}
+        </Card.Content>
+        <Card.Actions>
+          <Button
+            onLayout={(event: LayoutChangeEvent) => {
+              if (index === 0) {
+                // Only apply layout for the button when index is 1
+                onButtonLayout(event, 1);
+              }
+            }}
+            style={{ flex: 1 }}
+            disabled={item.status === "REJECTED"}
+            mode={item.isJoined ? "outlined" : "contained"}
+            onPress={() => toggleJoin(item.id, item.isJoined, item)}
+          >
+            {item.isJoined ? "View Bounty" : "Join Bounty"}
+          </Button>
+        </Card.Actions>
+      </Card>
+    );
+  };
 
   return (
     <View style={styles.container} ref={scrollViewRef}>

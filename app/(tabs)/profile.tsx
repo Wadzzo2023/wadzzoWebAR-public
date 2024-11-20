@@ -78,6 +78,7 @@ export default function SettingScreen() {
               setButtonLayouts((prevLayouts) => {
                 const newLayouts = [...prevLayouts];
                 newLayouts[index] = { x, y, width, height };
+                console.log(newLayouts);
                 return newLayouts;
               });
             },

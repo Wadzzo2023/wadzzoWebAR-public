@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  runOnJS,
   Easing,
 } from "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -18,7 +17,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useWalkThrough } from "../hooks/useWalkThrough";
 import { Color } from "../utils/all-colors";
 
-const { width, height } = Dimensions.get("window");
+const { height: screenHeight, width: screenWidth } = Dimensions.get("window");
 
 type StepProps = {
   target?: {
@@ -29,6 +28,13 @@ type StepProps = {
   };
   title: string;
   content: string;
+  isVisible?: boolean;
+  currentStep?: number;
+  totalSteps?: number;
+  onNext?: () => void;
+  onPrevious?: () => void;
+
+  onFinish?: () => void;
 };
 
 type WalkthroughProps = {
@@ -36,26 +42,58 @@ type WalkthroughProps = {
   onFinish: () => void;
 };
 
-const Step: React.FC<StepProps & { isVisible: boolean }> = ({
+const Step: React.FC<StepProps> = ({
   target,
   title,
   content,
   isVisible,
+  currentStep,
+  totalSteps,
+  onNext,
+  onPrevious,
+
+  onFinish,
 }) => {
   const opacity = useSharedValue(0);
+  const [position, setPosition] = useState<{ top: number; bottom: number }>({
+    top: 0,
+    bottom: 0,
+  });
 
-  React.useEffect(() => {
+  useEffect(() => {
     opacity.value = withTiming(isVisible ? 1 : 0, {
       duration: 300,
       easing: Easing.inOut(Easing.ease),
     });
   }, [isVisible, opacity]);
 
+  useEffect(() => {
+    if (target) {
+      const center = {
+        x: target.x + target.width / 2,
+        y: target.y + target.height / 2,
+      };
+      const relativeToTop = center.y;
+      const relativeToBottom = Math.abs(center.y - screenHeight);
+
+      const verticalPosition =
+        relativeToTop > relativeToBottom ? "top" : "bottom";
+
+      if (verticalPosition === "top") {
+        setPosition({ bottom: screenHeight - target.y + 20, top: 160 });
+      } else {
+        setPosition({ top: target.y + target.height + 20, bottom: 100 });
+      }
+    }
+  }, [target]);
+
   const animatedStyle = useAnimatedStyle(() => {
     return {
       opacity: opacity.value,
     };
   });
+
+  if (!isVisible) return null;
 
   return (
     <Animated.View style={[styles.stepContainer, animatedStyle]}>
@@ -72,9 +110,68 @@ const Step: React.FC<StepProps & { isVisible: boolean }> = ({
           ]}
         />
       )}
-      <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{content}</Text>
+
+      <View
+        style={[
+          styles.content,
+          {
+            top: position.top,
+            bottom: position.bottom,
+          },
+        ]}
+      >
+        <TouchableOpacity onPress={onFinish} style={[styles.skipButton]}>
+          <Text
+            style={{
+              color: "#fff",
+            }}
+          >
+            Skip
+          </Text>
+        </TouchableOpacity>
+        <View
+          style={{
+            flex: 1,
+            flexDirection: "column",
+            justifyContent: "space-between",
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              flexDirection: "column",
+              justifyContent: "flex-start",
+              alignItems: "center",
+              padding: 20,
+            }}
+          >
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.description}>{content}</Text>
+          </View>
+
+          {/* Navigation Buttons */}
+          <View style={styles.navigation}>
+            {currentStep! > 0 && (
+              <TouchableOpacity
+                onPress={onPrevious}
+                style={[
+                  styles.button,
+                  {
+                    backgroundColor: Color.light.onSurface,
+                  },
+                ]}
+              >
+                <Text style={styles.buttonText}>Previous</Text>
+              </TouchableOpacity>
+            )}
+
+            {currentStep! < totalSteps! - 1 && (
+              <TouchableOpacity onPress={onNext} style={styles.button}>
+                <Text style={styles.buttonText}>Next</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
       </View>
     </Animated.View>
   );
@@ -87,23 +184,17 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const opacity = useSharedValue(1);
   const { data, setData } = useWalkThrough();
+
   const onStop = async () => {
     if (data.showWalkThrough) {
-      await AsyncStorage.setItem("isFirstSignIn", "false"); // Mark the user as signed in
-      setData({
-        showWalkThrough: false,
-      });
+      await AsyncStorage.setItem("isFirstSignIn", "false");
+      setData({ showWalkThrough: false });
     }
   };
+
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
-    } else {
-      opacity.value = withTiming(0, { duration: 300 }, (finished) => {
-        if (finished) {
-          runOnJS(onFinish)();
-        }
-      });
     }
   };
 
@@ -116,44 +207,26 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
   const skip = () => {
     opacity.value = withTiming(0, { duration: 300 }, (finished) => {
       if (finished) {
-        runOnJS(onFinish)();
+        onFinish();
       }
     });
   };
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-    };
-  });
-
   return (
     <GestureHandlerRootView style={StyleSheet.absoluteFill}>
-      <Animated.View style={[styles.container, animatedStyle]}>
+      <Animated.View style={[styles.container]}>
         {steps.map((step, index) => (
-          <Step key={index} {...step} isVisible={index === currentStep} />
+          <Step
+            key={index}
+            {...step}
+            isVisible={index === currentStep}
+            currentStep={currentStep}
+            totalSteps={steps.length}
+            onNext={nextStep}
+            onPrevious={prevStep}
+            onFinish={onStop}
+          />
         ))}
-        <View style={styles.navigation}>
-          {currentStep > 0 ? (
-            <TouchableOpacity onPress={prevStep} style={styles.button}>
-              <Text style={styles.buttonText}>Previous</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.disable}></View>
-          )}
-          <TouchableOpacity onPress={nextStep} style={styles.button}>
-            <Text style={styles.buttonText}>
-              {currentStep === steps.length - 1 ? "Finish" : "Next"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity onPress={skip} style={styles.skipButton}>
-          <Text style={styles.skipButtonText}>Skip</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => onStop()} style={styles.stopButton}>
-          <Text style={styles.skipButtonText}>Stop</Text>
-        </TouchableOpacity>
       </Animated.View>
     </GestureHandlerRootView>
   );
@@ -164,9 +237,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0, 0, 0, 0.7)",
   },
-  stepContainer: {
-    ...StyleSheet.absoluteFillObject,
-  },
+  stepContainer: {},
   highlight: {
     position: "absolute",
     borderRadius: 4,
@@ -175,13 +246,19 @@ const styles = StyleSheet.create({
     borderColor: "#fff",
   },
   content: {
+    borderWidth: 4,
+    borderColor: Color.wadzzo,
+    borderRadius: 30,
     position: "absolute",
-    bottom: 140,
-    left: 20,
-    right: 20,
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "space-between",
+    alignItems: "center",
+    maxHeight: 215,
+    minHeight: 215,
+    left: 10,
+    right: 10,
     backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 20,
   },
   title: {
     fontSize: 18,
@@ -189,25 +266,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   description: {
-    fontSize: 16,
+    fontSize: 14,
   },
   navigation: {
     flexDirection: "row",
     justifyContent: "space-between",
-    position: "absolute",
-    bottom: 80,
-    left: 20,
-    right: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
   button: {
-    backgroundColor: "#007AFF",
+    backgroundColor: Color.wadzzo,
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
-  },
-  disable: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 5,
     borderRadius: 5,
   },
   buttonText: {
@@ -215,25 +285,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   skipButton: {
-    backgroundColor: Color.wadzzo,
-    position: "absolute",
-    bottom: 130,
-    right: 20,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    paddingVertical: 5,
-  },
-  stopButton: {
-    position: "absolute",
-    bottom: 130,
-    right: 100,
     backgroundColor: "red",
+
     paddingHorizontal: 20,
     paddingVertical: 5,
     borderRadius: 5,
-  },
-  skipButtonText: {
-    color: "#fff",
-    fontSize: 16,
   },
 });

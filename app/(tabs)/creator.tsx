@@ -78,19 +78,25 @@ export default function CreatorPage() {
       target: buttonLayouts[0],
       title: "Follow Mode",
       content:
-        "In Follow Mode, you'll only see pins for the brands you've followed on the map and AR screens. Switch to General Mode to view all brand pins.",
+        "In Follow Mode, see pins for followed brands only. Switch to General Mode to view all brand pins.",
     },
     {
       target: buttonLayouts[1],
       title: "Search for Brands",
       content:
-        "Search for brands by entering text here to find specific brands quickly.",
+        "Use the search bar to look for any brand on the platform by typing in the brand name in the search bar, then pressing the search icon",
     },
     {
       target: buttonLayouts[2],
       title: "Brand Lists",
       content:
         "Click on 'Available Brands' to view all brands, or 'Followed Brands' to see the ones you've followed.",
+    },
+    {
+      target: buttonLayouts[3],
+      title: "Follow Brands",
+      content:
+        "“To follow a brand, press the follow button next to the brand name. To unfollow a brand, press the unfollow button next to the brand name.",
     },
   ];
 
@@ -244,11 +250,16 @@ export default function CreatorPage() {
   if (isLoading) return <LoadingScreen />;
   if (error) return <Text>Error: {error.message}</Text>;
 
-  const renderBrandItem = ({ item }: { item: Brand }) => (
+  const renderBrandItem = ({ item, index }: { item: Brand; index: number }) => (
     <View style={styles.brandItem}>
       <Image source={{ uri: item.logo }} style={styles.brandImage} />
       <Text style={styles.brandName}>{item.first_name}</Text>
       <Button
+        onLayout={(event: LayoutChangeEvent) => {
+          if (index === 0) {
+            onButtonLayout(event, 3);
+          }
+        }}
         disabled={followLoadingId === item.id || unfollowLoadingId === item.id}
         mode={item.followed_by_current_user ? "outlined" : "contained"}
         onPress={() => toggleFollow(item.id, item.followed_by_current_user)}

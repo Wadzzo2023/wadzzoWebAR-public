@@ -66,6 +66,24 @@ export default function MyCollectionScreen() {
       title: "Filter Collection",
       content: "User can filter Collection between Title and Remaining Limit",
     },
+    {
+      target: buttonLayouts[1],
+      title: "View in AR",
+      content:
+        "Press the AR button to view your digital item in AR mode. In AR, explore your surroundings and see your pin as a real-life image.",
+    },
+    {
+      target: buttonLayouts[2],
+      title: "Delete Collection",
+      content:
+        "Once you've redeemed a reward, use it to permanently remove the pin from your collection.",
+    },
+    {
+      target: buttonLayouts[3],
+      title: "View Collection",
+      content:
+        "Pressing View on a pin reveals details like the brand, collection date, item info, a Claim button for more details, collection limits, and more.",
+    },
   ];
   const onButtonLayout = useCallback(
     (event: LayoutChangeEvent, index: number) => {
@@ -78,6 +96,7 @@ export default function MyCollectionScreen() {
               setButtonLayouts((prevLayouts) => {
                 const newLayouts = [...prevLayouts];
                 newLayouts[index] = { x, y, width, height };
+                console.log(newLayouts);
                 return newLayouts;
               });
             },
@@ -191,7 +210,13 @@ export default function MyCollectionScreen() {
     );
   }
 
-  const renderCollectionItem = ({ item }: { item: ConsumedLocation }) => (
+  const renderCollectionItem = ({
+    item,
+    index,
+  }: {
+    item: ConsumedLocation;
+    index: number;
+  }) => (
     <Card style={styles.card}>
       <View style={styles.imageContainer}>
         <Image source={{ uri: item.image_url }} style={styles.image} />
@@ -209,6 +234,12 @@ export default function MyCollectionScreen() {
       <Card.Actions style={styles.actions}>
         <View style={styles.leftButtons}>
           <Button
+            onLayout={(event: LayoutChangeEvent) => {
+              if (index === 0) {
+                // Only apply layout for the button when index is 1
+                onButtonLayout(event, 1);
+              }
+            }}
             onPress={() => onARPress(item)}
             style={[
               styles.smallButton,
@@ -227,6 +258,12 @@ export default function MyCollectionScreen() {
             </Text>
           </Button>
           <Button
+            onLayout={(event: LayoutChangeEvent) => {
+              if (index === 0) {
+                // Only apply layout for the button when index is 1
+                onButtonLayout(event, 2);
+              }
+            }}
             onPress={() =>
               onOpen("Delete", {
                 collectionId: item.id,
@@ -242,6 +279,11 @@ export default function MyCollectionScreen() {
           </Button>
         </View>
         <Button
+          onLayout={(event: LayoutChangeEvent) => {
+            if (index === 0) {
+              onButtonLayout(event, 3);
+            }
+          }}
           onPress={() => {
             setData({
               collections: item,
