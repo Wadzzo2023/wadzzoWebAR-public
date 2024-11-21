@@ -87,7 +87,7 @@ const SingleBountyItem = () => {
       });
     },
     onError: (error) => {
-      console.error("Error following bounty:", error);
+      // console.error("Error following bounty:", error);
     },
   });
 
@@ -137,7 +137,7 @@ const SingleBountyItem = () => {
         ) {
           return; // Skip this file
         }
-        console.log("uploading file", fileName);
+        // console.log("uploading file", fileName);
         const storageRef = ref(
           storage,
           `wadzzo/bounty/${bounty.id}/${fileName}/${new Date().getTime()}`
@@ -156,10 +156,10 @@ const SingleBountyItem = () => {
             }));
             switch (snapshot.state) {
               case "paused":
-                console.log("Upload is paused");
+                // console.log("Upload is paused");
                 break;
               case "running":
-                console.log("Upload is running");
+                // console.log("Upload is running");
                 break;
             }
           },

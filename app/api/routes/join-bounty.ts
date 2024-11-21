@@ -22,7 +22,7 @@ export const JoinBounty = async ({ bountyId }: { bountyId: string }) => {
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error("Error failed to Join Bounty:", error);
-        throw error;
+        // console.log("Error failed to Join Bounty:", error);
+
     }
 };

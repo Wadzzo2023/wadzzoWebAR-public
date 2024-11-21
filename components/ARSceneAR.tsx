@@ -144,7 +144,7 @@ const renderItemDetail = (
       style={styles.itemDetailContainer}
       position={[position[0], position[1], position[2]]}
       rotation={[0, 0, 0]}
-      height={2.2}
+      height={2.5}
       width={3}
     >
       <ViroFlexView style={styles.itemDetailHeader}>
@@ -155,7 +155,7 @@ const renderItemDetail = (
           width={0.8}
         />
         <ViroText
-          text={renderItemDetail.title || "No title"}
+          text={renderItemDetail.title ?? "No title"}
           style={styles.itemDetailTitle}
           height={0.5}
           width={1}
@@ -174,12 +174,12 @@ const renderItemDetail = (
         width={3.5}
       />
       <ViroText
-        text={
-          `Description: ${renderItemDetail.description}` || "No description"
-        }
+        text={`Description: ${
+          renderItemDetail.description ?? "No description"
+        }`}
         style={styles.itemDetailText}
-        height={0.4}
-        width={1}
+        height={0.6}
+        width={3}
       />
       <ViroText
         text={`Remaining: ${renderItemDetail.collection_limit_remaining}`}
@@ -216,27 +216,26 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
   );
   const [position, setPosition] = useState([0, 0, 0]);
   const onItemFocus = (item: ConsumedLocation) => {
-    console.log("Item focused", item);
+    // console.log("Item focused", item);
     onCapture(item);
     setOnFocusedItem(item);
   };
   const onItemBlur = () => {
     // onCapture(null);
-    console.log("Item blurred");
+    // console.log("Item blurred");
   };
 
   const { data } = useWinnerAnimation();
 
-  console.log("showWinnerAnimation", data.showWinnerAnimation);
   const itemPositions = useMemo(() => {
     return items.map(() => {
       const angleY = Math.random() * Math.PI * 2; // Random angle for horizontal (360 degrees)
       const angleX = Math.random() * Math.PI - Math.PI / 2; // Random angle for vertical
-      const radius = 5; // Distance from the camera
+      const radius = 10; // Distance from the camera
       const x = radius * Math.cos(angleX) * Math.cos(angleY);
-      const y = radius * Math.sin(angleX);
+      const y = 0;
       const z = radius * Math.cos(angleX) * Math.sin(angleY);
-      return [x, y % 5, z];
+      return [x, y, z];
     });
   }, [items]); // Only calculate positions once when items change
   const onARInitialized = (
@@ -247,7 +246,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
   };
   useEffect(() => {
     if (data.showWinnerAnimation) {
-      console.log("Winner animation triggered");
+      // console.log("Winner animation triggered");
     }
 
     return () => {
@@ -300,18 +299,6 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
               } else {
                 onItemBlur();
               }
-            }}
-            onClick={() => {
-              onItemFocus(item);
-              setPosition(
-                singleAR
-                  ? [0, 2.3, -5]
-                  : [
-                      itemPositions[index][0],
-                      itemPositions[index][1] + 2.5,
-                      itemPositions[index][2],
-                    ]
-              );
             }}
           >
             <Viro3DObject

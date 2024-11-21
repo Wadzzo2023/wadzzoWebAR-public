@@ -11,7 +11,7 @@ export const getUser = async () => {
       }
     );
     if (!response.ok) {
-      console.log("Failed to fetch user");
+      // console.log("Failed to fetch user");
     }
 
     const data = (await response.json()) as User;
@@ -19,6 +19,5 @@ export const getUser = async () => {
     return data;
   } catch (error) {
     console.error("Error fetching user:", error);
-    return null;
   }
 };

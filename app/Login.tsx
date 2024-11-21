@@ -73,10 +73,10 @@ const LoginScreen = () => {
           accessToken: authentication.accessToken,
         });
       } else {
-        console.log("no authentication ");
+        // // console.log("no authentication ");
       }
     }
-    console.log(response);
+    // // console.log(response);
   }
 
   const requestName = "api/auth/callback/credentials";
@@ -100,12 +100,13 @@ const LoginScreen = () => {
 
       if (!response.ok) {
         const error = await response.json();
+        // // console.log("Err",error)
         setError(true);
         setGoogleLoading(false);
         throw new Error(error.message);
       } else {
         const setCookies = response.headers.get("set-cookie");
-
+        // // console.log(setCookies)
         if (setCookies) {
           login(setCookies);
         }

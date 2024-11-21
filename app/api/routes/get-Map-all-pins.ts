@@ -1,7 +1,7 @@
 import { BASE_URL } from "@/components/utils/Common";
 
 export const getMapAllPins = async ({ filterID }: { filterID: string }) => {
-    console.log("filterID", filterID);
+    // console.log("filterID", filterID);
     try {
         const url = new URL(`api/game/locations`, BASE_URL);
         url.searchParams.append("filterId", filterID); // Append filterID as a query parameter
@@ -21,7 +21,7 @@ export const getMapAllPins = async ({ filterID }: { filterID: string }) => {
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error("Error fetching pins:", error);
-        throw error;
+        // console.log("Error fetching pins:", error);
+
     }
 };

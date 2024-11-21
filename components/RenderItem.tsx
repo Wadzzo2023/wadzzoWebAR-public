@@ -19,6 +19,9 @@ type Props = {
 };
 
 const RenderItem = ({ index, x, item }: Props) => {
+
+ 
+
   const { width: SCREEN_WIDTH } = useWindowDimensions();
 
   const lottieAnimationStyle = useAnimatedStyle(() => {

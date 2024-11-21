@@ -21,13 +21,13 @@ export const UploadSubmission = async ({ bountyId, content, media }: { bountyId:
         );
 
         if (!response.ok) {
-            throw new Error("Failed to submit this submission ");
+            // console.log("Failed to submit this submission");
         }
 
         const data = await response.json();
         return data;
     } catch (error) {
-        console.error("Error failed to submit this submission:", error);
-        throw error;
+        // console.log("Error failed to submit this submission:", error);
+
     }
 };

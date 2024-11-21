@@ -17,7 +17,7 @@ export const getAllBrands = async () => {
 
         return data;
     } catch (error) {
-        console.error("Error fetching collections:", error);
+        console.log("Error fetching collections:", error);
 
     }
 };

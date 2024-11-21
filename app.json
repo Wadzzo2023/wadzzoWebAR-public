@@ -2,7 +2,7 @@
   "expo": {
     "name": "Wadzzo",
     "slug": "Wadzzo",
-    "version": "4.1.2",
+    "version": "4.1.4",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "com.thebillboardapp.wadzzo",
@@ -13,7 +13,7 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "buildNumber": "10",
+      "buildNumber": "2",
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "infoPlist": {
@@ -74,7 +74,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "166cdf10-31b0-43b3-9bf4-cd1b1d826e90"
+        "projectId": "ae1c4f06-e01a-48da-a87d-1d1b70a7ec7e"
       }
     }
   }

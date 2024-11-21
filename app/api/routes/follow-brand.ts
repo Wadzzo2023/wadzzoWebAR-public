@@ -23,6 +23,6 @@ export const FollowBrand = async ({ brand_id }: { brand_id: string }) => {
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error("Error failed to follow brand:", error);
+    console.log("Error failed to follow brand:", error);
   }
 };

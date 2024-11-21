@@ -8,6 +8,8 @@ import React, {
 } from "react";
 import { WalletType } from "./types";
 import { getUser } from "@/app/api/routes/get-user";
+import { BASE_URL, CALLBACK_URL } from "@/components/utils/Common";
+import { getCsrfToken } from "./sign-in";
 
 export type User = {
   name?: string | null;
@@ -70,8 +72,26 @@ export const AuthProvider: FC<AuthProviderProps> = ({
 
   const logout = async (): Promise<void> => {
     try {
-      setUser(null);
+      
+      const res = await fetch(new URL('api/auth/signout',BASE_URL),{
+        method: "POST",
+        headers: {
+                "Content-Type": "application/json",
+            },
+          body: JSON.stringify({
+          csrfToken : await getCsrfToken(),
+         callbackUrl:CALLBACK_URL,
+         json:'true'
+
+        }),
+        credentials:'include'
+      })
+      console.log('res',res)
+      if(res.ok)
+      {
+            setUser(null);
       setIsAuthenticated(false);
+      }
     } catch (error) {
       console.log("Failed to log out:", error);
     }

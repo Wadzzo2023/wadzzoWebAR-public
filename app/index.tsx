@@ -21,18 +21,13 @@ const OnboardingScreen = () => {
   const [playAnimation, setPlayAnimation] = useState(false);
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  useEffect(() => {
-    if (isAuthenticated) {
-      router.replace("/(tabs)/");
-    }
-  }, [isAuthenticated]);
 
   const onViewableItemsChanged = ({
     viewableItems,
   }: {
     viewableItems: ViewToken[];
   }) => {
-    if (viewableItems[0].index !== null) {
+    if (viewableItems[0]?.index !== null) {
       flatListIndex.value = viewableItems[0].index;
       // Trigger animation when item changes
       setPlayAnimation(true);
@@ -46,6 +41,12 @@ const OnboardingScreen = () => {
       x.value = event.contentOffset.x;
     },
   });
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace("/(tabs)/");
+    }
+  }, [isAuthenticated]);
 
   return (
     <View style={[styles.container]}>

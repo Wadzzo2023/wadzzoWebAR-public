@@ -212,10 +212,10 @@ const ARScene = () => {
         }
       } catch (error) {
         setLoading(false);
-        console.error("Error claiming item:", error);
+        // console.error("Error claiming item:", error);
       }
     } else {
-      console.log("No item captured");
+      // // console.log("No item captured");
     }
   };
 

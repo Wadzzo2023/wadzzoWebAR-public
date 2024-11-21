@@ -78,7 +78,7 @@ export default function SettingScreen() {
               setButtonLayouts((prevLayouts) => {
                 const newLayouts = [...prevLayouts];
                 newLayouts[index] = { x, y, width, height };
-                console.log(newLayouts);
+                // console.log(newLayouts);
                 return newLayouts;
               });
             },
@@ -116,12 +116,12 @@ export default function SettingScreen() {
       target: buttonLayouts[4],
       title: "Delete Data",
       content:
-        "Confirm to delete your account. A request will be sent to our support team to manually process the deletion.",
+        "Press this button to delete your account.  A request will be sent to our support team and your account will be permanently deleted.",
     },
   ];
 
   const resetTutorial = async () => {
-    console.log("Resetting tutorial");
+    // console.log("Resetting tutorial");
     await AsyncStorage.setItem("isFirstSignIn", "true");
     setShowWalkthrough(true);
     setWalkThroughData({
@@ -130,7 +130,7 @@ export default function SettingScreen() {
   };
 
   const deleteData = async () => {
-    console.log("Deleting data");
+    // console.log("Deleting data");
     setShowDeleteDialog(false);
     const userInfo = `
 User ID: ${data?.id}
@@ -147,12 +147,12 @@ Email: ${data?.email}
     try {
       const result = await MailComposer.composeAsync(options);
       if (result.status === "sent") {
-        console.log("Support email sent successfully");
+        // console.log("Support email sent successfully");
       } else {
-        console.log("Support email not sent");
+        // console.log("Support email not sent");
       }
     } catch (error) {
-      console.error("Failed to send email", error);
+      // console.error("Failed to send email", error);
     }
   };
 
@@ -171,7 +171,7 @@ Email: ${data?.email}
     );
   };
   const checkFirstTimeSignIn = async () => {
-    console.log(showWalkthrough);
+    // console.log(showWalkthrough);
     if (walkthroughData.showWalkThrough) {
       setShowWalkthrough(true);
     } else {

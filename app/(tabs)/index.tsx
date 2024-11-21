@@ -120,7 +120,7 @@ const HomeScreen = () => {
               setButtonLayouts((prevLayouts) => {
                 const newLayouts = [...prevLayouts];
                 newLayouts[index] = { x, y, width, height };
-                console.log(newLayouts);
+                // console.log(newLayouts);
                 return newLayouts;
               });
             },
@@ -132,7 +132,7 @@ const HomeScreen = () => {
     []
   );
   const checkFirstTimeSignIn = async () => {
-    console.log(showWalkthrough);
+    // console.log(showWalkthrough);
     if (walkthroughData.showWalkThrough) {
       setShowWalkthrough(true);
     } else {
@@ -213,11 +213,11 @@ const HomeScreen = () => {
   const collectPinsSequentially = async (pins: ConsumedLocation[]) => {
     for (const pin of pins) {
       if (!autoCollectModeRef.current) {
-        console.log("Auto collect mode paused");
+        // console.log("Auto collect mode paused");
         return; // Exit if auto-collect is turned off
       }
       if (pin.collection_limit_remaining <= 0) {
-        console.log("Pin limit reached:", pin.id);
+        // console.log("Pin limit reached:", pin.id);
         continue;
       }
       const response = await fetch(
@@ -233,7 +233,7 @@ const HomeScreen = () => {
       );
 
       if (response.ok) {
-        console.log("Collected pin:", pin.id);
+        // console.log("Collected pin:", pin.id);
         showPinCollectionAnimation();
       }
 
@@ -324,8 +324,8 @@ const HomeScreen = () => {
 
   useEffect(() => {
     if (data.mode && userLocation && locations) {
-      const autoCollectPins = getAutoCollectPins(userLocation, locations, 100);
-
+      const autoCollectPins = getAutoCollectPins(userLocation, locations, 1000);
+      // console.log("Auto collect pins:", autoCollectPins);
       if (autoCollectPins.length > 0) {
         collectPinsSequentially(autoCollectPins);
       }
@@ -335,125 +335,113 @@ const HomeScreen = () => {
   useEffect(() => {
     autoCollectModeRef.current = data.mode;
   }, [data.mode]);
-
-  if (response.isLoading) {
+  // console.log("userLocation", userLocation);
+  if (response.isLoading || !locationPermission || !userLocation || loading) {
     return <LoadingScreen />;
   }
 
   return (
-    <View
-      style={styles.container}
-      ref={scrollViewRef}
-      onLayout={(event) => onButtonLayout(event, 0)}
-    >
-      {loading ? (
-        <LoadingScreen />
-      ) : (
-        locationPermission &&
-        userLocation && (
-          <>
-            <MapView
-              styleURL="mapbox://styles/wadzzo/cm1xtphyn01ci01pi20jhfbto"
-              style={styles.map}
-              pitchEnabled={true}
-              shouldRasterizeIOS={true}
-              logoEnabled={false}
-            >
-              <UserLocation visible={true} />
-              <Camera
-                animationDuration={5000}
-                defaultSettings={{
-                  centerCoordinate: [
-                    userLocation.longitude,
-                    userLocation.latitude,
-                  ],
-                }}
-                zoomLevel={16}
-                pitch={0}
-                ref={cameraRef}
-                centerCoordinate={[
-                  userLocation.longitude,
-                  userLocation.latitude,
-                ]}
-              />
-              <Marker locations={locations} />
-            </MapView>
+    <View style={styles.container} ref={scrollViewRef}>
+      <>
+        <MapView
+          styleURL="mapbox://styles/wadzzo/cm1xtphyn01ci01pi20jhfbto"
+          style={styles.map}
+          pitchEnabled={true}
+          shouldRasterizeIOS={true}
+          logoEnabled={false}
+        >
+          <UserLocation visible={true} />
+          <Camera
+            animationDuration={5000}
+            defaultSettings={{
+              centerCoordinate: [userLocation.longitude, userLocation.latitude],
+            }}
+            zoomLevel={16}
+            pitch={0}
+            ref={cameraRef}
+            centerCoordinate={[userLocation.longitude, userLocation.latitude]}
+          />
+          <Marker locations={locations} />
+        </MapView>
 
-            {/* Recenter button */}
-            <View
-              style={styles.balance}
-              onLayout={(event) => onButtonLayout(event, 1)}
-            >
-              <Image
-                style={{
-                  height: 20,
-                  width: 20,
-                }}
-                source={require("../../assets/images/wadzzo.png")}
-                height={100}
-                width={100}
-              />
-              <Text
-                style={{
-                  color: "white",
-                }}
-              >
-                {Number(balanceRes.data).toFixed(2)}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.recenterButton}
-              onPress={handleRecenter}
-              onLayout={(event) => onButtonLayout(event, 3)}
-            >
-              <MaterialCommunityIcons
-                name="crosshairs-gps"
-                size={20}
-                color="black"
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onLayout={(event) => onButtonLayout(event, 4)}
-              style={styles.AR}
-              onPress={() => handleARPress(userLocation, locations)}
-            >
-              <MaterialCommunityIcons
-                name="cube-scan"
-                size={20}
-                color="white"
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onLayout={(event) => onButtonLayout(event, 2)}
-              style={styles.Refresh}
-              onPress={async () => await response.refetch()}
-            >
-              <FontAwesome name="refresh" size={20} color="black" />
-            </TouchableOpacity>
-            <Animated.View
-              style={[
-                styles.pinCollectedAnim,
+        {showWalkthrough && (
+          <View
+            style={styles.welcome}
+            onLayout={(event) => onButtonLayout(event, 0)}
+          >
+            <Text>Tutorial start!</Text>
+          </View>
+        )}
+        {/* Recenter button */}
+        <View
+          style={styles.balance}
+          onLayout={(event) => onButtonLayout(event, 1)}
+        >
+          <Image
+            style={{
+              height: 20,
+              width: 20,
+            }}
+            source={require("../../assets/images/wadzzo.png")}
+            height={100}
+            width={100}
+          />
+          <Text
+            style={{
+              color: "white",
+            }}
+          >
+            {Number(balanceRes.data).toFixed(2)}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.recenterButton}
+          onPress={handleRecenter}
+          onLayout={(event) => onButtonLayout(event, 3)}
+        >
+          <MaterialCommunityIcons
+            name="crosshairs-gps"
+            size={20}
+            color="black"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onLayout={(event) => onButtonLayout(event, 4)}
+          style={styles.AR}
+          onPress={() => handleARPress(userLocation, locations)}
+        >
+          <MaterialCommunityIcons name="cube-scan" size={20} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onLayout={(event) => onButtonLayout(event, 2)}
+          style={styles.Refresh}
+          onPress={async () => await response.refetch()}
+        >
+          <FontAwesome name="refresh" size={20} color="black" />
+        </TouchableOpacity>
+        <Animated.View
+          style={[
+            styles.pinCollectedAnim,
+            {
+              opacity: pinAnim,
+              transform: [
                 {
-                  opacity: pinAnim,
-                  transform: [
-                    {
-                      scale: pinAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [1, 1.5], // Scale effect from 1 to 1.5
-                      }),
-                    },
-                  ],
+                  scale: pinAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [1, 1.5], // Scale effect from 1 to 1.5
+                  }),
                 },
-              ]}
-            >
-              <Image
-                source={require("../../assets/images/wadzzo.png")}
-                style={styles.pinImage}
-              />
-            </Animated.View>
-          </>
-        )
-      )}
+              ],
+            },
+          ]}
+        >
+          <Image
+            source={require("../../assets/images/wadzzo.png")}
+            style={styles.pinImage}
+          />
+        </Animated.View>
+      </>
+
       {showWalkthrough && (
         <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
       )}
@@ -489,10 +477,7 @@ const Marker = ({ locations }: { locations: ConsumedLocation[] }) => {
                 !location.auto_collect && {
                   borderRadius: 15, // Add borderRadius only when auto_collect is false
                 },
-                !location.collected && {},
-                location.collection_limit_remaining <= 0 && {
-                  opacity: 0.4,
-                },
+                !location.collected && { opacity: 0.4,}
               ]}
             />
           </TouchableOpacity>
@@ -565,6 +550,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     zIndex: 10,
   },
+  welcome: {
+    position: "absolute",
+    top: 100,
+    left: 10,
+  },
+
   AR: {
     position: "absolute",
     bottom: 140,

@@ -20,6 +20,6 @@ export const getCurrentUser = async () => {
 
         return data;
     } catch (error) {
-        throw error;
+        console.log("Error fetching current user:", error);
     }
 };

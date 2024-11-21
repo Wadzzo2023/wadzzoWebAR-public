@@ -17,7 +17,7 @@ export const deleteCurrentUser = async () => {
         return data;
 
     } catch (error) {
-        console.error("Error deleting user:", error);
-        throw error;
+        console.log("Error deleting user:", error);
+
     }
 };

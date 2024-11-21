@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { runOnJS } from "react-native-reanimated";
+
 import {
   View,
   Text,
@@ -33,7 +35,7 @@ type StepProps = {
   totalSteps?: number;
   onNext?: () => void;
   onPrevious?: () => void;
-
+  onSkip?: () => void;
   onFinish?: () => void;
 };
 
@@ -51,14 +53,11 @@ const Step: React.FC<StepProps> = ({
   totalSteps,
   onNext,
   onPrevious,
-
+  onSkip,
   onFinish,
 }) => {
   const opacity = useSharedValue(0);
-  const [position, setPosition] = useState<{ top: number; bottom: number }>({
-    top: 0,
-    bottom: 0,
-  });
+  const [position, setPosition] = useState<{ top: number; bottom: number }>();
 
   useEffect(() => {
     opacity.value = withTiming(isVisible ? 1 : 0, {
@@ -93,7 +92,7 @@ const Step: React.FC<StepProps> = ({
     };
   });
 
-  if (!isVisible) return null;
+  if (!isVisible || !position) return null;
 
   return (
     <Animated.View style={[styles.stepContainer, animatedStyle]}>
@@ -120,15 +119,25 @@ const Step: React.FC<StepProps> = ({
           },
         ]}
       >
-        <TouchableOpacity onPress={onFinish} style={[styles.skipButton]}>
-          <Text
-            style={{
-              color: "#fff",
-            }}
-          >
-            Skip
-          </Text>
-        </TouchableOpacity>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "flex-end",
+            width: "100%",
+            paddingHorizontal: 10,
+            paddingVertical:4,
+          }}
+        >
+          <TouchableOpacity onPress={onFinish} style={[styles.skipButton]}>
+            <Text
+              style={{
+                color: "#fff",
+              }}
+            >
+              Stop Tutorial
+            </Text>
+          </TouchableOpacity>
+        </View>
         <View
           style={{
             flex: 1,
@@ -142,7 +151,8 @@ const Step: React.FC<StepProps> = ({
               flexDirection: "column",
               justifyContent: "flex-start",
               alignItems: "center",
-              padding: 20,
+              paddingVertical: 0,
+              paddingHorizontal:20,
             }}
           >
             <Text style={styles.title}>{title}</Text>
@@ -165,9 +175,13 @@ const Step: React.FC<StepProps> = ({
               </TouchableOpacity>
             )}
 
-            {currentStep! < totalSteps! - 1 && (
-              <TouchableOpacity onPress={onNext} style={styles.button}>
+            {currentStep! < totalSteps! - 1 ? (
+              <TouchableOpacity onPress={onNext} style={[styles.button]}>
                 <Text style={styles.buttonText}>Next</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={onSkip} style={styles.button}>
+                <Text style={styles.buttonText}>Finish</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -207,7 +221,7 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
   const skip = () => {
     opacity.value = withTiming(0, { duration: 300 }, (finished) => {
       if (finished) {
-        onFinish();
+        runOnJS(onFinish)(); // Safely call onFinish on the JS thread
       }
     });
   };
@@ -225,6 +239,7 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
             onNext={nextStep}
             onPrevious={prevStep}
             onFinish={onStop}
+            onSkip={skip}
           />
         ))}
       </Animated.View>
@@ -271,8 +286,8 @@ const styles = StyleSheet.create({
   navigation: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
     paddingVertical: 10,
+    paddingHorizontal:10,
   },
   button: {
     backgroundColor: Color.wadzzo,

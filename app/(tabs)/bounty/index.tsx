@@ -24,7 +24,6 @@ import {
   Title,
 } from "react-native-paper";
 import RenderHtml from "react-native-render-html";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // import AsyncStorage
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -74,6 +73,29 @@ export default function BountyScreen() {
         "Clicking 'Join Bounty' lets users view details and join. If already joined, they can view details only.",
     },
   ];
+  const dummyBounties: Bounty[] = [
+    {
+      title: "Bounty 1",
+      description: "This is a bounty description",
+      priceInUSD: 100,
+      priceInBand: 100,
+      status: "APPROVED",
+      isJoined: false,
+      _count: {
+        participants: 10,
+      },
+      imageUrls: ["https://app.wadzzo.com/images/loading.png"],
+      winnerId: "0x1234567890",
+      creator: {
+        name: "Creator 1",
+        profileUrl: "https://app.wadzzo.com/images/loading.png",
+      },
+      id: "1",
+      creatorId: "0x1234567890",
+      requiredBalance: 100,
+    },
+  ];
+
   const onButtonLayout = useCallback(
     (event: LayoutChangeEvent, index: number) => {
       if (scrollViewRef.current) {
@@ -292,7 +314,7 @@ export default function BountyScreen() {
         </View>
       )}
       <FlatList
-        data={filteredBounties}
+        data={showWalkthrough ? dummyBounties : filteredBounties}
         renderItem={renderBountyItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[styles.listContainer, { paddingBottom: 80 }]}

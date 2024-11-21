@@ -32,7 +32,7 @@ export const GetXDR4Follow = async ({
       return null;
     }
   } catch (error) {
-    console.error("Error failed to follow brand:", error);
-    return null;
+    // console.log("Error failed to follow brand:", error);
+
   }
 };

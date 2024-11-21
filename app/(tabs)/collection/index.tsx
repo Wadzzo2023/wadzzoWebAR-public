@@ -85,6 +85,25 @@ export default function MyCollectionScreen() {
         "Pressing View on a pin reveals details like the brand, collection date, item info, a Claim button for more details, collection limits, and more.",
     },
   ];
+  const dummyCollection: ConsumedLocation[] = [
+    {
+      id: "1",
+      title: "Pin Title",
+      description: "This is a dummy collected pin description",
+      image_url: "https://app.wadzzo.com/images/loading.png",
+      collection_limit_remaining: 1,
+      lat: 1.0,
+      lng: 1.0,
+      url: "https://www.google.com",
+      collected: true,
+      auto_collect: false,
+      brand_id: "1",
+      brand_image_url: "https://app.wadzzo.com/images/loading.png",
+      brand_name: "Dummy Brand",
+      modal_url: "https://www.google.com",
+      viewed: true,
+    },
+  ];
   const onButtonLayout = useCallback(
     (event: LayoutChangeEvent, index: number) => {
       if (scrollViewRef.current) {
@@ -96,7 +115,7 @@ export default function MyCollectionScreen() {
               setButtonLayouts((prevLayouts) => {
                 const newLayouts = [...prevLayouts];
                 newLayouts[index] = { x, y, width, height };
-                console.log(newLayouts);
+                // console.log(newLayouts);
                 return newLayouts;
               });
             },
@@ -121,15 +140,14 @@ export default function MyCollectionScreen() {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch collections");
+        // console.log("Failed to fetch collections");
       }
 
       const data = await response.json();
 
       return data; // Make sure this matches the actual response structure
     } catch (error) {
-      console.error("Error fetching collections:", error);
-      throw error;
+      // console.log("Error fetching collections:", error);
     }
   };
 
@@ -145,7 +163,7 @@ export default function MyCollectionScreen() {
     router.push("/ARScreen");
   };
   const checkFirstTimeSignIn = async () => {
-    console.log(showWalkthrough);
+    // console.log(showWalkthrough);
     if (walkthroughData.showWalkThrough) {
       setShowWalkthrough(true);
     } else {
@@ -357,7 +375,7 @@ export default function MyCollectionScreen() {
         </View>
       )}
       <FlatList
-        data={sortedLocations}
+        data={showWalkthrough ? dummyCollection : sortedLocations}
         showsVerticalScrollIndicator={false}
         renderItem={renderCollectionItem}
         keyExtractor={(item, index) => `${item.id}-${index}`}

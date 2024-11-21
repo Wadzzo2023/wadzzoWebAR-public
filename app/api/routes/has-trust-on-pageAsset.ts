@@ -25,7 +25,7 @@ export const HasTrustOnPageAsset = async ({
     const data = await response.json();
     return data.hasTrust;
   } catch (error) {
-    console.error("Failed to  find trust on brand", error);
-    return error;
+    // console.log("Failed to  find trust on brand", error);
+
   }
 };

@@ -17,6 +17,6 @@ export const getAllBounties = async () => {
 
     } catch (error) {
         console.error("Error fetching bounties:", error);
-        throw error;
+
     }
 };

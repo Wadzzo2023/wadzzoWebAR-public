@@ -17,7 +17,7 @@ export const getUserPlatformAsset = async () => {
 
 
     } catch (error) {
-        console.error("Failed to fetch User Balance:", error);
-        throw new Error("Failed to fetch User Balance");
+        // console.log("Failed to fetch User Balance:", error);
+
     }
 };

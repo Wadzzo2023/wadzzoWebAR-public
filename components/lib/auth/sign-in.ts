@@ -8,7 +8,7 @@ export async function SignIn({ options }: { options: AuthCredentialType }) {
     BASE_URL
   ).toString();
 
-  console.log(options);
+  // console.log(options);
   const res = await fetch(_signInUrl, {
     method: "POST",
     headers: {
@@ -41,6 +41,6 @@ export async function getCsrfToken() {
     csrfToken: string;
   };
   const csrfToken = csrTokenResponse.csrfToken;
-  console.log("csrf", csrfToken);
+  // console.log("csrf", csrfToken);
   return csrfToken;
 }

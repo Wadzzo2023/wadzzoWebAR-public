@@ -266,13 +266,13 @@ export default function CreatorPage() {
         style={styles.followButton}
       >
         {item.followed_by_current_user ? (
-          followLoadingId === item.id ? (
-            <ActivityIndicator size={"small"} />
+          unfollowLoadingId === item.id ? (
+            <ActivityIndicator size={'small'}  color="black"/>
           ) : (
             "Unfollow"
           )
-        ) : unfollowLoadingId === item.id ? (
-          <ActivityIndicator size={"small"} />
+        ) : followLoadingId === item.id ? (
+          <ActivityIndicator size={'small'}  color="black"/>
         ) : (
           "Follow"
         )}
