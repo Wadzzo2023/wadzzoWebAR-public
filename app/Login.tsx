@@ -10,22 +10,36 @@ import {
 } from "react-native";
 
 import { useMutation } from "@tanstack/react-query";
-
 import * as Google from "expo-auth-session/providers/google";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { ActivityIndicator, Button, TextInput } from "react-native-paper";
-
 import { makeRedirectUri } from "expo-auth-session";
 import { useAuth } from "../components/lib/auth/Provider";
 import { GoogleOuthToFirebaseToken } from "../components/lib/auth/google";
 import { WalletType } from "../components/lib/auth/types";
 import { SignIn } from "../components/lib/auth/sign-in";
-import { BASE_URL, CALLBACK_URL } from "../components/utils/Common";
+import { BASE_URL, CALLBACK_URL, USER_ACCOUNT_URL, USER_ACCOUNT_XDR_URL } from "../components/utils/Common";
 import { Color } from "../components/utils/all-colors";
 import { AppleLogin } from "../components/lib/auth/apple/index.ios";
-
+import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
+import { set, z } from "zod";
+import axios from "axios";
+import { submitActiveAcountXdr } from "@/components/utils/submitActiveAccountXDR";
+import { getUser } from "./api/routes/get-user";
+import base64 from "react-native-base64";
+import { submitSignedXDRToServer4User } from "@/components/utils/submitSignedXDRtoServer4User";
+import { AuthErrorCodes } from "firebase/auth";
 const webPlatform = Platform.OS === "web";
+export const extraSchema = z.object({
+  isAccActive: z.boolean(),
+  xdr: z.string().optional(),
+});
+
+export const getPublicKeyAPISchema = z.object({
+  publicKey: z.string().min(56),
+  extra: extraSchema,
+});
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -35,7 +49,7 @@ const LoginScreen = () => {
   const [password, setPassword] = React.useState("");
   const router = useRouter();
   const [error, setError] = React.useState(false);
-
+  const [verifyEmail, setVerifyEmail] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
   const [googleLoading, setGoogleLoading] = React.useState(false);
   const [token, setTokens] = React.useState<{
@@ -89,7 +103,7 @@ const LoginScreen = () => {
         token.idToken,
         token.accessToken
       );
-
+      console.log(firebaseToken);
       const response = await SignIn({
         options: {
           email: firebaseToken.email,
@@ -97,7 +111,7 @@ const LoginScreen = () => {
           token: firebaseToken.firebaseToken,
         },
       });
-
+      console.log(response);
       if (!response.ok) {
         const error = await response.json();
         // // console.log("Err",error)
@@ -105,11 +119,37 @@ const LoginScreen = () => {
         setGoogleLoading(false);
         throw new Error(error.message);
       } else {
+
+
+
         const setCookies = response.headers.get("set-cookie");
-        // // console.log(setCookies)
+        // console.log(setCookies)
         if (setCookies) {
           login(setCookies);
         }
+        const decode = base64.decode(firebaseToken.firebaseToken.split(".")[1]);
+        const uid = extractUIDToken(decode);
+        const user = await getUser();
+        const res = await toast.promise(
+          axios.get(USER_ACCOUNT_URL, {
+            params: {
+              uid: uid,
+              email: firebaseToken.email,
+            },
+          }),
+          {
+            loading: "Getting public key...",
+            success: "Received public key",
+            error: "Unable to get public key",
+          },
+
+        );
+        console.log(res.data);
+        const { publicKey, extra } = await getPublicKeyAPISchema.parseAsync(
+          res.data,
+        );
+        await submitActiveAcountXdr(extra);
+
 
         setGoogleLoading(false);
       }
@@ -146,16 +186,102 @@ const LoginScreen = () => {
         credentials: "include",
       });
 
+
       if (!response.ok) {
         const error = await response.json();
-        setError(true);
+        const errorString = new URL(error.url).searchParams.get("error")
+        console.log(errorString);
+        if (errorString?.includes(AuthErrorCodes.USER_DELETED)) {
+          toast("User not found!", {
+            duration: 3000,
+            position: ToastPosition.BOTTOM,
+            styles: {
+              view: { backgroundColor: Color.light.error, borderRadius: 8 },
+              text: { color: 'white' }
+            },
+          });
+        }
+        else if (errorString?.includes(AuthErrorCodes.INVALID_EMAIL)) {
+          toast("Invalid Email!", {
+            duration: 3000,
+            position: ToastPosition.BOTTOM,
+            styles: {
+              view: { backgroundColor: Color.light.error, borderRadius: 8 },
+              text: { color: 'white' }
+            },
+          });
+        }
+
+        else if (errorString?.includes(AuthErrorCodes.INVALID_PASSWORD)) {
+          setError(true);
+          toast("Invalid Credentials.", {
+            duration: 3000,
+            position: ToastPosition.BOTTOM,
+            styles: {
+              view: { backgroundColor: Color.light.error, borderRadius: 8 },
+              text: { color: 'white' }
+            },
+          });
+
+        } else if (errorString?.includes("Email is not verified")) {
+          toast("Email is not verified! Check your email.", {
+            duration: 3000,
+            position: ToastPosition.BOTTOM,
+            styles: {
+              view: { backgroundColor: Color.light.error, borderRadius: 8 },
+              text: { color: 'white' }
+            },
+          });
+
+        } else {
+          toast("Something went wrong! Please contact with admin.", {
+            duration: 3000,
+            position: ToastPosition.BOTTOM,
+            styles: {
+              view: { backgroundColor: Color.light.error, borderRadius: 8 },
+              text: { color: 'white' }
+            },
+          });
+        }
         setLoading(false);
-        throw new Error(error.message);
       } else {
         const setCookies = response.headers.get("set-cookie");
         if (setCookies) {
           login(setCookies);
         }
+        const res = await toast.promise(
+          axios.get(USER_ACCOUNT_XDR_URL, {
+            params: {
+              email: email,
+            },
+          }),
+          {
+            loading: "Getting public key...",
+            success: "Received public key",
+            error: "Unable to get public key",
+          },
+
+        );
+        console.log(res.data);
+        const xdr = res.data.xdr as string;
+        if (xdr) {
+          // console.log(xdr, "xdr");
+          const res = await toast.promise(
+            submitSignedXDRToServer4User(xdr),
+            {
+              loading: "Activating account...",
+              success: "Request completed successfully",
+              error: "While activating account error happened, Try again later",
+            },
+          );
+
+          if (res) {
+            toast.success("Account activated");
+          } else {
+            toast.error("Account activation failed");
+          }
+        }
+        setLoading(false);
       }
     },
     onError: (error) => {
@@ -214,6 +340,7 @@ const LoginScreen = () => {
                 <TextInput
                   mode="outlined"
                   value={email}
+                  inputMode="email"
                   onChangeText={(text) => setEmail(text)}
                   placeholder="Email"
                   style={styles.input}
@@ -227,11 +354,11 @@ const LoginScreen = () => {
                   style={styles.input}
                 />
 
-                {/* <View style={styles.forgotPasswordContainer}>
+                <Link href={"/forget-password"} style={styles.forgotPasswordContainer}>
                   <Text style={styles.forgotPasswordText}>
                     Forgot your password?
                   </Text>
-                </View> */}
+                </Link>
                 <Button
                   onPress={handleLogin}
                   style={{ backgroundColor: Color.wadzzo, marginTop: 10 }}
@@ -272,18 +399,20 @@ const LoginScreen = () => {
                   </TouchableOpacity>
                 </View>
 
-                {/* <View style={styles.newAccountContainer}>
+                <View style={styles.newAccountContainer}>
                   <Text style={styles.newAccountText}>New here?</Text>
-                  <Button onPress={() => router.push("/Signup")}>
-                    Create an account
+                  <Button style={{ backgroundColor: Color.light.inverseOnSurface, marginTop: 10 }} onPress={() => router.push("/Signup")}>
+                    <Text style={{
+                      color: "black",
+                    }}>Create an account</Text>
                   </Button>
-                </View> */}
+                </View>
               </View>
             </View>
           </View>
         </View>
       </View>
-    </ScrollView>
+    </ScrollView >
   );
 };
 
@@ -380,7 +509,7 @@ const styles = StyleSheet.create({
   },
   forgotPasswordContainer: {
     padding: 8,
-    alignItems: "flex-end",
+    textAlign: "right",
   },
   forgotPasswordText: {
     textDecorationLine: "underline",
@@ -420,3 +549,29 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
+
+function extractUIDToken(decodedToken: string): string | null {
+  try {
+    // Remove any whitespace
+    const cleanToken = decodedToken.trim();
+
+    // Find the start and end of the email field
+    const uidStartIndex = cleanToken.indexOf('"user_id":"');
+    if (uidStartIndex === -1) return null;
+
+    // Calculate the actual start of the email value
+    const uidValueStart = uidStartIndex + '"user_id":"'.length;
+
+    // Find the end of the email value (look for next ")
+    const uidEndIndex = cleanToken.indexOf('"', uidValueStart);
+    if (uidEndIndex === -1) return null;
+
+    // Extract the email
+    const email = cleanToken.substring(uidValueStart, uidEndIndex);
+
+    return email;
+  } catch (error) {
+    console.error("Error extracting email:", error);
+    return null;
+  }
+}

@@ -16,9 +16,13 @@ import { useMutation } from "@tanstack/react-query";
 
 import { useRouter } from "expo-router";
 
-import { Button, TextInput } from "react-native-paper";
+import { ActivityIndicator, Button, TextInput } from "react-native-paper";
 import { Color } from "../components/utils/all-colors";
 import { BASE_URL } from "../components/utils/Common";
+import { AuthError, AuthErrorCodes, createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/components/lib/auth/config";
+import { GoogleOuthToFirebaseToken } from "@/components/lib/auth/google";
+import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -30,40 +34,103 @@ const SignUpScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [userName, setUserName] = useState("");
   const router = useRouter();
+  const [errorPassword, setErrorPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const mutation = useMutation({
     mutationFn: async () => {
-      const requestName = "api/v1/auth/sign_up";
-      const response = await fetch(new URL(requestName, BASE_URL).toString(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          email: email,
-          password: password,
-          password_confirmation: confirmPassword,
-          username: userName,
-        }).toString(),
-      });
+      setLoading(true);
+      try {
+        console.log("email", email);
+        console.log("password", password);
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const user = cred.user;
+        toast("Check you email to verify your account.", {
+          duration: 3000,
+          styles: {
+            view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
+          },
+          position: ToastPosition.BOTTOM,
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message);
-      } else {
-        const token = response.headers.get("set-cookie");
-        if (token) {
-          Alert.alert("Success", "Signup successful");
-          router.push("/(tabs)/");
+        });
+        router.push("/Login");
+        setLoading(false);
+
+      } catch (error: unknown) {
+        const err = error as AuthError;
+        if (err.code == AuthErrorCodes.EMAIL_EXISTS) {
+          toast("Email already exists!", {
+            duration: 3000,
+            styles: {
+              view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
+            },
+            position: ToastPosition.BOTTOM,
+
+          });
+          setLoading(false);
+
+        } else {
+          const errorMessage = err.code;
+          if (errorMessage === AuthErrorCodes.INVALID_EMAIL) {
+            toast("Invalid email!", {
+              duration: 3000,
+              styles: {
+                view: { backgroundColor: Color.light.error, borderRadius: 8 },
+                text: { color: 'white' }
+              },
+              position: ToastPosition.BOTTOM,
+            });
+          }
+          else if (errorMessage === AuthErrorCodes.WEAK_PASSWORD) {
+            toast("Weak password!", {
+              duration: 3000,
+              styles: {
+                view: { backgroundColor: Color.light.error, borderRadius: 8 },
+                text: { color: 'white' }
+              },
+              position: ToastPosition.BOTTOM,
+            });
+          }
+          else if (errorMessage === AuthErrorCodes.INVALID_PASSWORD) {
+            toast("Invalid password!", {
+              duration: 3000,
+              styles: {
+                view: { backgroundColor: Color.light.error, borderRadius: 8 },
+                text: { color: 'white' }
+              },
+              position: ToastPosition.BOTTOM,
+            });
+          }
+          else {
+            toast("Failed to create account", {
+              duration: 3000,
+              styles: {
+                view: { backgroundColor: Color.light.error, borderRadius: 8 },
+                text: { color: 'white' }
+              },
+              position: ToastPosition.BOTTOM,
+            });
+          }
+
+          setLoading(false);
+
         }
       }
+
     },
     onError: (error) => {
       Alert.alert("Error", error.message);
+      setLoading(false);
     },
   });
 
   const handleSignUp = () => {
+
+    if (password !== confirmPassword) {
+      setErrorPassword(true);
+      return;
+    }
     mutation.mutate();
+
   };
 
   return (
@@ -96,14 +163,7 @@ const SignUpScreen = () => {
                   value={email}
                   onChangeText={(text) => setEmail(text)}
                 />
-                <TextInput
-                  mode="outlined"
-                  placeholder="Username"
-                  secureTextEntry
-                  value={userName}
-                  onChangeText={(text) => setUserName(text)}
-                  style={styles.input}
-                />
+
                 <TextInput
                   placeholder="Password"
                   secureTextEntry
@@ -120,7 +180,13 @@ const SignUpScreen = () => {
                   secureTextEntry
                   style={styles.input}
                 />
-
+                {
+                  errorPassword && (
+                    <Text style={{ color: "red" }}>
+                      Password and Confirm Password do not match
+                    </Text>
+                  )
+                }
                 <Button
                   onPress={handleSignUp}
                   style={{
@@ -128,14 +194,18 @@ const SignUpScreen = () => {
                     backgroundColor: Color.wadzzo,
                   }}
                 >
-                  <Text style={{ color: "white" }}> Sign Up </Text>
+                  <Text style={{ color: "white" }}> Sign Up  </Text>       {loading && <ActivityIndicator color="white" size={12} />}
                 </Button>
 
                 <View style={styles.alreadyHaveAccountContainer}>
                   <Text style={styles.alreadyHaveAccountText}>
                     Already have an account?
                   </Text>
-                  <Button onPress={() => router.push("/Login")}>Login</Button>
+                  <Button style={{ backgroundColor: Color.light.inverseOnSurface, marginTop: 10 }} onPress={() => router.push("/Login")}>
+                    <Text style={{
+                      color: "black",
+                    }} >Login</Text>
+                  </Button>
                 </View>
               </View>
             </View>

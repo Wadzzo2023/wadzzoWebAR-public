@@ -115,7 +115,6 @@ export default function MyCollectionScreen() {
               setButtonLayouts((prevLayouts) => {
                 const newLayouts = [...prevLayouts];
                 newLayouts[index] = { x, y, width, height };
-                // console.log(newLayouts);
                 return newLayouts;
               });
             },
@@ -367,23 +366,29 @@ export default function MyCollectionScreen() {
           />
         </Menu>
       </Appbar.Header>
-      {sortedLocations.length === 0 && (
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <Text>No collections found</Text>
-        </View>
-      )}
-      <FlatList
-        data={showWalkthrough ? dummyCollection : sortedLocations}
-        showsVerticalScrollIndicator={false}
-        renderItem={renderCollectionItem}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
-        contentContainerStyle={[styles.list, { paddingBottom: 80 }]}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-      />
+      {
+        showWalkthrough ? renderCollectionItem({ item: dummyCollection[0], index: 0 }) :
+          <>
+            {sortedLocations.length === 0 && (
+              <View
+                style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+              >
+                <Text>No collections found</Text>
+              </View>
+            )}
+            <FlatList
+              data={sortedLocations}
+              showsVerticalScrollIndicator={false}
+              renderItem={renderCollectionItem}
+              keyExtractor={(item, index) => `${item.id}-${index}`}
+              contentContainerStyle={[styles.list, { paddingBottom: 80 }]}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              }
+            />
+          </>
+      }
+
 
       {showWalkthrough && (
         <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
@@ -426,7 +431,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   actions: {
-    flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 8,

@@ -11,7 +11,12 @@ import {
 import base64 from "react-native-base64";
 import { useAuth } from "../Provider";
 import { SignIn } from "../sign-in";
-import { WalletType } from "../types";
+import { getPublicKeyAPISchema, WalletType } from "../types";
+import { toast } from "@backpackapp-io/react-native-toast";
+import { USER_ACCOUNT_URL } from "@/components/utils/Common";
+import axios from "axios";
+import { submitActiveAcountXdr } from "@/components/utils/submitActiveAccountXDR";
+import { getUser } from "@/app/api/routes/get-user";
 
 export function AppleLogin() {
   const [loading, setLoading] = useState(false);
@@ -38,6 +43,28 @@ export function AppleLogin() {
         if (setCookies) {
           login(setCookies);
         }
+        const user = await getUser();
+        const response = await toast.promise(
+          axios.get(USER_ACCOUNT_URL, {
+            params: {
+              uid: user?.id,
+              pubkey: user?.id,
+              email: appleCredential.email,
+            },
+          }),
+          {
+            loading: "Getting public key...",
+            success: "Received public key",
+            error: "Unable to get public key",
+
+          },
+
+        );
+        console.log(response.data)
+        const { publicKey, extra } = await getPublicKeyAPISchema.parseAsync(
+          response.data,
+        );
+        await submitActiveAcountXdr(extra);
       }
     } catch (e) {
       console.log("e", e);

@@ -1,9 +1,11 @@
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import Mapbox, {
   Camera,
+  LocationPuck,
   MapView,
   MarkerView,
   UserLocation,
+  UserTrackingMode,
 } from "@rnmapbox/maps";
 import * as Location from "expo-location";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -13,6 +15,7 @@ import {
   findNodeHandle,
   Image,
   LayoutChangeEvent,
+  Platform,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -39,6 +42,7 @@ import { Color } from "@/components/utils/all-colors";
 import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
 import { useWalkThrough } from "@/components/hooks/useWalkThrough";
 import { useAuth } from "@/components/lib/auth/Provider";
+import { Position } from "@rnmapbox/maps/lib/typescript/src/types/Position";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
@@ -66,10 +70,11 @@ const HomeScreen = () => {
   const { setData } = useNearByPin();
   const { data } = useAccountAction();
   const autoCollectModeRef = useRef(data.mode);
+  const [trackingMode, setTrackingMode] = useState(true);
   const { onOpen } = useModal();
   const cameraRef = useRef<Camera>(null);
   const { isAuthenticated } = useAuth();
-
+  const [center, setCenter] = useState<Position>([0, 0]);
   const scrollViewRef = useRef(null);
   const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
@@ -145,7 +150,7 @@ const HomeScreen = () => {
     radius: number
   ) => {
     return locations.filter((location) => {
-      if (location.auto_collect || location.collection_limit_remaining <= 0)
+      if (location.auto_collect || location.collection_limit_remaining <= 0 || location.collected)
         return false;
       const distance = getDistanceFromLatLonInMeters(
         userLocation.latitude,
@@ -172,7 +177,7 @@ const HomeScreen = () => {
       (Math.cos((lat1 * Math.PI) / 180) *
         Math.cos((lat2 * Math.PI) / 180) *
         (1 - Math.cos(dLon))) /
-        2;
+      2;
     return R * 2 * Math.asin(Math.sqrt(a));
   };
 
@@ -198,7 +203,7 @@ const HomeScreen = () => {
     radius: number
   ) => {
     return locations.filter((location) => {
-      if (location.collection_limit_remaining <= 0) return false;
+      if (location.collection_limit_remaining <= 0 || location.collected) return false;
       if (location.auto_collect) {
         const distance = getDistanceFromLatLonInMeters(
           userLocation.latitude,
@@ -261,7 +266,7 @@ const HomeScreen = () => {
       cameraRef.current.setCamera({
         centerCoordinate: [userLocation.longitude, userLocation.latitude],
         zoomLevel: 16,
-        animationDuration: 1000,
+
       });
       setFollowUser(true); // Enable following again
     }
@@ -280,6 +285,7 @@ const HomeScreen = () => {
   const locations = response.data?.locations ?? [];
 
   useEffect(() => {
+    // Request location permission
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
@@ -289,28 +295,57 @@ const HomeScreen = () => {
 
       setLocationPermission(true);
 
-      let location = await Location.getCurrentPositionAsync();
-      setUserLocation({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-      setExtraInfo({
-        useCurrentLocation: {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        },
-      });
 
-      setLoading(false);
+      // Start watching the user's location
+      const locationSubscription = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          distanceInterval: 1, // update position every meter
+          timeInterval: 1000,  // update position every second
+        },
+        (location) => {
+          const { latitude, longitude, speed } = location.coords;
+
+          setLoading(false);
+          setUserLocation({
+            latitude,
+            longitude,
+          });
+          console.log("User location:", latitude, longitude);
+          // Track if the user is walking or running based on speed (in meters per second)
+          if (speed! >= 3) {
+            console.log("User is running");
+          } else if (speed! >= 0.5) {
+            console.log("User is walking");
+          } else {
+            console.log("User is stationary");
+          }
+
+          setExtraInfo({
+            useCurrentLocation: {
+              latitude,
+              longitude,
+            },
+          });
+        }
+      );
+
+      // Clean up the subscription when the component unmounts or when location tracking stops
+      return () => {
+        if (locationSubscription) {
+          locationSubscription.remove();
+        }
+      };
     })();
   }, []);
+
 
   useEffect(() => {
     if (userLocation && cameraRef.current) {
       cameraRef.current.setCamera({
         centerCoordinate: [userLocation.longitude, userLocation.latitude],
         zoomLevel: 16,
-        animationDuration: 1000,
+        animationDuration: 5000,
       });
     }
   }, [userLocation]);
@@ -321,6 +356,17 @@ const HomeScreen = () => {
       checkFirstTimeSignIn(); // Check if it's the first sign-in
     }
   }, [isAuthenticated, walkthroughData]);
+
+  useEffect(() => {
+    if (userLocation && cameraRef.current) {
+      let zoomLevel = 16; // Default zoom level for walking
+      cameraRef.current.setCamera({
+        centerCoordinate: [userLocation.longitude, userLocation.latitude],
+        zoomLevel,
+        animationDuration: 1000,
+      });
+    }
+  }, [userLocation]);
 
   useEffect(() => {
     if (data.mode && userLocation && locations) {
@@ -335,13 +381,17 @@ const HomeScreen = () => {
   useEffect(() => {
     autoCollectModeRef.current = data.mode;
   }, [data.mode]);
-  // console.log("userLocation", userLocation);
-  if (response.isLoading || !locationPermission || !userLocation || loading) {
+
+
+
+  if (response.isLoading || loading || !locationPermission || !userLocation) {
     return <LoadingScreen />;
   }
 
+
   return (
     <View style={styles.container} ref={scrollViewRef}>
+
       <>
         <MapView
           styleURL="mapbox://styles/wadzzo/cm1xtphyn01ci01pi20jhfbto"
@@ -349,18 +399,24 @@ const HomeScreen = () => {
           pitchEnabled={true}
           shouldRasterizeIOS={true}
           logoEnabled={false}
+
+
         >
-          <UserLocation visible={true} />
           <Camera
-            animationDuration={5000}
             defaultSettings={{
               centerCoordinate: [userLocation.longitude, userLocation.latitude],
             }}
+
             zoomLevel={16}
+            followZoomLevel={16}
+            followPitch={16}
             pitch={0}
+            allowUpdates={true}
+            followUserMode={UserTrackingMode.Follow}
             ref={cameraRef}
             centerCoordinate={[userLocation.longitude, userLocation.latitude]}
           />
+          <LocationPuck pulsing={{ isEnabled: true }} puckBearingEnabled puckBearing="heading" />
           <Marker locations={locations} />
         </MapView>
 
@@ -369,7 +425,7 @@ const HomeScreen = () => {
             style={styles.welcome}
             onLayout={(event) => onButtonLayout(event, 0)}
           >
-            <Text>Tutorial start!</Text>
+
           </View>
         )}
         {/* Recenter button */}
@@ -405,6 +461,7 @@ const HomeScreen = () => {
             color="black"
           />
         </TouchableOpacity>
+
         <TouchableOpacity
           onLayout={(event) => onButtonLayout(event, 4)}
           style={styles.AR}
@@ -477,7 +534,7 @@ const Marker = ({ locations }: { locations: ConsumedLocation[] }) => {
                 !location.auto_collect && {
                   borderRadius: 15, // Add borderRadius only when auto_collect is false
                 },
-                !location.collected && { opacity: 0.4,}
+                location.collected && { opacity: 0.4, }
               ]}
             />
           </TouchableOpacity>
@@ -530,7 +587,7 @@ const styles = StyleSheet.create({
 
   recenterButton: {
     position: "absolute",
-    bottom: 80,
+    bottom: Platform.OS === 'ios' ? 90 : 80,
     right: 10,
     backgroundColor: Color.white,
     padding: 12,
@@ -558,7 +615,7 @@ const styles = StyleSheet.create({
 
   AR: {
     position: "absolute",
-    bottom: 140,
+    bottom: Platform.OS === 'ios' ? 150 : 140,
     right: 10,
     backgroundColor: Color.wadzzo,
     padding: 12,
@@ -567,7 +624,7 @@ const styles = StyleSheet.create({
   },
   Refresh: {
     position: "absolute",
-    bottom: 80,
+    bottom: Platform.OS === 'ios' ? 90 : 80,
     right: 60,
     backgroundColor: Color.white,
     padding: 12,

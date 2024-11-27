@@ -21,6 +21,8 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { useBounty } from "../hooks/useBounty";
 import { JoinBounty } from "@/app/api/routes/join-bounty";
+import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
+import { Color } from "../utils/all-colors";
 
 const JoinBountyModal = () => {
   const { isOpen, onClose, type, data } = useModal();
@@ -43,13 +45,28 @@ const JoinBountyModal = () => {
       queryClient.invalidateQueries({
         queryKey: ["bounties"],
       });
+      toast("Joined bounty successfully!", {
+
+        duration: 3000,
+        position: ToastPosition.BOTTOM,
+        styles: {
+          view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
+        },
+      });
       setJoinBountyId(null);
       setData({ item: data.bounty });
       handleClose();
       router.push(`/bounty/${data.bounty?.id}`);
     },
     onError: (error) => {
-      ToastAndroid.show("Failed to join bounty", ToastAndroid.SHORT);
+      toast("Failed to join bounty", {
+        duration: 3000,
+        position: ToastPosition.BOTTOM,
+        styles: {
+          view: { backgroundColor: Color.light.error, borderRadius: 8 },
+          text: { color: 'white' }
+        },
+      });
       setJoinBountyId(null);
     },
   });

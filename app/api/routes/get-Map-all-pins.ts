@@ -1,3 +1,4 @@
+import { ConsumedLocation } from "@/components/types/CollectionTypes";
 import { BASE_URL } from "@/components/utils/Common";
 
 export const getMapAllPins = async ({ filterID }: { filterID: string }) => {
@@ -18,8 +19,9 @@ export const getMapAllPins = async ({ filterID }: { filterID: string }) => {
             throw new Error("Failed to fetch pins");
         }
 
-        const data = await response.json();
+        const data = await response.json() as { locations: ConsumedLocation[] };
         return data;
+
     } catch (error) {
         // console.log("Error fetching pins:", error);
 

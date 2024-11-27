@@ -40,17 +40,3 @@ export function needSign(walletType: WalletType) {
 }
 
 
-
-export async function submitActiveAcountXdr(
-    extra: z.infer<typeof extraSchema>,
-) {
-    if (!extra.isAccActive) {
-        if (extra.xdr) {
-
-            const res = await submitSignedXDRToServer4User(extra.xdr)
-
-
-
-        }
-    }
-}

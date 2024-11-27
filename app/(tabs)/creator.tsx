@@ -38,6 +38,7 @@ import { UnFollowBrand } from "../api/routes/unfollow-brand";
 import { Color } from "@/components/utils/all-colors";
 import LoadingScreen from "@/components/Loading";
 import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
+import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
 
 type Brand = {
   id: string;
@@ -158,26 +159,66 @@ export default function CreatorPage() {
           const res = await submitSignedXDRToServer4User(xdr);
           if (res) {
             await FollowBrand({ brand_id });
+            toast("Followed Creator Successfully!", {
+
+              duration: 3000,
+              position: ToastPosition.BOTTOM,
+              styles: {
+                view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
+              },
+            });
           } else {
-            Alert.alert("Not enough Wadzzo, need minimum 25 wadzzo to follow");
+            toast("Not enough Wadzzo, need minimum 25 wadzzo to follow", {
+              duration: 3000,
+              position: ToastPosition.BOTTOM,
+              styles: {
+                view: { backgroundColor: Color.light.error, borderRadius: 8 },
+                text: { color: 'white' }
+              },
+            });
             setFollowLoadingId(null);
           }
         } else {
-          Alert.alert("Creator has not setup page asset yet");
+
+          toast("Creator has not setup page asset yet", {
+            duration: 3000,
+            position: ToastPosition.BOTTOM,
+            styles: {
+              view: { backgroundColor: Color.light.error, borderRadius: 8 },
+              text: { color: 'white' }
+            },
+          });
           setFollowLoadingId(null);
         }
       } else {
-        return await FollowBrand({ brand_id });
+        await FollowBrand({ brand_id });
+        toast("Followed Creator Successfully!", {
+
+          duration: 3000,
+          position: ToastPosition.BOTTOM,
+          styles: {
+            view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
+          },
+        });
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+
       queryClient.invalidateQueries({
         queryKey: ["AllBrands"],
       });
+
       setFollowLoadingId(null);
     },
     onError: (error) => {
-      console.error("Error following brand:", error);
+      toast("Followed Creator Failed!", {
+        duration: 3000,
+        position: ToastPosition.BOTTOM,
+        styles: {
+          view: { backgroundColor: Color.light.error, borderRadius: 8 },
+          text: { color: 'white' }
+        },
+      });
       setFollowLoadingId(null);
     },
   });
@@ -191,10 +232,27 @@ export default function CreatorPage() {
       queryClient.invalidateQueries({
         queryKey: ["AllBrands"],
       });
+      toast("unfollowed Creator Successfully!", {
+
+        duration: 3000,
+        position: ToastPosition.BOTTOM,
+        styles: {
+          view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
+        },
+      });
       setUnfollowLoadingId(null);
     },
     onError: (error) => {
       console.error("Error unfollowing brand:", error);
+      toast("unfollowed Creator Failed!", {
+
+        duration: 3000,
+        position: ToastPosition.BOTTOM,
+        styles: {
+          view: { backgroundColor: Color.light.error, borderRadius: 8 },
+          text: { color: 'white' }
+        },
+      });
       setUnfollowLoadingId(null);
     },
   });
@@ -267,12 +325,12 @@ export default function CreatorPage() {
       >
         {item.followed_by_current_user ? (
           unfollowLoadingId === item.id ? (
-            <ActivityIndicator size={'small'}  color="black"/>
+            <ActivityIndicator size={'small'} color="black" />
           ) : (
             "Unfollow"
           )
         ) : followLoadingId === item.id ? (
-          <ActivityIndicator size={'small'}  color="black"/>
+          <ActivityIndicator size={'small'} color="black" />
         ) : (
           "Follow"
         )}
@@ -325,7 +383,7 @@ export default function CreatorPage() {
               style={[
                 styles.switchLabel,
                 accountActionData.brandMode === BrandMode.FOLLOW &&
-                  styles.activeSwitchLabel,
+                styles.activeSwitchLabel,
               ]}
             >
               Follow

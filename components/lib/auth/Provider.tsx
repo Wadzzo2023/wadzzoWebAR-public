@@ -10,6 +10,9 @@ import { WalletType } from "./types";
 import { getUser } from "@/app/api/routes/get-user";
 import { BASE_URL, CALLBACK_URL } from "@/components/utils/Common";
 import { getCsrfToken } from "./sign-in";
+import Toast from "react-native-root-toast";
+import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
+import { Color } from "@/components/utils/all-colors";
 
 export type User = {
   name?: string | null;
@@ -65,6 +68,14 @@ export const AuthProvider: FC<AuthProviderProps> = ({
   const login = async (cookie: string): Promise<void> => {
     try {
       await checkAuth();
+      toast("Login Successfully!", {
+        duration: 3000,
+        styles: {
+          view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
+        },
+        position: ToastPosition.BOTTOM,
+
+      });
     } catch (error) {
       console.log("Failed to log in:", error);
     }
@@ -72,25 +83,32 @@ export const AuthProvider: FC<AuthProviderProps> = ({
 
   const logout = async (): Promise<void> => {
     try {
-      
-      const res = await fetch(new URL('api/auth/signout',BASE_URL),{
+
+      const res = await fetch(new URL('api/auth/signout', BASE_URL), {
         method: "POST",
         headers: {
-                "Content-Type": "application/json",
-            },
-          body: JSON.stringify({
-          csrfToken : await getCsrfToken(),
-         callbackUrl:CALLBACK_URL,
-         json:'true'
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          csrfToken: await getCsrfToken(),
+          callbackUrl: CALLBACK_URL,
+          json: 'true'
 
         }),
-        credentials:'include'
+        credentials: 'include'
       })
-      console.log('res',res)
-      if(res.ok)
-      {
-            setUser(null);
-      setIsAuthenticated(false);
+      console.log('res', res)
+      if (res.ok) {
+        toast("Logout Sucessfully!", {
+
+          duration: 3000,
+          position: ToastPosition.BOTTOM,
+          styles: {
+            view: { backgroundColor: Color.wadzzo, borderRadius: 8 }
+          },
+        });
+        setUser(null);
+        setIsAuthenticated(false);
       }
     } catch (error) {
       console.log("Failed to log out:", error);

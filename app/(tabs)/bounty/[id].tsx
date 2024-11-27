@@ -34,6 +34,7 @@ import ProgressBar from "@/components/ProgressBar";
 import { Color } from "@/components/utils/all-colors";
 import { addrShort } from "@/components/utils/AddrShort";
 import { Bounty } from "@/components/types/BountyTypes";
+import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
 
 interface DocumentPickerAsset extends DocumentPicker.DocumentPickerAsset {
   downloadableURI?: string;
@@ -77,7 +78,14 @@ const SingleBountyItem = () => {
       return await UploadSubmission({ bountyId, content, media });
     },
     onSuccess: () => {
-      ToastAndroid.show("Submission created successfully", ToastAndroid.SHORT);
+      toast("Successfully submitted!", {
+
+        duration: 3000,
+        position: ToastPosition.BOTTOM,
+        styles: {
+          view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
+        },
+      });
       setMedia([]);
       setSolution("");
       setUploadFiles([]);
@@ -286,7 +294,7 @@ const SingleBountyItem = () => {
                 />
               </Card.Content>
             </Card>
-          ) : bounty.winnerId === null ? (
+          ) : bounty.BountyWinner.length !== bounty.totalWinner ? (
             <Card style={styles.card}>
               <Card.Content>
                 <Title>Submit Your Solution</Title>
@@ -330,7 +338,9 @@ const SingleBountyItem = () => {
             <Card style={styles.card}>
               <Card.Content>
                 <Title style={styles.winnerText}>
-                  Winner: {addrShort(bounty.winnerId, 15)}
+                  <Text style={styles.winnerText}>
+                    {bounty.totalWinner - bounty._count.BountyWinner > 1 ? ` ${(bounty.totalWinner - bounty._count.BountyWinner)} Winners Left` : bounty.totalWinner - bounty._count.BountyWinner === 1 ? `${(bounty.totalWinner - bounty._count.BountyWinner)} Winner Left` : "Winner Declared"}
+                  </Text>
                 </Title>
               </Card.Content>
             </Card>

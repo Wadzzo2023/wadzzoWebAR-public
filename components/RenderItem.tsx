@@ -20,7 +20,7 @@ type Props = {
 
 const RenderItem = ({ index, x, item }: Props) => {
 
- 
+
 
   const { width: SCREEN_WIDTH } = useWindowDimensions();
 
@@ -91,7 +91,7 @@ const RenderItem = ({ index, x, item }: Props) => {
         {item.description}
       </Text>
       {index === 2 && (
-        <Link href="https://app.wadzzo.com/">
+        <Link href="/Signup">
           <Button mode="contained">SIGN UP</Button>
         </Link>
       )}

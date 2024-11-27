@@ -83,9 +83,11 @@ export default function BountyScreen() {
       isJoined: false,
       _count: {
         participants: 10,
+        BountyWinner: 1,
       },
       imageUrls: ["https://app.wadzzo.com/images/loading.png"],
-      winnerId: "0x1234567890",
+      totalWinner: 0,
+      BountyWinner: [],
       creator: {
         name: "Creator 1",
         profileUrl: "https://app.wadzzo.com/images/loading.png",
@@ -93,6 +95,7 @@ export default function BountyScreen() {
       id: "1",
       creatorId: "0x1234567890",
       requiredBalance: 100,
+      isOwner: false,
     },
   ];
 
@@ -160,7 +163,8 @@ export default function BountyScreen() {
 
   if (response.isLoading) return <LoadingScreen />;
   const toggleJoin = (id: string, isAlreadyJoin: boolean, bounty: Bounty) => {
-    if (isAlreadyJoin) {
+    console.log(bounty);
+    if (isAlreadyJoin || bounty.isOwner) {
       setData({ item: bounty });
       router.push("/(tabs)/bounty/:id");
       // navigation.navigate("SingleBountyItem", { item: bounty });
@@ -186,7 +190,7 @@ export default function BountyScreen() {
           style={styles.cardCover}
         />
         <Card.Content>
-          <Title>{item.title}</Title>
+          <Title>{item.title?.slice(0, 30)}</Title>
           <View
             style={{
               marginBottom: 8,
@@ -198,7 +202,7 @@ export default function BountyScreen() {
               contentWidth={Dimensions.get("window").width}
               source={{
                 html:
-                  item.description.length > 200
+                  item.description.length > 100
                     ? item.description.slice(0, 200)
                     : "",
               }}
@@ -223,9 +227,9 @@ export default function BountyScreen() {
           <Text style={styles.participantsText}>
             Participants: {item._count.participants}
           </Text>
-          {item.winnerId && (
+          {item.BountyWinner && (
             <Text style={styles.winnerText}>
-              Winner: {addrShort(item.winnerId, 15)}
+              {item.totalWinner - item._count.BountyWinner > 1 ? ` ${(item.totalWinner - item._count.BountyWinner)} Winners Left` : item.totalWinner - item._count.BountyWinner === 1 ? `${(item.totalWinner - item._count.BountyWinner)} Winner Left` : "Winner Declared"}
             </Text>
           )}
         </Card.Content>
@@ -242,7 +246,7 @@ export default function BountyScreen() {
             mode={item.isJoined ? "outlined" : "contained"}
             onPress={() => toggleJoin(item.id, item.isJoined, item)}
           >
-            {item.isJoined ? "View Bounty" : "Join Bounty"}
+            {item.isJoined || item.isOwner ? "View Bounty" : "Join Bounty"}
           </Button>
         </Card.Actions>
       </Card>
@@ -306,23 +310,31 @@ export default function BountyScreen() {
           onPress={() => {}}
         /> */}
       </Appbar.Header>
-      {filteredBounties.length === 0 && (
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <Text>No Bounty found</Text>
-        </View>
-      )}
-      <FlatList
-        data={showWalkthrough ? dummyBounties : filteredBounties}
-        renderItem={renderBountyItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.listContainer, { paddingBottom: 80 }]}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-        style={styles.flatList}
-      />
+      {
+        showWalkthrough ? renderBountyItem({ item: dummyBounties[0], index: 0 }) :
+          <>
+            {filteredBounties.length === 0 && (
+              <View
+                style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+              >
+                <Text>No Bounty found</Text>
+              </View>
+            )}
+            <FlatList
+              data={filteredBounties}
+              renderItem={renderBountyItem}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={[styles.listContainer, { paddingBottom: 80 }]}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              }
+              style={styles.flatList}
+            />
+          </>
+
+      }
+
+
       {showWalkthrough && (
         <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
       )}
@@ -361,6 +373,7 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 16,
+    elevation: 4,
   },
   detailsContainer: {
     flex: 1,

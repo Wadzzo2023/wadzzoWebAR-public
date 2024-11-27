@@ -124,8 +124,8 @@ const Step: React.FC<StepProps> = ({
             flexDirection: "row",
             justifyContent: "flex-end",
             width: "100%",
-            paddingHorizontal: 10,
-            paddingVertical:4,
+            paddingHorizontal: 20,
+            paddingVertical: 4,
           }}
         >
           <TouchableOpacity onPress={onFinish} style={[styles.skipButton]}>
@@ -152,7 +152,7 @@ const Step: React.FC<StepProps> = ({
               justifyContent: "flex-start",
               alignItems: "center",
               paddingVertical: 0,
-              paddingHorizontal:20,
+              paddingHorizontal: 20,
             }}
           >
             <Text style={styles.title}>{title}</Text>
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 10,
-    paddingHorizontal:10,
+    paddingHorizontal: 10,
   },
   button: {
     backgroundColor: Color.wadzzo,

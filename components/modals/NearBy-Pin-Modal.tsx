@@ -26,10 +26,10 @@ const NearbyPinModal = () => {
   return (
     <Portal>
       <Dialog visible={isModalOpen} onDismiss={handleClose}>
-        <Dialog.Title>NearBy</Dialog.Title>
+        <Dialog.Title>Nearby</Dialog.Title>
         <Dialog.Content>
           <Text variant="bodyMedium" style={styles.message}>
-            No Pin Available
+            No pins available
           </Text>
         </Dialog.Content>
 

@@ -38,6 +38,7 @@ import { getUser } from "../api/routes/get-user";
 import LoadingScreen from "@/components/Loading";
 import { Color } from "@/components/utils/all-colors";
 import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
+import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
 
 type ButtonLayout = {
   x: number;
@@ -48,7 +49,7 @@ type ButtonLayout = {
 
 export default function SettingScreen() {
   const theme = useTheme();
-
+  const [loading, setLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { logout, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -65,7 +66,15 @@ export default function SettingScreen() {
 
   const copyPublicKey = async () => {
     await Clipboard.setStringAsync(data?.id ?? "");
-    ToastAndroid.show("Public key copied to clipboard", ToastAndroid.SHORT);
+    toast("Public key copied!", {
+      duration: 3000,
+      position: ToastPosition.BOTTOM,
+      styles: {
+        view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
+
+
+      },
+    });
   };
   const onButtonLayout = useCallback(
     (event: LayoutChangeEvent, index: number) => {
@@ -94,7 +103,7 @@ export default function SettingScreen() {
     {
       target: buttonLayouts[0],
       title: "Sign Out",
-      content: "Click here to log out of your account.",
+      content: "Click here to log out of your wadzzo account.",
     },
     {
       target: buttonLayouts[1],
@@ -157,7 +166,9 @@ Email: ${data?.email}
   };
 
   const signOut = async () => {
-    logout();
+    setLoading(true);
+    await logout();
+    setLoading(false);
   };
 
   const togglePinCollectionMode = () => {
@@ -165,8 +176,7 @@ Email: ${data?.email}
       mode: !pinMode.mode,
     });
     console.log(
-      `Pin Collection Mode set to: ${
-        !pinMode.mode ? "Auto Collect" : "Manual Collect"
+      `Pin Collection Mode set to: ${!pinMode.mode ? "Auto Collect" : "Manual Collect"
       }`
     );
   };
@@ -209,7 +219,7 @@ Email: ${data?.email}
             justifyContent: "flex-start",
           }}
         >
-          <TouchableOpacity onPress={signOut}>
+          <TouchableOpacity onPress={signOut} disabled={loading}>
             <Feather name="log-out" size={20} color="white" />
           </TouchableOpacity>
           <Text

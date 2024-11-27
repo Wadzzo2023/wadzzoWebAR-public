@@ -22,6 +22,8 @@ import {
 import { Color } from "../components/utils/all-colors";
 import { AuthProvider } from "../components/lib/auth/Provider";
 import ModalProvider from "../components/provider/modal-provider";
+import { toast, Toasts } from '@backpackapp-io/react-native-toast';
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 const customDarkTheme = { ...MD3DarkTheme, colors: Color.dark };
 const customLightTheme = { ...MD3LightTheme, colors: Color.light };
@@ -54,22 +56,33 @@ export default function RootLayout() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <PaperProvider theme={CombinedLightTheme}>
-          <ModalProvider />
 
-          <Stack
-            initialRouteName="index"
-            screenOptions={{ headerShown: false }}
-          >
-            <Stack.Screen name="index" />
-            <Stack.Screen name="Login" />
-            <Stack.Screen name="Signup" />
-            <Stack.Screen name="(tabs)" />
-          </Stack>
-        </PaperProvider>
-      </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <GestureHandlerRootView style={
+        { flex: 1, }
+      }>
+
+        <AuthProvider>
+          <PaperProvider theme={CombinedLightTheme}>
+
+            <ModalProvider />
+
+            <Stack
+              initialRouteName="index"
+              screenOptions={{ headerShown: false }}
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="Login" />
+              <Stack.Screen name="Signup" />
+              <Stack.Screen name="(tabs)" />
+            </Stack>
+
+          </PaperProvider>
+          <Toasts />
+
+        </AuthProvider>
+      </GestureHandlerRootView>
     </QueryClientProvider>
+
   );
 }
