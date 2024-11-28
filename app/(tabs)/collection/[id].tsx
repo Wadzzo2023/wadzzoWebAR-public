@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, Linking, ScrollView, StyleSheet, View } from "react-native";
+import { Image, Linking, Platform, ScrollView, StyleSheet, View } from "react-native";
 import {
   Appbar,
   Avatar,
@@ -27,7 +27,7 @@ const SingleCollectionItem = () => {
   if (!data.collections) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} >
       <Appbar.Header style={styles.appbar}>
         <Appbar.BackAction color="white" onPress={() => router.back()} />
         <Appbar.Content
@@ -100,9 +100,16 @@ const SingleCollectionItem = () => {
                   )
                 }
               >
-                Visit Website
+                Visit
               </Button>
-
+              <Button
+                style={styles.button}
+                icon="hand-coin"
+                mode="outlined"
+                onPress={() => Linking.openURL(new URL("maps/pins/my", BASE_URL).href)}
+              >
+                Claim
+              </Button>
               <Button
                 style={styles.button}
                 icon="cube-scan"
@@ -115,20 +122,20 @@ const SingleCollectionItem = () => {
                   router.push("/ARScreen");
                 }}
               >
-                View in AR
+                AR
               </Button>
             </View>
           </Card.Content>
         </Card>
       </ScrollView>
 
-      <FAB
+      {/* <FAB
         style={styles.fab}
         icon="hand-coin"
         color="white"
         onPress={() => Linking.openURL(new URL("maps/pins/my", BASE_URL).href)}
         label={"Claim"}
-      />
+      /> */}
     </View>
   );
 };
@@ -139,6 +146,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f0f0f0",
+    paddingBottom: Platform.OS === "ios" ? 35 : 25,
   },
   appbar: {
     elevation: 8,
@@ -200,10 +208,11 @@ const styles = StyleSheet.create({
   },
   linkContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     marginBottom: 50,
   },
   button: {
+    paddingHorizontal: 8,
     borderRadius: 8,
   },
   fab: {

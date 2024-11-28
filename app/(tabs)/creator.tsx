@@ -128,7 +128,7 @@ export default function CreatorPage() {
     []
   );
   const checkFirstTimeSignIn = async () => {
-    console.log(showWalkthrough);
+
     if (walkthroughData.showWalkThrough) {
       setShowWalkthrough(true);
     } else {

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Wadzzo",
     "slug": "Wadzzo",
-    "version": "4.1.5",
+    "version": "4.1.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "com.thebillboardapp.wadzzo",
@@ -25,7 +25,7 @@
       "bundleIdentifier": "com.thebillboardapp.wadzzo"
     },
     "android": {
-      "buildNumber": "2",
+      "versionCode": "2",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -77,7 +77,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "ae1c4f06-e01a-48da-a87d-1d1b70a7ec7e"
+        "projectId": "563b3113-abd1-4432-860b-59131f6fff2d"
       }
     }
   }

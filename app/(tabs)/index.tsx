@@ -43,6 +43,7 @@ import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
 import { useWalkThrough } from "@/components/hooks/useWalkThrough";
 import { useAuth } from "@/components/lib/auth/Provider";
 import { Position } from "@rnmapbox/maps/lib/typescript/src/types/Position";
+import { CollectionAnimation } from "@/components/CollectionAnimation";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
@@ -56,6 +57,7 @@ type ButtonLayout = {
   width: number;
   height: number;
 };
+
 const HomeScreen = () => {
   const [locationPermission, setLocationPermission] = useState(false);
   const [userLocation, setUserLocation] = useState<userLocationType | null>(
@@ -74,6 +76,8 @@ const HomeScreen = () => {
   const { onOpen } = useModal();
   const cameraRef = useRef<Camera>(null);
   const { isAuthenticated } = useAuth();
+  const [showAnimation, setShowAnimation] = useState(false);
+
   const [center, setCenter] = useState<Position>([0, 0]);
   const scrollViewRef = useRef(null);
   const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
@@ -219,9 +223,9 @@ const HomeScreen = () => {
     for (const pin of pins) {
       if (!autoCollectModeRef.current) {
         // console.log("Auto collect mode paused");
-        return; // Exit if auto-collect is turned off
+        break; // Exit if auto-collect is turned off
       }
-      if (pin.collection_limit_remaining <= 0) {
+      if (pin.collection_limit_remaining <= 0 || pin.collected) {
         // console.log("Pin limit reached:", pin.id);
         continue;
       }
@@ -238,7 +242,7 @@ const HomeScreen = () => {
       );
 
       if (response.ok) {
-        // console.log("Collected pin:", pin.id);
+        console.log("Collected pin:", pin.id);
         showPinCollectionAnimation();
       }
 
@@ -247,25 +251,15 @@ const HomeScreen = () => {
   };
 
   const showPinCollectionAnimation = () => {
-    Animated.sequence([
-      Animated.timing(pinAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.timing(pinAnim, {
-        toValue: 0,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    setShowAnimation(true);
+
   };
 
   const handleRecenter = () => {
     if (userLocation && cameraRef.current) {
       cameraRef.current.setCamera({
         centerCoordinate: [userLocation.longitude, userLocation.latitude],
-        zoomLevel: 16,
+        zoomLevel: 18,
 
       });
       setFollowUser(true); // Enable following again
@@ -301,7 +295,7 @@ const HomeScreen = () => {
         {
           accuracy: Location.Accuracy.High,
           distanceInterval: 1, // update position every meter
-          timeInterval: 1000,  // update position every second
+          timeInterval: 5000,  // update position every second
         },
         (location) => {
           const { latitude, longitude, speed } = location.coords;
@@ -344,7 +338,7 @@ const HomeScreen = () => {
     if (userLocation && cameraRef.current) {
       cameraRef.current.setCamera({
         centerCoordinate: [userLocation.longitude, userLocation.latitude],
-        zoomLevel: 16,
+        zoomLevel: 18,
         animationDuration: 5000,
       });
     }
@@ -359,7 +353,7 @@ const HomeScreen = () => {
 
   useEffect(() => {
     if (userLocation && cameraRef.current) {
-      let zoomLevel = 16; // Default zoom level for walking
+      let zoomLevel = 18; // Default zoom level for walking
       cameraRef.current.setCamera({
         centerCoordinate: [userLocation.longitude, userLocation.latitude],
         zoomLevel,
@@ -379,6 +373,7 @@ const HomeScreen = () => {
   }, [data.mode, userLocation, locations]);
 
   useEffect(() => {
+    console.log("Auto collect mode:", data.mode);
     autoCollectModeRef.current = data.mode;
   }, [data.mode]);
 
@@ -399,17 +394,14 @@ const HomeScreen = () => {
           pitchEnabled={true}
           shouldRasterizeIOS={true}
           logoEnabled={false}
-
-
         >
           <Camera
             defaultSettings={{
               centerCoordinate: [userLocation.longitude, userLocation.latitude],
             }}
-
-            zoomLevel={16}
-            followZoomLevel={16}
-            followPitch={16}
+            zoomLevel={18}
+            followZoomLevel={18}
+            followPitch={18}
             pitch={0}
             allowUpdates={true}
             followUserMode={UserTrackingMode.Follow}
@@ -419,7 +411,10 @@ const HomeScreen = () => {
           <LocationPuck pulsing={{ isEnabled: true }} puckBearingEnabled puckBearing="heading" />
           <Marker locations={locations} />
         </MapView>
-
+        <CollectionAnimation
+          visible={showAnimation}
+          onAnimationComplete={() => setShowAnimation(false)}
+        />
         {showWalkthrough && (
           <View
             style={styles.welcome}

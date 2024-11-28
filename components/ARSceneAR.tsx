@@ -174,9 +174,8 @@ const renderItemDetail = (
         width={3.5}
       />
       <ViroText
-        text={`Description: ${
-          renderItemDetail.description ?? "No description"
-        }`}
+        text={`Description: ${renderItemDetail.description ?? "No description"
+          }`}
         style={styles.itemDetailText}
         height={0.6}
         width={3}
@@ -228,7 +227,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
   const { data } = useWinnerAnimation();
 
   const itemPositions = useMemo(() => {
-    return items.map(() => {
+    return items.slice(0, 20).map(() => {
       const angleY = Math.random() * Math.PI * 2; // Random angle for horizontal (360 degrees)
       const angleX = Math.random() * Math.PI - Math.PI / 2; // Random angle for vertical
       const radius = 10; // Distance from the camera
@@ -267,7 +266,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
       />
 
       {trackingStatus == ViroTrackingStateConstants.TRACKING_NORMAL &&
-        items.map((item, index) => (
+        items.slice(0, 20).map((item, index) => (
           <ViroNode
             key={`${index}-${item.id}`}
             animation={{
@@ -279,10 +278,10 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
               singleAR
                 ? [0, 0, -5]
                 : [
-                    itemPositions[index][0],
-                    itemPositions[index][1],
-                    itemPositions[index][2],
-                  ]
+                  itemPositions[index][0],
+                  itemPositions[index][1],
+                  itemPositions[index][2],
+                ]
             }
             onHover={(isHovering) => {
               if (isHovering) {
@@ -291,10 +290,10 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
                   singleAR
                     ? [0, 2.3, -5]
                     : [
-                        itemPositions[index][0],
-                        itemPositions[index][1] + 2.5,
-                        itemPositions[index][2],
-                      ]
+                      itemPositions[index][0],
+                      itemPositions[index][1] + 2.5,
+                      itemPositions[index][2],
+                    ]
                 );
               } else {
                 onItemBlur();

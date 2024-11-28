@@ -40,8 +40,7 @@ const SignUpScreen = () => {
     mutationFn: async () => {
       setLoading(true);
       try {
-        console.log("email", email);
-        console.log("password", password);
+
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         const user = cred.user;
         toast("Check you email to verify your account.", {

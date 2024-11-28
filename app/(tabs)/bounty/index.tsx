@@ -121,7 +121,6 @@ export default function BountyScreen() {
     []
   );
   const checkFirstTimeSignIn = async () => {
-    console.log(showWalkthrough);
     if (walkthroughData.showWalkThrough) {
       setShowWalkthrough(true);
     } else {
@@ -163,7 +162,6 @@ export default function BountyScreen() {
 
   if (response.isLoading) return <LoadingScreen />;
   const toggleJoin = (id: string, isAlreadyJoin: boolean, bounty: Bounty) => {
-    console.log(bounty);
     if (isAlreadyJoin || bounty.isOwner) {
       setData({ item: bounty });
       router.push("/(tabs)/bounty/:id");
@@ -179,7 +177,6 @@ export default function BountyScreen() {
     item: Bounty;
     index: number;
   }) => {
-    console.log(item.description.length);
     return (
       <Card style={styles.card}>
         <Card.Cover
@@ -190,7 +187,7 @@ export default function BountyScreen() {
           style={styles.cardCover}
         />
         <Card.Content>
-          <Title>{item.title?.slice(0, 30)}</Title>
+          <Title>{item.title?.slice(0, 65)}</Title>
           <View
             style={{
               marginBottom: 8,
@@ -202,7 +199,7 @@ export default function BountyScreen() {
               contentWidth={Dimensions.get("window").width}
               source={{
                 html:
-                  item.description.length > 100
+                  item.description.length > 200
                     ? item.description.slice(0, 200)
                     : "",
               }}
