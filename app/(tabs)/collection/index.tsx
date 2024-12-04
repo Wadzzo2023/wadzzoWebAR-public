@@ -70,7 +70,7 @@ export default function MyCollectionScreen() {
       target: buttonLayouts[1],
       title: "View in AR",
       content:
-        "Press the AR button to view your digital item in AR mode. In AR, explore your surroundings and see your pin as a real-life image.",
+        "Press the AR button to view your digital item in AR mode.  In AR, explore your surroundings and see your pin as a real-life item.",
     },
     {
       target: buttonLayouts[2],
@@ -353,7 +353,7 @@ export default function MyCollectionScreen() {
               setSortBy("title");
               setSortMenuVisible(false);
             }}
-            title="Sort by Title"
+            title="Sort by Title (A-Z)"
             style={sortBy === "title" ? styles.selectedMenuItem : null} // Highlight selected option
           />
           <Menu.Item
@@ -361,7 +361,7 @@ export default function MyCollectionScreen() {
               setSortBy("remaining");
               setSortMenuVisible(false);
             }}
-            title="Sort by Limit Remaining"
+            title="Sort by Limit Remaining (Highest to Lowest)"
             style={sortBy === "remaining" ? styles.selectedMenuItem : null} // Highlight selected option
           />
         </Menu>

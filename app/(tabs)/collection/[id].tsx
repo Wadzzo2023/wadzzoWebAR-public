@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f0f0f0",
-    paddingBottom: Platform.OS === "ios" ? 35 : 25,
+    paddingBottom: Platform.OS === "ios" ? 48 : 25,
   },
   appbar: {
     elevation: 8,

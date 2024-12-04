@@ -114,7 +114,7 @@ export default function SettingScreen() {
       target: buttonLayouts[2],
       title: "Auto Collection",
       content:
-        "Enable Auto Collection to automatically collect pins. Disable it to stop auto collection of pins.",
+        "Enable Auto Collection to automatically collect eligible pins.  All pins set for auto collection will be gathered when you’re within collecting distance, but all manual pins must still be collected through AR mode.",
     },
     {
       target: buttonLayouts[3],

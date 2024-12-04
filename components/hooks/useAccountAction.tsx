@@ -8,6 +8,7 @@ export enum BrandMode {
 export interface AccountActionData {
   mode?: boolean;
   brandMode?: BrandMode;
+  trackingMode?: boolean;
 }
 
 interface AccountActionStore {
@@ -19,6 +20,7 @@ export const useAccountAction = create<AccountActionStore>((set) => ({
   data: {
     mode: true,
     brandMode: BrandMode.GENERAL,
+    trackingMode: true,
   },
   setData: (data: AccountActionData) => set({ data }),
 }));

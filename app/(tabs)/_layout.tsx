@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   homeButtonContainer: {
     width: 70,
     height: 70,
-    marginTop: -40,
+    marginTop: -20,
   },
   homeButtonGradient: {
     width: "100%",

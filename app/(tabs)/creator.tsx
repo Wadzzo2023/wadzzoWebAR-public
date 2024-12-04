@@ -97,7 +97,7 @@ export default function CreatorPage() {
       target: buttonLayouts[3],
       title: "Follow Brands",
       content:
-        "“To follow a brand, press the follow button next to the brand name. To unfollow a brand, press the unfollow button next to the brand name.",
+        "To follow a brand, press the follow button next to the brand name. To unfollow a brand, press the unfollow button next to the brand name.",
     },
   ];
 
@@ -244,8 +244,7 @@ export default function CreatorPage() {
     },
     onError: (error) => {
       console.error("Error unfollowing brand:", error);
-      toast("unfollowed Creator Failed!", {
-
+      toast("Unfollowed Creator Failed!", {
         duration: 3000,
         position: ToastPosition.BOTTOM,
         styles: {

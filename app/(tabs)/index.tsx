@@ -1,9 +1,12 @@
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import Mapbox, {
   Camera,
+  Images,
   LocationPuck,
   MapView,
   MarkerView,
+  ShapeSource,
+  SymbolLayer,
   UserLocation,
   UserTrackingMode,
 } from "@rnmapbox/maps";
@@ -44,6 +47,8 @@ import { useWalkThrough } from "@/components/hooks/useWalkThrough";
 import { useAuth } from "@/components/lib/auth/Provider";
 import { Position } from "@rnmapbox/maps/lib/typescript/src/types/Position";
 import { CollectionAnimation } from "@/components/CollectionAnimation";
+import { featureCollection, point } from "@turf/turf";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
@@ -68,24 +73,21 @@ const HomeScreen = () => {
   const router = useRouter();
   const { setData: setExtraInfo } = useExtraInfo();
   const [loading, setLoading] = useState(true);
-  const [followUser, setFollowUser] = useState(true);
   const { setData } = useNearByPin();
   const { data } = useAccountAction();
   const autoCollectModeRef = useRef(data.mode);
-  const [trackingMode, setTrackingMode] = useState(true);
   const { onOpen } = useModal();
   const cameraRef = useRef<Camera>(null);
   const { isAuthenticated } = useAuth();
   const [showAnimation, setShowAnimation] = useState(false);
-
-  const [center, setCenter] = useState<Position>([0, 0]);
   const scrollViewRef = useRef(null);
   const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const { data: accountActionData, setData: setAccountActionData } =
     useAccountAction();
   const { data: walkthroughData } = useWalkThrough();
-
+  const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(null);
+  const [handleRecenterPress, setHandleRecenterPress] = useState(false);
   const steps = [
     {
       target: buttonLayouts[0],
@@ -115,7 +117,7 @@ const HomeScreen = () => {
       target: buttonLayouts[4],
       title: "AR button",
       content:
-        "To collect manual pins, press the AR button on your map to view your surroundings. Locate the icon on your screen, then tap Claim to add the item to your collection.",
+        "To collect manual pins, press the AR button on your map to view your surroundings.  Locate the icon on your screen, then press the Collect button that appears below it to add the item to your collection.",
     },
   ];
   const onButtonLayout = useCallback(
@@ -202,10 +204,11 @@ const HomeScreen = () => {
   };
 
   const getAutoCollectPins = (
-    userLocation: userLocationType,
+    userLocation: userLocationType | null,
     locations: ConsumedLocation[],
     radius: number
   ) => {
+    if (!userLocation) return []; // Exit early if userLocation is null
     return locations.filter((location) => {
       if (location.collection_limit_remaining <= 0 || location.collected) return false;
       if (location.auto_collect) {
@@ -252,19 +255,33 @@ const HomeScreen = () => {
 
   const showPinCollectionAnimation = () => {
     setShowAnimation(true);
-
   };
 
   const handleRecenter = () => {
-    if (userLocation && cameraRef.current) {
-      cameraRef.current.setCamera({
-        centerCoordinate: [userLocation.longitude, userLocation.latitude],
-        zoomLevel: 18,
-
-      });
-      setFollowUser(true); // Enable following again
+    if (!userLocation || !cameraRef.current) {
+      toast.error("Unable to center the map. User location unavailable.");
+      return;
     }
+    setHandleRecenterPress(true);
+    cameraRef.current.setCamera({
+      centerCoordinate: [userLocation.longitude, userLocation.latitude],
+      zoomLevel: 16,
+    });
+
+    setTimeout(() => {
+      setHandleRecenterPress(false);
+    }, 8000);
+
+    setAccountActionData({
+      ...accountActionData,
+      trackingMode: true,
+    });
+
+
   };
+
+
+
   const response = useQuery({
     queryKey: ["MapsAllPins", accountActionData.brandMode],
     queryFn: async () =>
@@ -276,11 +293,16 @@ const HomeScreen = () => {
     queryKey: ["balance"],
     queryFn: getUserPlatformAsset,
   });
+
+
+
   const locations = response.data?.locations ?? [];
 
   useEffect(() => {
-    // Request location permission
-    (async () => {
+    if (!data.trackingMode) return; // Exit early if trackingMode is false
+
+    // Request location permission and start watching the user's location
+    const startWatchingLocation = async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         Alert.alert("Permission to access location was denied");
@@ -289,24 +311,21 @@ const HomeScreen = () => {
 
       setLocationPermission(true);
 
-
       // Start watching the user's location
-      const locationSubscription = await Location.watchPositionAsync(
+      locationSubscriptionRef.current = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
           distanceInterval: 1, // update position every meter
-          timeInterval: 5000,  // update position every second
+          timeInterval: 5000,  // update position every 5 seconds
         },
         (location) => {
           const { latitude, longitude, speed } = location.coords;
 
           setLoading(false);
-          setUserLocation({
-            latitude,
-            longitude,
-          });
+          setUserLocation({ latitude, longitude });
           console.log("User location:", latitude, longitude);
-          // Track if the user is walking or running based on speed (in meters per second)
+
+          // Track user activity based on speed
           if (speed! >= 3) {
             console.log("User is running");
           } else if (speed! >= 0.5) {
@@ -316,33 +335,20 @@ const HomeScreen = () => {
           }
 
           setExtraInfo({
-            useCurrentLocation: {
-              latitude,
-              longitude,
-            },
+            useCurrentLocation: { latitude, longitude },
           });
         }
       );
+    };
 
-      // Clean up the subscription when the component unmounts or when location tracking stops
-      return () => {
-        if (locationSubscription) {
-          locationSubscription.remove();
-        }
-      };
-    })();
-  }, []);
+    startWatchingLocation();
 
+    // Cleanup function in case the component unmounts while tracking
+    return () => {
+      locationSubscriptionRef.current?.remove();
+    };
+  }, [data.trackingMode]); // Depend on trackingMode
 
-  useEffect(() => {
-    if (userLocation && cameraRef.current) {
-      cameraRef.current.setCamera({
-        centerCoordinate: [userLocation.longitude, userLocation.latitude],
-        zoomLevel: 18,
-        animationDuration: 5000,
-      });
-    }
-  }, [userLocation]);
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace("/Login");
@@ -351,26 +357,27 @@ const HomeScreen = () => {
     }
   }, [isAuthenticated, walkthroughData]);
 
-  useEffect(() => {
-    if (userLocation && cameraRef.current) {
-      let zoomLevel = 18; // Default zoom level for walking
-      cameraRef.current.setCamera({
-        centerCoordinate: [userLocation.longitude, userLocation.latitude],
-        zoomLevel,
-        animationDuration: 1000,
-      });
-    }
-  }, [userLocation]);
+
 
   useEffect(() => {
-    if (data.mode && userLocation && locations) {
-      const autoCollectPins = getAutoCollectPins(userLocation, locations, 1000);
-      // console.log("Auto collect pins:", autoCollectPins);
+    if (data.trackingMode) {
+      toast.success(`Tracking mode is on`);
+    }
+    if (!data.trackingMode) {
+      toast.error(`Tracking mode is off`);
+    }
+
+  }, [data.trackingMode]);
+
+
+  useEffect(() => {
+    if (data.mode && locations) {
+      const autoCollectPins = getAutoCollectPins(userLocation, locations, 50);
       if (autoCollectPins.length > 0) {
         collectPinsSequentially(autoCollectPins);
       }
     }
-  }, [data.mode, userLocation, locations]);
+  }, [data.mode, locations]);
 
   useEffect(() => {
     console.log("Auto collect mode:", data.mode);
@@ -383,6 +390,7 @@ const HomeScreen = () => {
     return <LoadingScreen />;
   }
 
+  console.log("tracking mode, handleRecenterPress", data.trackingMode, handleRecenterPress);
 
   return (
     <View style={styles.container} ref={scrollViewRef}>
@@ -391,20 +399,30 @@ const HomeScreen = () => {
         <MapView
           styleURL="mapbox://styles/wadzzo/cm1xtphyn01ci01pi20jhfbto"
           style={styles.map}
+
           pitchEnabled={true}
-          shouldRasterizeIOS={true}
           logoEnabled={false}
+          onCameraChanged={(event) => {
+            // console.log("Region is changing:", event.properties.zoom);
+            if ((event.properties.zoom < 14 || event.properties.zoom > 18) && data.trackingMode && !handleRecenterPress) {
+              // console.log("Zoom level:", event.properties.zoom.toFixed(0));
+              setAccountActionData({
+                ...accountActionData,
+                trackingMode: false,
+              });
+            }
+          }
+          }
         >
           <Camera
             defaultSettings={{
               centerCoordinate: [userLocation.longitude, userLocation.latitude],
             }}
-            zoomLevel={18}
-            followZoomLevel={18}
-            followPitch={18}
+            zoomLevel={16}
+            followZoomLevel={16}
+            followPitch={16}
+            heading={0}
             pitch={0}
-            allowUpdates={true}
-            followUserMode={UserTrackingMode.Follow}
             ref={cameraRef}
             centerCoordinate={[userLocation.longitude, userLocation.latitude]}
           />
@@ -432,10 +450,12 @@ const HomeScreen = () => {
             style={{
               height: 20,
               width: 20,
+
             }}
             source={require("../../assets/images/wadzzo.png")}
             height={100}
             width={100}
+
           />
           <Text
             style={{
@@ -503,10 +523,13 @@ const HomeScreen = () => {
 
 const Marker = ({ locations }: { locations: ConsumedLocation[] }) => {
   const { onOpen } = useModal();
+  const pins = locations.map((location) => point([location.lng, location.lat]));
   return (
     <>
       {locations.map((location: ConsumedLocation, index: number) => (
         <MarkerView
+          allowOverlap={true}
+          allowOverlapWithPuck={true}
           key={`${index}-${location.id}`}
           coordinate={[location.lng, location.lat]}
         >
@@ -525,9 +548,12 @@ const Marker = ({ locations }: { locations: ConsumedLocation[] }) => {
                 {
                   height: 30,
                   width: 30,
+                  borderWidth: 2,
+
+                  borderColor: Color.wadzzo,
                 },
                 !location.auto_collect && {
-                  borderRadius: 15, // Add borderRadius only when auto_collect is false
+                  borderRadius: 20, // Add borderRadius only when auto_collect is false
                 },
                 location.collected && { opacity: 0.4, }
               ]}
@@ -535,6 +561,7 @@ const Marker = ({ locations }: { locations: ConsumedLocation[] }) => {
           </TouchableOpacity>
         </MarkerView>
       ))}
+
     </>
   );
 };

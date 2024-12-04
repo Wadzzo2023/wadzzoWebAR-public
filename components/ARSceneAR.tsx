@@ -138,6 +138,7 @@ const renderItemDetail = (
   if (!renderItemDetail) {
     return null;
   }
+  console.log("Render item detail", renderItemDetail);
 
   return (
     <ViroFlexView
@@ -220,8 +221,9 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
     setOnFocusedItem(item);
   };
   const onItemBlur = () => {
-    // onCapture(null);
-    // console.log("Item blurred");
+    setOnFocusedItem(null);
+    onCapture(null);
+    console.log("Item blurred");
   };
 
   const { data } = useWinnerAnimation();
@@ -230,7 +232,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
     return items.slice(0, 20).map(() => {
       const angleY = Math.random() * Math.PI * 2; // Random angle for horizontal (360 degrees)
       const angleX = Math.random() * Math.PI - Math.PI / 2; // Random angle for vertical
-      const radius = 10; // Distance from the camera
+      const radius = 8; // Distance from the camera
       const x = radius * Math.cos(angleX) * Math.cos(angleY);
       const y = 0;
       const z = radius * Math.cos(angleX) * Math.sin(angleY);
