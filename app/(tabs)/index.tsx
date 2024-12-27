@@ -26,7 +26,7 @@ import {
 
 import { useQuery } from "@tanstack/react-query";
 
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import { Text } from "react-native-paper";
 import { useExtraInfo } from "@/components/hooks/useExtraInfo";
@@ -78,16 +78,18 @@ const HomeScreen = () => {
   const autoCollectModeRef = useRef(data.mode);
   const { onOpen } = useModal();
   const cameraRef = useRef<Camera>(null);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [showAnimation, setShowAnimation] = useState(false);
   const scrollViewRef = useRef(null);
   const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const [showAutoCollectionAnimation, setShowAutoCollectionAnimation] = useState(false);
   const { data: accountActionData, setData: setAccountActionData } =
     useAccountAction();
   const { data: walkthroughData } = useWalkThrough();
   const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(null);
   const [handleRecenterPress, setHandleRecenterPress] = useState(false);
+  const [countCurrentStep, setCountCurrentStep] = useState(0);
   const steps = [
     {
       target: buttonLayouts[0],
@@ -96,28 +98,34 @@ const HomeScreen = () => {
         "This tutorial will show you how to use Wadzzo to find pins around you, follow your favorite brands, and collect rewards.",
     },
     {
-      target: buttonLayouts[1],
+      target: buttonLayouts[2],
       title: "Wadzzo Balance",
       content:
         "The Wadzzo Balance displays your Wadzzo count. Check the Bounty Board for the latest ways to earn more Wadzzo!",
     },
     {
-      target: buttonLayouts[2],
+      target: buttonLayouts[3],
       title: "Refresh Button",
       content:
         "If you need to refresh your map, press the refresh button. This will reload your entire map with all up to date app data.",
     },
     {
-      target: buttonLayouts[3],
+      target: buttonLayouts[4],
       title: "Re-center button",
       content:
         "Press the Re-center button to center your map view to your current location",
     },
     {
-      target: buttonLayouts[4],
+      target: buttonLayouts[5],
       title: "AR button",
       content:
         "To collect manual pins, press the AR button on your map to view your surroundings.  Locate the icon on your screen, then press the Collect button that appears below it to add the item to your collection.",
+    },
+    {
+      target: buttonLayouts[1],
+      title: "Pin Auto Collection",
+      content:
+        "When you automatically collect a pin a celebration will play on screen, indicating your auto collection. This celebration will appear as Wadzzo bursting across your map.",
     },
   ];
   const onButtonLayout = useCallback(
@@ -139,9 +147,13 @@ const HomeScreen = () => {
           );
         }
       }
+
     },
     []
   );
+
+
+
   const checkFirstTimeSignIn = async () => {
     // console.log(showWalkthrough);
     if (walkthroughData.showWalkThrough) {
@@ -150,6 +162,9 @@ const HomeScreen = () => {
       setShowWalkthrough(false);
     }
   };
+
+
+
   const getNearbyPins = (
     userLocation: userLocationType,
     locations: ConsumedLocation[],
@@ -191,7 +206,8 @@ const HomeScreen = () => {
     userLocation: userLocationType,
     locations: ConsumedLocation[]
   ) => {
-    const nearbyPins = getNearbyPins(userLocation, locations, 1000);
+    const nearbyPins = getNearbyPins(userLocation, locations, 50);
+    console.log("Nearby pins:", nearbyPins.length);
     if (nearbyPins.length > 0) {
       setData({
         nearbyPins: nearbyPins,
@@ -223,6 +239,9 @@ const HomeScreen = () => {
     });
   };
   const collectPinsSequentially = async (pins: ConsumedLocation[]) => {
+
+
+
     for (const pin of pins) {
       if (!autoCollectModeRef.current) {
         // console.log("Auto collect mode paused");
@@ -350,24 +369,34 @@ const HomeScreen = () => {
   }, [data.trackingMode]); // Depend on trackingMode
 
   useEffect(() => {
+    if (authLoading) return; // Exit if still loading
+
     if (!isAuthenticated) {
       router.replace("/Login");
     } else {
       checkFirstTimeSignIn(); // Check if it's the first sign-in
     }
-  }, [isAuthenticated, walkthroughData]);
-
+  }, [authLoading, isAuthenticated, walkthroughData]);
 
 
   useEffect(() => {
-    if (data.trackingMode) {
-      toast.success(`Tracking mode is on`);
-    }
-    if (!data.trackingMode) {
-      toast.error(`Tracking mode is off`);
-    }
-
+    console.log("Tracking mode:", data.trackingMode);
   }, [data.trackingMode]);
+
+  useEffect(() => {
+    if (countCurrentStep === 5) {
+      console.log("countCurrentStep", countCurrentStep)
+      showPinCollectionAnimation();
+    }
+  }, [countCurrentStep]);
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log("Refetching data"),
+        response.refetch();
+    }, [])
+  );
+
 
 
   useEffect(() => {
@@ -386,11 +415,9 @@ const HomeScreen = () => {
 
 
 
-  if (response.isLoading || loading || !locationPermission || !userLocation) {
+  if (response.isLoading || loading || !locationPermission || !userLocation || authLoading) {
     return <LoadingScreen />;
   }
-
-  console.log("tracking mode, handleRecenterPress", data.trackingMode, handleRecenterPress);
 
   return (
     <View style={styles.container} ref={scrollViewRef}>
@@ -444,7 +471,7 @@ const HomeScreen = () => {
         {/* Recenter button */}
         <View
           style={styles.balance}
-          onLayout={(event) => onButtonLayout(event, 1)}
+          onLayout={(event) => onButtonLayout(event, 2)}
         >
           <Image
             style={{
@@ -468,7 +495,7 @@ const HomeScreen = () => {
         <TouchableOpacity
           style={styles.recenterButton}
           onPress={handleRecenter}
-          onLayout={(event) => onButtonLayout(event, 3)}
+          onLayout={(event) => onButtonLayout(event, 4)}
         >
           <MaterialCommunityIcons
             name="crosshairs-gps"
@@ -478,44 +505,39 @@ const HomeScreen = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onLayout={(event) => onButtonLayout(event, 4)}
+          onLayout={(event) => onButtonLayout(event, 5)}
           style={styles.AR}
           onPress={() => handleARPress(userLocation, locations)}
         >
           <MaterialCommunityIcons name="cube-scan" size={20} color="white" />
         </TouchableOpacity>
         <TouchableOpacity
-          onLayout={(event) => onButtonLayout(event, 2)}
+          onLayout={(event) => onButtonLayout(event, 3)}
           style={styles.Refresh}
           onPress={async () => await response.refetch()}
         >
           <FontAwesome name="refresh" size={20} color="black" />
         </TouchableOpacity>
-        <Animated.View
-          style={[
-            styles.pinCollectedAnim,
-            {
-              opacity: pinAnim,
-              transform: [
-                {
-                  scale: pinAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [1, 1.5], // Scale effect from 1 to 1.5
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          <Image
-            source={require("../../assets/images/wadzzo.png")}
-            style={styles.pinImage}
-          />
-        </Animated.View>
+
+        {
+          showWalkthrough && countCurrentStep === 5 && (
+            <View
+              style={styles.pinCollectedAnim}
+              onLayout={(event) => onButtonLayout(event, 1)}
+            >
+              <Image
+                source={require("../../assets/images/wadzzo.png")}
+                style={styles.pinImage}
+              />
+            </View>
+          )
+        }
+
+
       </>
 
       {showWalkthrough && (
-        <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
+        <Walkthrough steps={steps} setCountCurrentStep={setCountCurrentStep} onFinish={() => setShowWalkthrough(false)} />
       )}
     </View>
   );

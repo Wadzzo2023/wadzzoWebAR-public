@@ -106,7 +106,7 @@ ViroAnimations.registerAnimations({
     properties: {
       rotateY: "+=360",
     },
-    duration: 2500,
+    duration: 6000,
   },
   scaleUp: {
     properties: {
@@ -147,6 +147,8 @@ const renderItemDetail = (
       rotation={[0, 0, 0]}
       height={2.5}
       width={3}
+      transformBehaviors={["billboardY"]}
+
     >
       <ViroFlexView style={styles.itemDetailHeader}>
         <ViroImage
@@ -194,7 +196,7 @@ const renderItemDetail = (
             console.error("Failed to open URL:", err)
           );
         }}
-        text={`Link: ${renderItemDetail.url}`}
+        text={`Link: ${renderItemDetail.url.slice(0, 35)}...`}
         style={styles.itemDetailText}
         height={0.2}
         width={3.5}

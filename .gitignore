@@ -24,3 +24,4 @@ ios
 ios/certs/*
 
 .env
+.package-lock.json

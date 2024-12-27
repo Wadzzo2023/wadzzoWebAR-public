@@ -192,7 +192,7 @@ export default function CreatorPage() {
         }
       } else {
         await FollowBrand({ brand_id });
-        toast("Followed Creator Successfully!", {
+        toast("Joined as a follower!", {
 
           duration: 3000,
           position: ToastPosition.BOTTOM,
@@ -232,7 +232,7 @@ export default function CreatorPage() {
       queryClient.invalidateQueries({
         queryKey: ["AllBrands"],
       });
-      toast("unfollowed Creator Successfully!", {
+      toast("Successfully removed as follower!", {
 
         duration: 3000,
         position: ToastPosition.BOTTOM,

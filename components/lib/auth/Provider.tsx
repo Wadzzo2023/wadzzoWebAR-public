@@ -10,7 +10,6 @@ import { WalletType } from "./types";
 import { getUser } from "@/app/api/routes/get-user";
 import { BASE_URL, CALLBACK_URL } from "@/components/utils/Common";
 import { getCsrfToken } from "./sign-in";
-import Toast from "react-native-root-toast";
 import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
 import { Color } from "@/components/utils/all-colors";
 
@@ -26,6 +25,7 @@ export type User = {
 type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
+  loading: boolean; // Add loading state
   login: (cookie: string) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -40,32 +40,34 @@ export const AuthProvider: FC<AuthProviderProps> = ({
   children,
 }: AuthProviderProps): JSX.Element => {
   const [user, setUser] = useState<User | null>(null);
-
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(false); // Loading state
 
   useEffect(() => {
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
+    setLoading(true); // Start loading
     try {
-      if (!user) {
-        const user = await getUser();
-        if (user?.id) {
-          setUser(user);
-          setIsAuthenticated(true);
-        } else {
-          setUser(null);
-          setIsAuthenticated(false);
-        }
+      const user = await getUser();
+      if (user?.id) {
+        setUser(user);
+        setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
       }
     } catch (error) {
       setUser(null);
       setIsAuthenticated(false);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
   const login = async (cookie: string): Promise<void> => {
+    setLoading(true); // Start loading
     try {
       await checkAuth();
       toast("Login Successfully!", {
@@ -74,17 +76,18 @@ export const AuthProvider: FC<AuthProviderProps> = ({
           view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
         },
         position: ToastPosition.BOTTOM,
-
       });
     } catch (error) {
       console.log("Failed to log in:", error);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
   const logout = async (): Promise<void> => {
+    setLoading(true); // Start loading
     try {
-
-      const res = await fetch(new URL('api/auth/signout', BASE_URL), {
+      const res = await fetch(new URL("api/auth/signout", BASE_URL), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -92,19 +95,17 @@ export const AuthProvider: FC<AuthProviderProps> = ({
         body: JSON.stringify({
           csrfToken: await getCsrfToken(),
           callbackUrl: CALLBACK_URL,
-          json: 'true'
-
+          json: "true",
         }),
-        credentials: 'include'
-      })
-      console.log('res', res)
-      if (res.ok) {
-        toast("Logout Sucessfully!", {
+        credentials: "include",
+      });
 
+      if (res.ok) {
+        toast("Logout Successfully!", {
           duration: 3000,
           position: ToastPosition.BOTTOM,
           styles: {
-            view: { backgroundColor: Color.wadzzo, borderRadius: 8 }
+            view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
           },
         });
         setUser(null);
@@ -112,11 +113,15 @@ export const AuthProvider: FC<AuthProviderProps> = ({
       }
     } catch (error) {
       console.log("Failed to log out:", error);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, isAuthenticated, loading, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

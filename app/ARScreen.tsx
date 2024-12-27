@@ -142,7 +142,9 @@ const ARScene = () => {
         if (response.ok) {
           Vibration.vibrate(1000);
           setData({ showWinnerAnimation: true });
-
+          queryClient.invalidateQueries({
+            queryKey: ["collection", "MapsAllPins"],
+          });
           Animated.timing(itemOpacity, {
             toValue: 1,
             duration: 3000,
@@ -199,9 +201,7 @@ const ARScene = () => {
                   setLoading(false);
                   setCapturedItem(null);
                   setData({ showWinnerAnimation: false });
-                  queryClient.invalidateQueries({
-                    queryKey: ["collection", "MapsAllPins"],
-                  });
+
                   router.back();
                 });
               });

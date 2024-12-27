@@ -348,22 +348,42 @@ export default function MyCollectionScreen() {
             />
           }
         >
-          <Menu.Item
+          <Button
             onPress={() => {
               setSortBy("title");
               setSortMenuVisible(false);
             }}
-            title="Sort by Title (A-Z)"
+
+
             style={sortBy === "title" ? styles.selectedMenuItem : null} // Highlight selected option
-          />
-          <Menu.Item
+          >
+            <View style={{
+              flex: 1,
+              flexDirection: 'row',
+              gap: 4
+            }}>
+              <Text>Sort By</Text>
+              <Text>Title (A-Z)</Text>
+            </View>
+          </Button>
+          <Button
             onPress={() => {
               setSortBy("remaining");
               setSortMenuVisible(false);
             }}
-            title="Sort by Limit Remaining (Highest to Lowest)"
+
             style={sortBy === "remaining" ? styles.selectedMenuItem : null} // Highlight selected option
-          />
+          >
+            <View style={{
+              flex: 1,
+              flexDirection: 'row',
+              gap: 4
+            }}>
+              <Text>Sort By</Text>
+              <Text>Limit (High to Low)</Text>
+            </View>
+
+          </Button>
         </Menu>
       </Appbar.Header>
       {

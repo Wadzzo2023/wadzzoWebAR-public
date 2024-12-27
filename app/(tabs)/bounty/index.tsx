@@ -39,6 +39,7 @@ import LoadingScreen from "@/components/Loading";
 import { addrShort } from "@/components/utils/AddrShort";
 import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
 import { Color } from "@/components/utils/all-colors";
+import { toast } from "@backpackapp-io/react-native-toast";
 
 type ButtonLayout = {
   x: number;
@@ -86,7 +87,7 @@ export default function BountyScreen() {
         BountyWinner: 1,
       },
       imageUrls: ["https://app.wadzzo.com/images/loading.png"],
-      totalWinner: 0,
+      totalWinner: 5,
       BountyWinner: [],
       creator: {
         name: "Creator 1",
@@ -147,7 +148,7 @@ export default function BountyScreen() {
   const filteredBounties = useMemo(() => {
     return bountyList.filter((bounty: Bounty) => {
       if (selectedFilter === "Joined") return bounty.isJoined;
-      if (selectedFilter === "Not Joined") return !bounty.isJoined;
+      if (selectedFilter === "Not Joined") return !bounty.isJoined && !bounty.isOwner;
       return true; // "All"
     });
   }, [selectedFilter, bountyList]);
@@ -166,6 +167,8 @@ export default function BountyScreen() {
       setData({ item: bounty });
       router.push("/(tabs)/bounty/:id");
       // navigation.navigate("SingleBountyItem", { item: bounty });
+    } else if (bounty.totalWinner === bounty._count.BountyWinner) {
+      toast.error("All Winners Declared");
     } else {
       onOpen("JoinBounty", { bounty: bounty, balance: balanceRes.data });
     }
@@ -201,7 +204,7 @@ export default function BountyScreen() {
                 html:
                   item.description.length > 200
                     ? item.description.slice(0, 200)
-                    : "",
+                    : item.description,
               }}
             />
           </View>
@@ -243,7 +246,7 @@ export default function BountyScreen() {
             mode={item.isJoined ? "outlined" : "contained"}
             onPress={() => toggleJoin(item.id, item.isJoined, item)}
           >
-            {item.isJoined || item.isOwner ? "View Bounty" : "Join Bounty"}
+            {item.isJoined || item.isOwner ? "View Bounty" : item.totalWinner !== item._count.BountyWinner ? "Join Bounty" : "Finished"}
           </Button>
         </Card.Actions>
       </Card>

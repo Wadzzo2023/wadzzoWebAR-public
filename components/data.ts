@@ -12,11 +12,11 @@ export interface OnboardingData {
 const onBoardData: OnboardingData[] = [
   {
     id: 1,
-    animation: require('../assets/animation/win.json'),
-    text: 'Win',
-    description: "Win Prizes, bounties and rewards from your favorite local and national brands",
-    textColor: '#005b4f',
-    backgroundColor: '#12C7A0',
+    animation: require('../assets//animation/explore.json'),
+    text: 'Explore',
+    description: "Open wadzzo to start your journey to explore the world of rewards and prizes",
+    textColor: '#F15937',
+    backgroundColor: '#C8E6B3',
   },
   {
     id: 2,
@@ -28,11 +28,11 @@ const onBoardData: OnboardingData[] = [
   },
   {
     id: 3,
-    animation: require('../assets//animation/explore.json'),
-    text: 'Explore',
-    description: "Open wadzzo to start your journey to explore the world of rewards and prizes",
-    textColor: '#F15937',
-    backgroundColor: '#C8E6B3',
+    animation: require('../assets/animation/win.json'),
+    text: 'Win',
+    description: "Win Prizes, bounties and rewards from your favorite local and national brands",
+    textColor: '#005b4f',
+    backgroundColor: '#12C7A0',
   },
 ];
 
