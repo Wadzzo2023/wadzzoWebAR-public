@@ -2,7 +2,7 @@ import { ViroARSceneNavigator, ViroAnimations } from "@reactvision/react-viro";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   Animated,
@@ -122,6 +122,8 @@ const ARScene = () => {
   const itemAnimation = useRef(new Animated.Value(height)).current;
   const spacecraftFlyOut = useRef(new Animated.Value(0)).current;
   const itemOpacity = useRef(new Animated.Value(0)).current;
+  const [isFirstTime, setIsFirstTime] = useState(true);
+  const [showCaptureButton, setShowCaptureButton] = useState(false);
 
   const onCaptureButtonPress = async () => {
     if (capturedItem) {
@@ -250,6 +252,16 @@ const ARScene = () => {
     ],
     opacity: itemOpacity,
   };
+  useEffect(() => {
+    if (isFirstTime) {
+      setTimeout(() => {
+        setShowCaptureButton(true);
+        setIsFirstTime(false);
+      }, 6000);
+    } else {
+      setShowCaptureButton(true);
+    }
+  }, [isFirstTime]);
 
   return (
     <View style={styles.container}>
@@ -281,7 +293,7 @@ const ARScene = () => {
         style={styles.f1}
       />
 
-      {!singleAR && capturedItem && (
+      {!singleAR && capturedItem && showCaptureButton && (
         <>
           <TouchableOpacity
             disabled={loading || !capturedItem}

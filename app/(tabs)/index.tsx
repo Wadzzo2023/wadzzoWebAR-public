@@ -90,6 +90,7 @@ const HomeScreen = () => {
   const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(null);
   const [handleRecenterPress, setHandleRecenterPress] = useState(false);
   const [countCurrentStep, setCountCurrentStep] = useState(0);
+  const [touchOnMap, setTouchOnMap] = useState(false);
   const steps = [
     {
       target: buttonLayouts[0],
@@ -296,6 +297,8 @@ const HomeScreen = () => {
       trackingMode: true,
     });
 
+    setTouchOnMap(false);
+
 
   };
 
@@ -429,9 +432,12 @@ const HomeScreen = () => {
 
           pitchEnabled={true}
           logoEnabled={false}
+          onTouchMove={() => {
+            setTouchOnMap(true);
+          }}
           onCameraChanged={(event) => {
-            // console.log("Region is changing:", event.properties.zoom);
-            if ((event.properties.zoom < 14 || event.properties.zoom > 18) && data.trackingMode && !handleRecenterPress) {
+            // console.log("Region is changing:", event);
+            if (touchOnMap && data.trackingMode && !handleRecenterPress) {
               // console.log("Zoom level:", event.properties.zoom.toFixed(0));
               setAccountActionData({
                 ...accountActionData,
@@ -500,7 +506,7 @@ const HomeScreen = () => {
           <MaterialCommunityIcons
             name="crosshairs-gps"
             size={20}
-            color="black"
+            color={data.trackingMode ? Color.wadzzo : "black"}
           />
         </TouchableOpacity>
 
