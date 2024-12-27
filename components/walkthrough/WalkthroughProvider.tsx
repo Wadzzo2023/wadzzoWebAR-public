@@ -42,7 +42,7 @@ type StepProps = {
 type WalkthroughProps = {
   steps: StepProps[];
   onFinish: () => void;
-  setCountCurrentStep: (step: number) => void;
+  setCountCurrentStep?: (step: number) => void;
 };
 
 const Step: React.FC<StepProps> = ({
@@ -211,14 +211,18 @@ export const Walkthrough: React.FC<WalkthroughProps> = ({
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
-      setCountCurrentStep(currentStep + 1);
+      if (setCountCurrentStep) {
+        setCountCurrentStep(currentStep + 1);
+      }
     }
   };
 
   const prevStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
-      setCountCurrentStep(currentStep - 1);
+      if (setCountCurrentStep) {
+        setCountCurrentStep(currentStep + 1);
+      }
     }
   };
 
