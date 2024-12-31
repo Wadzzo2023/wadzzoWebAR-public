@@ -2,7 +2,7 @@
   "expo": {
     "name": "Wadzzo",
     "slug": "Wadzzo",
-    "version": "4.1.6",
+    "version": "4.2.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "com.thebillboardapp.wadzzo",
@@ -16,13 +16,60 @@
       "buildNumber": "2",
       "usesAppleSignIn": true,
       "supportsTablet": true,
+      "bundleIdentifier": "com.thebillboardapp.wadzzo",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
         "NSPhotoLibraryAddUsageDescription": "Allow $(PRODUCT_NAME) to save photos",
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to use your camera",
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use your microphone"
-      },
-      "bundleIdentifier": "com.thebillboardapp.wadzzo"
+      }
+    },
+    "privacyManifest": {
+      "NSPrivacyTracking": false,
+      "NSPrivacyCollectedDataTypes": [
+        {
+          "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePhotoLibrary",
+          "NSPrivacyCollectedDataTypeLinked": false,
+          "NSPrivacyCollectedDataTypeTracking": false,
+          "NSPrivacyCollectedDataTypePurposes": [
+            "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+          ]
+        },
+        {
+          "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeLocation",
+          "NSPrivacyCollectedDataTypeLinked": false,
+          "NSPrivacyCollectedDataTypeTracking": false,
+          "NSPrivacyCollectedDataTypePurposes": [
+            "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+          ]
+        }
+      ],
+      "NSPrivacyAccessedAPITypes": [
+        {
+          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryPhotoLibrary",
+          "NSPrivacyAccessedAPITypeReasons": [
+            "NSPrivacyAccessedAPIReasonAppFunctionality"
+          ]
+        },
+        {
+          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryLocation",
+          "NSPrivacyAccessedAPITypeReasons": [
+            "NSPrivacyAccessedAPIReasonAppFunctionality"
+          ]
+        },
+        {
+          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+          "NSPrivacyAccessedAPITypeReasons": [
+            "NSPrivacyAccessedAPIReasonAppFunctionality"
+          ]
+        },
+        {
+          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+          "NSPrivacyAccessedAPITypeReasons": [
+            "NSPrivacyAccessedAPIReasonAppFunctionality"
+          ]
+        }
+      ]
     },
     "android": {
       "versionCode": "2",
@@ -30,13 +77,13 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.thebillboardapp.wadzzo",
       "permissions": [
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
-      ],
-      "package": "com.thebillboardapp.wadzzo"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -63,7 +110,7 @@
         "@rnmapbox/maps",
         {
           "RNMapboxMapsDownloadToken": "sk.eyJ1Ijoid2FkenpvIiwiYSI6ImNtMXdnMG9rdzBsdTUycXM5eGUyZ3duNmEifQ.m6L76S3I7p0Sl3ik2kA65A",
-          "RNMapboxMapsVersion": "11.0.0"
+          "RNMapboxMapsVersion": "11.8.0"
         }
       ],
       "expo-font",
@@ -77,7 +124,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "563b3113-abd1-4432-860b-59131f6fff2d"
+        "projectId": "166cdf10-31b0-43b3-9bf4-cd1b1d826e90"
       }
     }
   }
