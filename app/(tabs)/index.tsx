@@ -434,6 +434,7 @@ const HomeScreen = () => {
           logoEnabled={false}
           onTouchMove={() => {
             setTouchOnMap(true);
+            setHandleRecenterPress(false);
           }}
           onCameraChanged={(event) => {
             // console.log("Region is changing:", event);
@@ -444,6 +445,7 @@ const HomeScreen = () => {
                 trackingMode: false,
               });
             }
+
           }
           }
         >
