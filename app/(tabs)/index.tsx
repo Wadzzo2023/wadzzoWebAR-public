@@ -497,7 +497,7 @@ const HomeScreen = () => {
               color: "white",
             }}
           >
-            {Number(balanceRes.data).toFixed(2)}
+            {Number(balanceRes.data) >= 0 ? Number(balanceRes.data).toFixed(2) : 0}
           </Text>
         </View>
         <TouchableOpacity

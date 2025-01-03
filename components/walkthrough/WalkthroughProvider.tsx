@@ -309,7 +309,6 @@ const styles = StyleSheet.create({
   },
   skipButton: {
     backgroundColor: "red",
-
     paddingHorizontal: 20,
     paddingVertical: 5,
     borderRadius: 5,

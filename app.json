@@ -18,10 +18,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.thebillboardapp.wadzzo",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
-        "NSPhotoLibraryAddUsageDescription": "Allow $(PRODUCT_NAME) to save photos",
-        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to use your camera",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use your microphone"
+        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photo library to allow you to select photo or content to view in Augmented Reality(AR)",
+        "NSPhotoLibraryAddUsageDescription": "Allow $(PRODUCT_NAME) to save photos to your photo library.",
+        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to use your camera to access camera and use Augmented Reality(AR) functionality.",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use your microphone to play supported Augmented Reality(AR) content and record audio."
       }
     },
     "privacyManifest": {
@@ -95,7 +95,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use your camera to access camera and use Augmented Reality(AR) functionality."
         }
       ],
       "@reactvision/react-viro",
@@ -103,7 +103,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to show you items nearby."
         }
       ],
       [

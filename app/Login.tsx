@@ -368,35 +368,46 @@ const LoginScreen = () => {
                   {loading && <ActivityIndicator color="white" size={12} />}
                 </Button>
 
-                <View style={styles.socialContainer}>
-                  <TouchableOpacity
-                    disabled={googleMutation.isPending}
-                    onPress={async () => await promptAsync()}
-                  >
-                    <View style={styles.login_social_button}>
-                      {googleMutation.isPending ? (
-                        <ActivityIndicator size={12} />
-                      ) : (
-                        <Image
-                          style={styles.login_social_icon}
-                          source={require("../assets/icons/google.png")}
-                        />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                  {Platform.OS === "ios" && <AppleLogin />}
-                  <TouchableOpacity
-                    onPress={() => {
-                      router.push("/albedo");
-                    }}
-                  >
-                    <View style={styles.login_social_button}>
+                <View style={styles.socialLoginContainer}>
+                  <View style={styles.socialButtonsContainer}>
+                    <TouchableOpacity
+                      style={styles.socialButton}
+                      disabled={googleMutation.isPending}
+                      onPress={async () => await promptAsync()}
+                    >
                       <Image
-                        style={styles.login_social_icon}
+                        style={styles.socialIcon}
+                        source={require("../assets/icons/google.png")}
+                      />
+                      <Text style={styles.socialButtonText}>Continue with Google</Text>
+                      {googleMutation.isPending && (
+                        <ActivityIndicator size={16} color={Color.wadzzo} style={styles.loader} />
+                      )}
+                    </TouchableOpacity>
+                    {
+                      Platform.OS === 'ios' && <AppleLogin />
+                    }
+                    {/* <AppleLogin style={styles.socialButton}>
+                      <Image
+                        style={styles.socialIcon}
+                        source={require("../assets/icons/apple.png")}
+                      />
+                      <Text style={styles.socialButtonText}>Continue with Apple</Text>
+                    </AppleLogin> */}
+
+                    <TouchableOpacity
+                      style={styles.socialButton}
+                      onPress={() => {
+                        router.push("/albedo");
+                      }}
+                    >
+                      <Image
+                        style={styles.socialIcon}
                         source={require("../assets/icons/albedo.png")}
                       />
-                    </View>
-                  </TouchableOpacity>
+                      <Text style={styles.socialButtonText}>Continue with Albedo</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <View style={styles.newAccountContainer}>
@@ -534,7 +545,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 8,
     width: "100%",
-    marginTop: 20,
     flexDirection: "column",
     justifyContent: "center",
   },
@@ -545,6 +555,47 @@ const styles = StyleSheet.create({
   createAccountText: {
     color: "#3b82f6", // Blue-500
     textDecorationLine: "underline",
+  },
+  socialLoginContainer: {
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  socialLoginText: {
+    fontSize: 14,
+    color: Color.light.onSurface,
+    marginBottom: 16,
+  },
+  socialButtonsContainer: {
+    width: '100%',
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Color.light.surface,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  socialIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 12,
+  },
+  socialButtonText: {
+    flex: 1,
+    fontSize: 16,
+    color: Color.light.onSurface,
+  },
+  loader: {
+    marginLeft: 8,
   },
 });
 

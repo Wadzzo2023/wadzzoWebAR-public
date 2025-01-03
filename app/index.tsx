@@ -13,6 +13,8 @@ import { useAuth } from "../components/lib/auth/Provider";
 import RenderItem from "../components/RenderItem";
 import Pagination from "../components/Pagination";
 import CustomButton from "../components/CustomButton";
+import LoadingScreen from "@/components/Loading";
+import LoadingForAuthenticationScreen from "@/components/LoadingForAuthentication";
 
 const OnboardingScreen = () => {
   const flatListRef = useAnimatedRef<FlatList<OnboardingData>>();
@@ -20,7 +22,7 @@ const OnboardingScreen = () => {
   const flatListIndex = useSharedValue(0);
   const [playAnimation, setPlayAnimation] = useState(false);
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   const onViewableItemsChanged = ({
     viewableItems,
@@ -48,6 +50,9 @@ const OnboardingScreen = () => {
     }
   }, [isAuthenticated]);
 
+  if (loading) {
+    return <LoadingForAuthenticationScreen />;
+  }
   return (
     <View style={[styles.container]}>
       <Animated.FlatList
@@ -132,3 +137,7 @@ const styles = StyleSheet.create({
     height: 200,
   },
 });
+
+
+
+
