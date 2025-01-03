@@ -21,7 +21,9 @@
         "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photo library to allow you to select photo or content to view in Augmented Reality(AR)",
         "NSPhotoLibraryAddUsageDescription": "Allow $(PRODUCT_NAME) to save photos to your photo library.",
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to use your camera to access camera and use Augmented Reality(AR) functionality.",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use your microphone to play supported Augmented Reality(AR) content and record audio."
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use your microphone to play supported Augmented Reality(AR) content and record audio.",
+        "NSLocationAlwaysUsageDescription": "Allow $(PRODUCT_NAME) to access your location to show you items nearby",
+        "NSLocationWhenInUseUsageDescription": "Allow $(PRODUCT_NAME) to access your location to show you items nearby"
       }
     },
     "privacyManifest": {
