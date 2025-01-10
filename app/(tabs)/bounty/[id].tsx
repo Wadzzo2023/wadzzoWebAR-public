@@ -225,14 +225,7 @@ const SingleBountyItem = () => {
             <Card.Content>
               <View style={styles.headerContainer}>
                 <Title style={styles.title}>{bounty.title}</Title>
-                <Chip
-                  style={[
-                    styles.statusChip,
-                    { backgroundColor: getStatusColor(bounty.status) },
-                  ]}
-                >
-                  {bounty.status}
-                </Chip>
+
               </View>
               <View style={styles.prizeContainer}>
                 <Text style={styles.prizeText}>
@@ -294,7 +287,7 @@ const SingleBountyItem = () => {
                 />
               </Card.Content>
             </Card>
-          ) : bounty.BountyWinner.length !== bounty.totalWinner ? (
+          ) : bounty.BountyWinner.length < bounty.totalWinner ? (
             <Card style={styles.card}>
               <Card.Content>
                 <Title>Submit Your Solution</Title>

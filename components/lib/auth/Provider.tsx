@@ -20,6 +20,8 @@ export type User = {
   id: string;
   walletType: WalletType;
   emailVerified: boolean;
+  bio?: string | null;
+  joinedAt?: Date | null;
 };
 
 type AuthContextType = {

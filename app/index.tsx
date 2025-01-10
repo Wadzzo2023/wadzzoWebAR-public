@@ -22,7 +22,7 @@ const OnboardingScreen = () => {
   const flatListIndex = useSharedValue(0);
   const [playAnimation, setPlayAnimation] = useState(false);
   const router = useRouter();
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
 
   const onViewableItemsChanged = ({
     viewableItems,
@@ -45,10 +45,14 @@ const OnboardingScreen = () => {
   });
 
   useEffect(() => {
-    if (isAuthenticated) {
+    console.log("User, isAuthenticated", user, isAuthenticated);
+    if (isAuthenticated && user?.image) {
       router.replace("/(tabs)/");
     }
-  }, [isAuthenticated]);
+    else if (isAuthenticated && !user?.image) {
+      router.replace("/onboardprofile/");
+    }
+  }, [isAuthenticated, user?.image]);
 
   if (loading) {
     return <LoadingForAuthenticationScreen />;

@@ -1,9 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Dimensions,
   findNodeHandle,
+  Image,
   LayoutChangeEvent,
   Linking,
   ScrollView,
@@ -13,6 +14,7 @@ import {
   View,
 } from "react-native";
 import {
+  ActivityIndicator,
   Appbar,
   Avatar,
   Button,
@@ -39,6 +41,7 @@ import LoadingScreen from "@/components/Loading";
 import { Color } from "@/components/utils/all-colors";
 import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
 import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
+import { deleteCurrentUser } from "../api/routes/delete-current-user";
 
 type ButtonLayout = {
   x: number;
@@ -59,10 +62,12 @@ export default function SettingScreen() {
   const { data: walkthroughData, setData: setWalkThroughData } =
     useWalkThrough();
   const { data: pinMode, setData } = useAccountAction();
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["currentUserInfo"],
     queryFn: getUser,
   });
+  console.log(data);
 
   const copyPublicKey = async () => {
     await Clipboard.setStringAsync(data?.id ?? "");
@@ -125,7 +130,7 @@ export default function SettingScreen() {
       target: buttonLayouts[4],
       title: "Delete Data",
       content:
-        "Press this button to delete your account.  A request will be sent to our support team and your account will be permanently deleted.",
+        "Press this button to delete your account. Your account will be permanently deleted.",
     },
   ];
 
@@ -137,34 +142,26 @@ export default function SettingScreen() {
       showWalkThrough: true,
     });
   };
+  const DeleteMutation = useMutation({
+    mutationFn: deleteCurrentUser,
+  });
 
   const deleteData = async () => {
-    // console.log("Deleting data");
-    setShowDeleteDialog(false);
-    const userInfo = `
-User ID: ${data?.id}
-Name: ${data?.name}
-Email: ${data?.email}
-  `;
-
-    const options = {
-      recipients: ["support@wadzzo.com"],
-      subject: "User Data Deletion Request",
-      body: `Hello Support,\n\nThe following user has requested data deletion:\n\n${userInfo}\n\nBest regards,\nYour App Team`,
-    };
-
     try {
-      const result = await MailComposer.composeAsync(options);
-      if (result.status === "sent") {
-        // console.log("Support email sent successfully");
-      } else {
-        // console.log("Support email not sent");
-      }
+      await DeleteMutation.mutateAsync();
+
+      await logout();
     } catch (error) {
-      // console.error("Failed to send email", error);
+      console.error("Error deleting account:", error);
+      toast("Failed to delete account. Please try again.", {
+        duration: 3000,
+        position: ToastPosition.TOP,
+        styles: {
+          view: { backgroundColor: 'red', borderRadius: 8 },
+        },
+      });
     }
   };
-
   const signOut = async () => {
     setLoading(true);
     await logout();
@@ -236,8 +233,8 @@ Email: ${data?.email}
       </Appbar.Header>
       <Card style={styles.profileCard}>
         <View style={styles.profileContent}>
-          <Avatar.Image
-            size={80}
+          <Image
+            style={{ width: 70, height: 70, borderRadius: 70 }}
             source={{
               uri:
                 data?.image ??
@@ -329,6 +326,7 @@ Email: ${data?.email}
             onPress={() => setShowDeleteDialog(true)}
             style={styles.button}
             icon="delete"
+            disabled={loading || isLoading}
             textColor={theme.colors.error}
           >
             <Text> Delete Data</Text>
@@ -359,9 +357,21 @@ Email: ${data?.email}
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setShowDeleteDialog(false)}>Cancel</Button>
-            <Button onPress={deleteData} textColor={theme.colors.error}>
-              Delete
+            {
+              DeleteMutation.isPending ? null : <Button onPress={() => setShowDeleteDialog(false)}>Cancel</Button>
+            }
+            <Button
+              disabled={loading || DeleteMutation.isPending}
+              onPress={deleteData} textColor={theme.colors.error}>
+              {DeleteMutation.isPending ? <Text style={{
+
+                flexDirection: "row",
+                alignContent: "center",
+
+                justifyContent: "center",
+              }}>
+                <ActivityIndicator size={16} color={Color.wadzzo} /> This may take a few seconds
+              </Text> : "Delete"}
             </Button>
           </Dialog.Actions>
         </Dialog>

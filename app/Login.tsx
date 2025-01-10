@@ -44,7 +44,7 @@ export const getPublicKeyAPISchema = z.object({
 WebBrowser.maybeCompleteAuthSession();
 
 const LoginScreen = () => {
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, user, login } = useAuth();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const router = useRouter();
@@ -299,10 +299,13 @@ const LoginScreen = () => {
   }, [response]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.image) {
       router.replace("/(tabs)/");
     }
-  }, [isAuthenticated]);
+    else if (isAuthenticated && !user?.image) {
+      router.replace("/onboardprofile/");
+    }
+  }, [isAuthenticated, user?.image]);
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>

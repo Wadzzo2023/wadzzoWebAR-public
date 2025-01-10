@@ -13,6 +13,7 @@ export const deleteCurrentUser = async () => {
         if (!response.ok) {
             throw new Error("Error deleting");
         }
+        console.log("User deleted successfully");
         const data = await response.json();
         return data;
 

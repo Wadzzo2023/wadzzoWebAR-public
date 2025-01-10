@@ -82,6 +82,7 @@ export default function BountyScreen() {
       priceInBand: 100,
       status: "APPROVED",
       isJoined: false,
+      currentWinnerCount: 1,
       _count: {
         participants: 10,
         BountyWinner: 1,

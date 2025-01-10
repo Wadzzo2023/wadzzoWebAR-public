@@ -19,7 +19,7 @@ import { useRouter } from "expo-router";
 import { ActivityIndicator, Button, TextInput } from "react-native-paper";
 import { Color } from "../components/utils/all-colors";
 import { BASE_URL } from "../components/utils/Common";
-import { AuthError, AuthErrorCodes, createUserWithEmailAndPassword } from "firebase/auth";
+import { AuthError, AuthErrorCodes, createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "@/components/lib/auth/config";
 import { GoogleOuthToFirebaseToken } from "@/components/lib/auth/google";
 import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
@@ -43,14 +43,16 @@ const SignUpScreen = () => {
 
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         const user = cred.user;
-        toast("Check you email to verify your account.", {
-          duration: 3000,
-          styles: {
-            view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
-          },
-          position: ToastPosition.BOTTOM,
-
-        });
+        if (user) {
+          await sendEmailVerification(user);
+          toast("Check you email to verify your account.", {
+            duration: 3000,
+            styles: {
+              view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
+            },
+            position: ToastPosition.BOTTOM,
+          });
+        }
         router.push("/Login");
         setLoading(false);
 

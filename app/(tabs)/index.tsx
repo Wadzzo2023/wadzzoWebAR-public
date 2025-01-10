@@ -1,4 +1,8 @@
-import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  FontAwesome,
+  MaterialCommunityIcons,
+  AntDesign,
+} from "@expo/vector-icons";
 import Mapbox, {
   Camera,
   Images,
@@ -24,11 +28,12 @@ import {
   View,
 } from "react-native";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import * as ImagePicker from "expo-image-picker";
 
 import { useFocusEffect, useRouter } from "expo-router";
 
-import { Text } from "react-native-paper";
+import { ActivityIndicator, Button, Text, TextInput } from "react-native-paper";
 import { useExtraInfo } from "@/components/hooks/useExtraInfo";
 import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import {
@@ -44,11 +49,11 @@ import LoadingScreen from "@/components/Loading";
 import { Color } from "@/components/utils/all-colors";
 import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
 import { useWalkThrough } from "@/components/hooks/useWalkThrough";
-import { useAuth } from "@/components/lib/auth/Provider";
+import { useAuth, User } from "@/components/lib/auth/Provider";
 import { Position } from "@rnmapbox/maps/lib/typescript/src/types/Position";
 import { CollectionAnimation } from "@/components/CollectionAnimation";
 import { featureCollection, point } from "@turf/turf";
-import { toast } from "@backpackapp-io/react-native-toast";
+import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
@@ -62,6 +67,7 @@ type ButtonLayout = {
   width: number;
   height: number;
 };
+
 
 const HomeScreen = () => {
   const [locationPermission, setLocationPermission] = useState(false);
@@ -78,16 +84,19 @@ const HomeScreen = () => {
   const autoCollectModeRef = useRef(data.mode);
   const { onOpen } = useModal();
   const cameraRef = useRef<Camera>(null);
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const [showAnimation, setShowAnimation] = useState(false);
   const scrollViewRef = useRef(null);
   const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
-  const [showAutoCollectionAnimation, setShowAutoCollectionAnimation] = useState(false);
+  const [showAutoCollectionAnimation, setShowAutoCollectionAnimation] =
+    useState(false);
   const { data: accountActionData, setData: setAccountActionData } =
     useAccountAction();
   const { data: walkthroughData } = useWalkThrough();
-  const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(null);
+  const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(
+    null
+  );
   const [handleRecenterPress, setHandleRecenterPress] = useState(false);
   const [countCurrentStep, setCountCurrentStep] = useState(0);
   const [touchOnMap, setTouchOnMap] = useState(false);
@@ -148,12 +157,9 @@ const HomeScreen = () => {
           );
         }
       }
-
     },
     []
   );
-
-
 
   const checkFirstTimeSignIn = async () => {
     // console.log(showWalkthrough);
@@ -164,15 +170,17 @@ const HomeScreen = () => {
     }
   };
 
-
-
   const getNearbyPins = (
     userLocation: userLocationType,
     locations: ConsumedLocation[],
     radius: number
   ) => {
     return locations.filter((location) => {
-      if (location.auto_collect || location.collection_limit_remaining <= 0 || location.collected)
+      if (
+        location.auto_collect ||
+        location.collection_limit_remaining <= 0 ||
+        location.collected
+      )
         return false;
       const distance = getDistanceFromLatLonInMeters(
         userLocation.latitude,
@@ -227,7 +235,8 @@ const HomeScreen = () => {
   ) => {
     if (!userLocation) return []; // Exit early if userLocation is null
     return locations.filter((location) => {
-      if (location.collection_limit_remaining <= 0 || location.collected) return false;
+      if (location.collection_limit_remaining <= 0 || location.collected)
+        return false;
       if (location.auto_collect) {
         const distance = getDistanceFromLatLonInMeters(
           userLocation.latitude,
@@ -240,9 +249,6 @@ const HomeScreen = () => {
     });
   };
   const collectPinsSequentially = async (pins: ConsumedLocation[]) => {
-
-
-
     for (const pin of pins) {
       if (!autoCollectModeRef.current) {
         // console.log("Auto collect mode paused");
@@ -298,11 +304,7 @@ const HomeScreen = () => {
     });
 
     setTouchOnMap(false);
-
-
   };
-
-
 
   const response = useQuery({
     queryKey: ["MapsAllPins", accountActionData.brandMode],
@@ -315,8 +317,6 @@ const HomeScreen = () => {
     queryKey: ["balance"],
     queryFn: getUserPlatformAsset,
   });
-
-
 
   const locations = response.data?.locations ?? [];
 
@@ -338,7 +338,7 @@ const HomeScreen = () => {
         {
           accuracy: Location.Accuracy.High,
           distanceInterval: 1, // update position every meter
-          timeInterval: 5000,  // update position every 5 seconds
+          timeInterval: 5000, // update position every 5 seconds
         },
         (location) => {
           const { latitude, longitude, speed } = location.coords;
@@ -381,26 +381,22 @@ const HomeScreen = () => {
     }
   }, [authLoading, isAuthenticated, walkthroughData]);
 
-
   useEffect(() => {
     console.log("Tracking mode:", data.trackingMode);
   }, [data.trackingMode]);
 
   useEffect(() => {
     if (countCurrentStep === 5) {
-      console.log("countCurrentStep", countCurrentStep)
+      console.log("countCurrentStep", countCurrentStep);
       showPinCollectionAnimation();
     }
   }, [countCurrentStep]);
 
   useFocusEffect(
     useCallback(() => {
-      console.log("Refetching data"),
-        response.refetch();
+      console.log("Refetching data"), response.refetch();
     }, [])
   );
-
-
 
   useEffect(() => {
     if (data.mode && locations) {
@@ -416,20 +412,22 @@ const HomeScreen = () => {
     autoCollectModeRef.current = data.mode;
   }, [data.mode]);
 
-
-
-  if (response.isLoading || loading || !locationPermission || !userLocation || authLoading) {
+  if (
+    response.isLoading ||
+    loading ||
+    !locationPermission ||
+    !userLocation ||
+    authLoading
+  ) {
     return <LoadingScreen />;
   }
 
   return (
     <View style={styles.container} ref={scrollViewRef}>
-
       <>
         <MapView
           styleURL="mapbox://styles/wadzzo/cm1xtphyn01ci01pi20jhfbto"
           style={styles.map}
-
           pitchEnabled={true}
           logoEnabled={false}
           onTouchMove={() => {
@@ -445,9 +443,7 @@ const HomeScreen = () => {
                 trackingMode: false,
               });
             }
-
-          }
-          }
+          }}
         >
           <Camera
             defaultSettings={{
@@ -461,7 +457,11 @@ const HomeScreen = () => {
             ref={cameraRef}
             centerCoordinate={[userLocation.longitude, userLocation.latitude]}
           />
-          <LocationPuck pulsing={{ isEnabled: true }} puckBearingEnabled puckBearing="heading" />
+          <LocationPuck
+            pulsing={{ isEnabled: true }}
+            puckBearingEnabled
+            puckBearing="heading"
+          />
           <Marker locations={locations} />
         </MapView>
         <CollectionAnimation
@@ -472,9 +472,7 @@ const HomeScreen = () => {
           <View
             style={styles.welcome}
             onLayout={(event) => onButtonLayout(event, 0)}
-          >
-
-          </View>
+          ></View>
         )}
         {/* Recenter button */}
         <View
@@ -485,19 +483,19 @@ const HomeScreen = () => {
             style={{
               height: 20,
               width: 20,
-
             }}
             source={require("../../assets/images/wadzzo.png")}
             height={100}
             width={100}
-
           />
           <Text
             style={{
               color: "white",
             }}
           >
-            {Number(balanceRes.data) >= 0 ? Number(balanceRes.data).toFixed(2) : 0}
+            {Number(balanceRes.data) >= 0
+              ? Number(balanceRes.data).toFixed(2)
+              : 0}
           </Text>
         </View>
         <TouchableOpacity
@@ -527,25 +525,25 @@ const HomeScreen = () => {
           <FontAwesome name="refresh" size={20} color="black" />
         </TouchableOpacity>
 
-        {
-          showWalkthrough && countCurrentStep === 5 && (
-            <View
-              style={styles.pinCollectedAnim}
-              onLayout={(event) => onButtonLayout(event, 1)}
-            >
-              <Image
-                source={require("../../assets/images/wadzzo.png")}
-                style={styles.pinImage}
-              />
-            </View>
-          )
-        }
-
-
+        {showWalkthrough && countCurrentStep === 5 && (
+          <View
+            style={styles.pinCollectedAnim}
+            onLayout={(event) => onButtonLayout(event, 1)}
+          >
+            <Image
+              source={require("../../assets/images/wadzzo.png")}
+              style={styles.pinImage}
+            />
+          </View>
+        )}
       </>
 
       {showWalkthrough && (
-        <Walkthrough steps={steps} setCountCurrentStep={setCountCurrentStep} onFinish={() => setShowWalkthrough(false)} />
+        <Walkthrough
+          steps={steps}
+          setCountCurrentStep={setCountCurrentStep}
+          onFinish={() => setShowWalkthrough(false)}
+        />
       )}
     </View>
   );
@@ -585,13 +583,12 @@ const Marker = ({ locations }: { locations: ConsumedLocation[] }) => {
                 !location.auto_collect && {
                   borderRadius: 20, // Add borderRadius only when auto_collect is false
                 },
-                location.collected && { opacity: 0.4, }
+                location.collected && { opacity: 0.4 },
               ]}
             />
           </TouchableOpacity>
         </MarkerView>
       ))}
-
     </>
   );
 };
@@ -639,7 +636,7 @@ const styles = StyleSheet.create({
 
   recenterButton: {
     position: "absolute",
-    bottom: Platform.OS === 'ios' ? 90 : 80,
+    bottom: Platform.OS === "ios" ? 90 : 80,
     right: 10,
     backgroundColor: Color.white,
     padding: 12,
@@ -667,7 +664,7 @@ const styles = StyleSheet.create({
 
   AR: {
     position: "absolute",
-    bottom: Platform.OS === 'ios' ? 150 : 140,
+    bottom: Platform.OS === "ios" ? 150 : 140,
     right: 10,
     backgroundColor: Color.wadzzo,
     padding: 12,
@@ -676,13 +673,63 @@ const styles = StyleSheet.create({
   },
   Refresh: {
     position: "absolute",
-    bottom: Platform.OS === 'ios' ? 90 : 80,
+    bottom: Platform.OS === "ios" ? 90 : 80,
     right: 60,
     backgroundColor: Color.white,
     padding: 12,
     borderRadius: 8,
     zIndex: 10,
   },
+  containerOnBoard: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  avatar: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    marginBottom: 20,
+  },
+  randomButton: {
+    backgroundColor: "#4CAF50",
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  randomButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  input: {
+    width: "100%",
+    height: 40,
+    borderColor: "gray",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+  },
+  saveButton: {
+    backgroundColor: "#2196F3",
+    padding: 15,
+    borderRadius: 5,
+  },
+  saveButtonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 12,
+    marginTop: 4,
+  }
 });
 
 export default HomeScreen;

@@ -101,6 +101,14 @@
         }
       ],
       "@reactvision/react-viro",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to use your photos to update your profile picture.",
+          "microphonePermission": false,
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use your camera to access camera and use Augmented Reality(AR) functionality."
+        }
+      ],
       "expo-document-picker",
       [
         "expo-location",
