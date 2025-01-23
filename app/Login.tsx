@@ -30,6 +30,7 @@ import { getUser } from "./api/routes/get-user";
 import base64 from "react-native-base64";
 import { submitSignedXDRToServer4User } from "@/components/utils/submitSignedXDRtoServer4User";
 import { AuthErrorCodes } from "firebase/auth";
+import { handleFireBaseAuthError } from "@/components/firebase-error";
 const webPlatform = Platform.OS === "web";
 export const extraSchema = z.object({
   isAccActive: z.boolean(),
@@ -109,6 +110,7 @@ const LoginScreen = () => {
           email: firebaseToken.email,
           walletType: WalletType.google,
           token: firebaseToken.firebaseToken,
+          fromAppSign: "true",
         },
       });
       console.log(response);
@@ -176,6 +178,7 @@ const LoginScreen = () => {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
+          fromAppSign: "true",
           email,
           password,
           csrfToken: csrfToken,
@@ -189,51 +192,18 @@ const LoginScreen = () => {
 
       if (!response.ok) {
         const error = await response.json();
+        console.log(error, "error");
         const errorString = new URL(error.url).searchParams.get("error")
-        console.log(errorString);
-        if (errorString?.includes(AuthErrorCodes.USER_DELETED)) {
-          toast("User not found!", {
-            duration: 3000,
-            position: ToastPosition.BOTTOM,
-            styles: {
-              view: { backgroundColor: Color.light.error, borderRadius: 8 },
-              text: { color: 'white' }
-            },
+        console.log(errorString, "errorString");
+        setLoading(false);
+        if (errorString) {
+          handleFireBaseAuthError({
+            error: errorString,
+            email: email,
+            password: password,
           });
         }
-        else if (errorString?.includes(AuthErrorCodes.INVALID_EMAIL)) {
-          toast("Invalid Email!", {
-            duration: 3000,
-            position: ToastPosition.BOTTOM,
-            styles: {
-              view: { backgroundColor: Color.light.error, borderRadius: 8 },
-              text: { color: 'white' }
-            },
-          });
-        }
-
-        else if (errorString?.includes(AuthErrorCodes.INVALID_PASSWORD)) {
-          setError(true);
-          toast("Invalid Credentials.", {
-            duration: 3000,
-            position: ToastPosition.BOTTOM,
-            styles: {
-              view: { backgroundColor: Color.light.error, borderRadius: 8 },
-              text: { color: 'white' }
-            },
-          });
-
-        } else if (errorString?.includes("Email is not verified")) {
-          toast("Email is not verified! Check your email.", {
-            duration: 3000,
-            position: ToastPosition.BOTTOM,
-            styles: {
-              view: { backgroundColor: Color.light.error, borderRadius: 8 },
-              text: { color: 'white' }
-            },
-          });
-
-        } else {
+        else {
           toast("Something went wrong! Please contact with admin.", {
             duration: 3000,
             position: ToastPosition.BOTTOM,
@@ -243,7 +213,8 @@ const LoginScreen = () => {
             },
           });
         }
-        setLoading(false);
+
+
       } else {
         const setCookies = response.headers.get("set-cookie");
         if (setCookies) {
@@ -302,10 +273,10 @@ const LoginScreen = () => {
     if (isAuthenticated && user?.image) {
       router.replace("/(tabs)/");
     }
-    else if (isAuthenticated && !user?.image) {
+    else if (isAuthenticated && user && !user?.image) {
       router.replace("/onboardprofile/");
     }
-  }, [isAuthenticated, user?.image]);
+  }, [isAuthenticated, user, user?.image]);
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -629,3 +600,5 @@ function extractUIDToken(decodedToken: string): string | null {
     return null;
   }
 }
+
+

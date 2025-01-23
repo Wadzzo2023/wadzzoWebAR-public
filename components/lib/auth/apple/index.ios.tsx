@@ -35,6 +35,8 @@ export function AppleLogin() {
           walletType: WalletType.apple,
           email: appleCredential.email,
           appleToken: appleCredential.identityToken,
+          fromAppSign: "true",
+
         },
       });
 

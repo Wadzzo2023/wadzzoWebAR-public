@@ -30,6 +30,8 @@ type AuthContextType = {
   loading: boolean; // Add loading state
   login: (cookie: string) => Promise<void>;
   logout: () => Promise<void>;
+  setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -122,7 +124,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, loading, login, logout }}
+      value={{ user, isAuthenticated, loading, login, logout, setIsAuthenticated, setUser }}
     >
       {children}
     </AuthContext.Provider>

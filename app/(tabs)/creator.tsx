@@ -85,7 +85,7 @@ export default function CreatorPage() {
       target: buttonLayouts[1],
       title: "Search for Brands",
       content:
-        "Use the search bar to look for any brand on the platform by typing in the brand name in the search bar, then pressing the search icon",
+        "Use the search bar to look for any brand on the platform by typing in the brand name in the search bar, then pressing the search icon.",
     },
     {
       target: buttonLayouts[2],
@@ -309,7 +309,11 @@ export default function CreatorPage() {
 
   const renderBrandItem = ({ item, index }: { item: Brand; index: number }) => (
     <View style={styles.brandItem}>
-      <Image source={{ uri: item.logo }} style={styles.brandImage} />
+      <Image source={{ uri: item.logo ?? 'https://app.wadzzo.com/images/loading.png' }}
+        height={50}
+        width={50}
+
+        style={styles.brandImage} />
       <Text style={styles.brandName}>{item.first_name}</Text>
       <Button
         onLayout={(event: LayoutChangeEvent) => {
@@ -504,14 +508,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
     backgroundColor: "white",
-    padding: 12,
+    padding: 8,
     borderRadius: 8,
   },
   brandImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 50,
+    height: 50,
+    borderRadius: 10,
     marginRight: 12,
+    objectFit: "cover",
   },
   brandName: {
     flex: 1,

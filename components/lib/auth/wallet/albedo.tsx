@@ -47,6 +47,7 @@ export function AlbedoWebViewAuth({
             pubkey: pubkey,
             signature: signature,
             token: token,
+            fromAppSign: "true",
           },
         });
 

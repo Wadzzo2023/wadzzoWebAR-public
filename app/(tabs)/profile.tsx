@@ -54,7 +54,7 @@ export default function SettingScreen() {
   const theme = useTheme();
   const [loading, setLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const { logout, isAuthenticated } = useAuth();
+  const { logout, isAuthenticated, setIsAuthenticated, setUser } = useAuth();
   const router = useRouter();
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
@@ -63,7 +63,7 @@ export default function SettingScreen() {
     useWalkThrough();
   const { data: pinMode, setData } = useAccountAction();
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["currentUserInfo"],
     queryFn: getUser,
   });
@@ -149,7 +149,8 @@ export default function SettingScreen() {
   const deleteData = async () => {
     try {
       await DeleteMutation.mutateAsync();
-
+      setIsAuthenticated(false);
+      setUser(null);
       await logout();
     } catch (error) {
       console.error("Error deleting account:", error);

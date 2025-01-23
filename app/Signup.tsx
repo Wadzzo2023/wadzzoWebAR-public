@@ -23,6 +23,7 @@ import { AuthError, AuthErrorCodes, createUserWithEmailAndPassword, sendEmailVer
 import { auth } from "@/components/lib/auth/config";
 import { GoogleOuthToFirebaseToken } from "@/components/lib/auth/google";
 import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
+import { handleFireBaseAuthError } from "@/components/firebase-error";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -57,64 +58,26 @@ const SignUpScreen = () => {
         setLoading(false);
 
       } catch (error: unknown) {
+        setLoading(false)
         const err = error as AuthError;
-        if (err.code == AuthErrorCodes.EMAIL_EXISTS) {
-          toast("Email already exists!", {
+        if (err.code) {
+          handleFireBaseAuthError({
+            error: err.code,
+            email: email,
+            password: password,
+          });
+        }
+        else {
+          toast("Something went wrong", {
             duration: 3000,
             styles: {
               view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
             },
             position: ToastPosition.BOTTOM,
-
-          });
-          setLoading(false);
-
-        } else {
-          const errorMessage = err.code;
-          if (errorMessage === AuthErrorCodes.INVALID_EMAIL) {
-            toast("Invalid email!", {
-              duration: 3000,
-              styles: {
-                view: { backgroundColor: Color.light.error, borderRadius: 8 },
-                text: { color: 'white' }
-              },
-              position: ToastPosition.BOTTOM,
-            });
           }
-          else if (errorMessage === AuthErrorCodes.WEAK_PASSWORD) {
-            toast("Weak password!", {
-              duration: 3000,
-              styles: {
-                view: { backgroundColor: Color.light.error, borderRadius: 8 },
-                text: { color: 'white' }
-              },
-              position: ToastPosition.BOTTOM,
-            });
-          }
-          else if (errorMessage === AuthErrorCodes.INVALID_PASSWORD) {
-            toast("Invalid password!", {
-              duration: 3000,
-              styles: {
-                view: { backgroundColor: Color.light.error, borderRadius: 8 },
-                text: { color: 'white' }
-              },
-              position: ToastPosition.BOTTOM,
-            });
-          }
-          else {
-            toast("Failed to create account", {
-              duration: 3000,
-              styles: {
-                view: { backgroundColor: Color.light.error, borderRadius: 8 },
-                text: { color: 'white' }
-              },
-              position: ToastPosition.BOTTOM,
-            });
-          }
-
-          setLoading(false);
-
+          )
         }
+
       }
 
     },

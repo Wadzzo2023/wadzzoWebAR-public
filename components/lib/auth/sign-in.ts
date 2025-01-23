@@ -3,6 +3,7 @@ import { AuthCredentialType } from "./types";
 
 export async function SignIn({ options }: { options: AuthCredentialType }) {
   const csrfToken = await getCsrfToken();
+
   const _signInUrl = new URL(
     "api/auth/callback/credentials",
     BASE_URL

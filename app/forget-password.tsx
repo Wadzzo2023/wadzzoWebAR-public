@@ -1,8 +1,10 @@
+import { handleFireBaseAuthError } from "@/components/firebase-error";
 import { auth } from "@/components/lib/auth/config";
 import { Color } from "@/components/utils/all-colors";
 import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
 import { useRouter } from "expo-router";
-import { sendPasswordResetEmail } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
+import { AuthError, sendPasswordResetEmail } from "firebase/auth";
 import React, { useEffect } from "react";
 import {
     Image,
@@ -34,15 +36,23 @@ const ForgetPassword = () => {
                 },
             });
         } catch (error) {
-            toast("Failed to reset password", {
-                duration: 3000,
-                position: ToastPosition.BOTTOM,
-                styles: {
-                    view: { backgroundColor: Color.light.error, borderRadius: 8 },
-                },
-            });
+            if (error instanceof FirebaseError) {
+                handleFireBaseAuthError({
+                    error: error.code,
+                });
+            }
+            else {
+                toast("An error occurred, please try again later. Or Contact with Admin", {
+                    duration: 3000,
+                    position: ToastPosition.BOTTOM,
+                    styles: {
+                        view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
+                    },
+                });
+            }
 
         }
+
         setLoading(false);
     }
 

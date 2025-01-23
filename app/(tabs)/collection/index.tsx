@@ -64,7 +64,7 @@ export default function MyCollectionScreen() {
     {
       target: buttonLayouts[0],
       title: "Filter Collection",
-      content: "User can filter Collection between Title and Remaining Limit",
+      content: "User can filter Collection between Title and Remaining Limit.",
     },
     {
       target: buttonLayouts[1],
