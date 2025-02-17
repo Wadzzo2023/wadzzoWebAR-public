@@ -41,8 +41,7 @@ const SignUpScreen = () => {
     mutationFn: async () => {
       setLoading(true);
       try {
-
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const cred = await createUserWithEmailAndPassword(auth, email.toLocaleLowerCase(), password);
         const user = cred.user;
         if (user) {
           await sendEmailVerification(user);

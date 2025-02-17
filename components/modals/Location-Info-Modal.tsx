@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, Text } from "react-native";
 import { useModal } from "../hooks/useModal";
 import {
   Portal,
@@ -13,6 +13,8 @@ import {
 } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Color } from "../utils/all-colors";
+import { router } from "expo-router";
+import { DirectionDataType, useDirectionStore } from "../store/direction-store";
 
 interface LocationData {
   id: string;
@@ -29,12 +31,15 @@ interface LocationData {
 const LocationInformationModal = () => {
   const { isOpen, onClose, type, data } = useModal();
   const isModalOpen = isOpen && type === "LocationInformation";
-
+  const { setData: setDirectionData } = useDirectionStore();
   const handleClose = () => {
     onClose();
   };
 
+
   const locationData = data.Collection as LocationData;
+
+
 
   if (!isModalOpen || !locationData) {
     return null;
@@ -105,7 +110,37 @@ const LocationInformationModal = () => {
           </Card.Content>
           <Card.Actions>
             <Button
-              mode="outlined"
+              mode="elevated"
+              onPress={
+                () => {
+                  setDirectionData((prevData?: DirectionDataType) => ({
+                    currentLocation: prevData?.currentLocation, // Preserve current location
+                    destinationLocation: {
+                      latitude: locationData.lat,
+                      longitude: locationData.lng,
+                    },
+                  }));
+                  onClose();
+                  router.push("/direction")
+                }
+              }
+              style={{
+                flex: 1,
+                backgroundColor: "red",
+
+                borderRadius: 8,
+
+              }}
+            >
+              <Text style={{
+                color: "white",
+                fontSize: 16,
+                fontWeight: "bold"
+              }}>
+                Get Directions</Text>
+            </Button>
+            <Button
+              mode="elevated"
               onPress={handleClose}
               style={{
                 flex: 1,

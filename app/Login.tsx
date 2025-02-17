@@ -171,7 +171,7 @@ const LoginScreen = () => {
       );
       const csrTokenResponse = await csrTokenRequest.json();
       const csrfToken = csrTokenResponse.csrfToken;
-
+      const emailLower = email.toLocaleLowerCase();
       const response = await fetch(new URL(requestName, BASE_URL).toString(), {
         method: "POST",
         headers: {
@@ -179,7 +179,7 @@ const LoginScreen = () => {
         },
         body: new URLSearchParams({
           fromAppSign: "true",
-          email,
+          email: emailLower,
           password,
           csrfToken: csrfToken,
           callbackUrl: CALLBACK_URL,
@@ -223,7 +223,7 @@ const LoginScreen = () => {
         const res = await toast.promise(
           axios.get(USER_ACCOUNT_XDR_URL, {
             params: {
-              email: email,
+              email: emailLower,
             },
           }),
           {

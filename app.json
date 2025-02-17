@@ -2,7 +2,7 @@
   "expo": {
     "name": "Wadzzo",
     "slug": "Wadzzo",
-    "version": "4.2.7",
+    "version": "4.3.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "com.thebillboardapp.wadzzo",
@@ -23,7 +23,8 @@
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to use your camera to access camera and use Augmented Reality(AR) functionality.",
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use your microphone to play supported Augmented Reality(AR) content and record audio.",
         "NSLocationAlwaysUsageDescription": "Allow $(PRODUCT_NAME) to access your location to show you items nearby",
-        "NSLocationWhenInUseUsageDescription": "Allow $(PRODUCT_NAME) to access your location to show you items nearby"
+        "NSLocationWhenInUseUsageDescription": "Allow $(PRODUCT_NAME) to access your location to show you items nearby",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "privacyManifest": {
@@ -82,7 +83,6 @@
       "package": "com.thebillboardapp.wadzzo",
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ]

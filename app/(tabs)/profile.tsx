@@ -165,6 +165,9 @@ export default function SettingScreen() {
   };
   const signOut = async () => {
     setLoading(true);
+
+    setUser(null);
+    setIsAuthenticated(false);
     await logout();
     setLoading(false);
   };
