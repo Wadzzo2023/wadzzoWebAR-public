@@ -1,237 +1,199 @@
-import {
-    FontAwesome,
-    MaterialCommunityIcons,
-    AntDesign,
-} from "@expo/vector-icons";
-import Mapbox, {
-    Camera,
-    Images,
-    LocationPuck,
-    MapView,
-    MarkerView,
-    ShapeSource,
-    SymbolLayer,
-    UserLocation,
-    UserTrackingMode,
-} from "@rnmapbox/maps";
-import * as Location from "expo-location";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+"use client"
+
+import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons"
+import Mapbox, { Camera, LineLayer, LocationPuck, MapView, MarkerView, RasterLayer, RasterSource, UserTrackingMode, VectorSource, } from "@rnmapbox/maps"
+import * as Location from "expo-location"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
     Alert,
     Animated,
-    Dimensions,
     Easing,
     findNodeHandle,
     Image,
-    LayoutChangeEvent,
+    ImageStyle,
+    type LayoutChangeEvent,
     Platform,
     StyleSheet,
+    TextStyle,
     TouchableOpacity,
     View,
-} from "react-native";
+    ViewStyle,
+} from "react-native"
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import * as ImagePicker from "expo-image-picker";
+import { useQuery } from "@tanstack/react-query"
 
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router"
 
-import { ActivityIndicator, Button, Text, TextInput } from "react-native-paper";
-import { useExtraInfo } from "@/components/hooks/useExtraInfo";
-import { useNearByPin } from "@/components/hooks/useNearbyPin";
-import {
-    BrandMode,
-    useAccountAction,
-} from "@/components/hooks/useAccountAction";
-import { useModal } from "@/components/hooks/useModal";
-import { ConsumedLocation } from "@/components/types/CollectionTypes";
-import { BASE_URL } from "@/components/utils/Common";
+import { ActivityIndicator, Text } from "react-native-paper"
+import { useExtraInfo } from "@/components/hooks/useExtraInfo"
+import { useNearByPin } from "@/components/hooks/useNearbyPin"
+import { BrandMode, useAccountAction } from "@/components/hooks/useAccountAction"
+import { useModal } from "@/components/hooks/useModal"
+import type { ConsumedLocation } from "@/components/types/CollectionTypes"
+import { BASE_URL } from "@/components/utils/Common"
 
-import LoadingScreen from "@/components/Loading";
-import { Color } from "@/components/utils/all-colors";
-import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
-import { useWalkThrough } from "@/components/hooks/useWalkThrough";
-import { useAuth, User } from "@/components/lib/auth/Provider";
-import { Position } from "@rnmapbox/maps/lib/typescript/src/types/Position";
-import { CollectionAnimation } from "@/components/CollectionAnimation";
-import { featureCollection, point } from "@turf/turf";
-import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
-import {
-    DirectionDataType,
-    useDirectionStore,
-} from "@/components/store/direction-store";
-import { getMapAllPins } from "../api/routes/get-Map-all-pins";
-import { getUserPlatformAsset } from "../api/routes/get-user-platformAsset";
+import LoadingScreen from "@/components/Loading"
+import { Color } from "@/components/utils/all-colors"
+import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider"
+import { useWalkThrough } from "@/components/hooks/useWalkThrough"
+import { useAuth } from "@/components/lib/auth/Provider"
+import { CollectionAnimation } from "@/components/CollectionAnimation"
+import { point } from "@turf/turf"
+import { toast } from "@backpackapp-io/react-native-toast"
+import { type DirectionDataType, useDirectionStore } from "@/components/store/direction-store"
+import { getMapAllPins } from "../api/routes/get-Map-all-pins"
+import { getUserPlatformAsset } from "../api/routes/get-user-platformAsset"
 import {
     calculateBearing,
     getAutoCollectPins,
     getDistanceFromLatLonInMeters,
-    getEdgePosition,
     getNearbyPins,
-} from "@/components/utils/map";
-import { ButtonLayout, createStepsForMap } from "@/components/steps/map";
-import NearestPinIndicator from "@/components/nearest-pin-indicator";
+} from "@/components/utils/map"
+import { type ButtonLayout, createStepsForMap } from "@/components/steps/map"
+import NearestPinIndicator from "@/components/nearest-pin-indicator"
 
-Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
+Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!)
 
 type userLocationType = {
-    latitude: number;
-    longitude: number;
-};
-
+    latitude: number
+    longitude: number
+}
 
 const HomeScreen = () => {
-    const [locationPermission, setLocationPermission] = useState(false);
-    const [userLocation, setUserLocation] = useState<userLocationType | null>(
-        null
-    );
-    const [pinAnim] = useState(new Animated.Value(0));
-    const [nearestPin, setNearestPin] = useState<ConsumedLocation | null>(null);
-    const [nearestPinDistance, setNearestPinDistance] = useState<number | null>(
-        null
-    );
-    const router = useRouter();
-    const { setData: setExtraInfo } = useExtraInfo();
-    const { setData: setDirectionData } = useDirectionStore();
-    const [loading, setLoading] = useState(true);
-    const { setData } = useNearByPin();
-    const { data } = useAccountAction();
-    const autoCollectModeRef = useRef(data.mode);
-    const { onOpen } = useModal();
-    const cameraRef = useRef<Camera>(null);
-    const { isAuthenticated, loading: authLoading, user } = useAuth();
-    const [showAnimation, setShowAnimation] = useState(false);
-    const [userHeading, setUserHeading] = useState(0);
-    const scrollViewRef = useRef(null);
-    const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([]);
-    const [showWalkthrough, setShowWalkthrough] = useState(false);
-    const [bearing, setBearing] = useState(0);
-    const { data: accountActionData, setData: setAccountActionData } =
-        useAccountAction();
-    const { data: walkthroughData } = useWalkThrough();
-    const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(
-        null
-    );
-    const headingSubscriptionRef = useRef<Location.LocationSubscription | null>(
-        null
-    );
-    const rotateAnim = useRef(new Animated.Value(0)).current;
+    const [locationPermission, setLocationPermission] = useState(false)
+    const [userLocation, setUserLocation] = useState<userLocationType | null>(null)
+    const [pinAnim] = useState(new Animated.Value(0))
+    const [nearestPin, setNearestPin] = useState<ConsumedLocation | null>(null)
+    const [nearestPinDistance, setNearestPinDistance] = useState<number | null>(null)
+    const router = useRouter()
+    const { setData: setExtraInfo } = useExtraInfo()
+    const { setData: setDirectionData } = useDirectionStore()
+    const [loading, setLoading] = useState(true)
+    const { setData } = useNearByPin()
+    const { data } = useAccountAction()
+    const autoCollectModeRef = useRef(data.mode)
+    const { onOpen } = useModal()
+    const cameraRef = useRef<Camera>(null)
+    const { isAuthenticated, loading: authLoading, user } = useAuth()
+    const [showAnimation, setShowAnimation] = useState(false)
+    const [userHeading, setUserHeading] = useState(0)
+    const scrollViewRef = useRef(null)
+    const [buttonLayouts, setButtonLayouts] = useState<ButtonLayout[]>([])
+    const [showWalkthrough, setShowWalkthrough] = useState(false)
+    const [bearing, setBearing] = useState(0)
+    const { data: accountActionData, setData: setAccountActionData } = useAccountAction()
+    const { data: walkthroughData } = useWalkThrough()
+    const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(null)
+    const headingSubscriptionRef = useRef<Location.LocationSubscription | null>(null)
+    const rotateAnim = useRef(new Animated.Value(0)).current
 
-    const [handleRecenterPress, setHandleRecenterPress] = useState(false);
-    const [countCurrentStep, setCountCurrentStep] = useState(0);
-    const [touchOnMap, setTouchOnMap] = useState(false);
+    const [handleRecenterPress, setHandleRecenterPress] = useState(false)
+    const [countCurrentStep, setCountCurrentStep] = useState(0)
+    const [touchOnMap, setTouchOnMap] = useState(false)
+    const [followUserMode, setFollowUserMode] = useState(true) // Added state for followUserMode
 
-    const lastHeadingUpdate = useRef<number>(Date.now());
-    const MIN_HEADING_UPDATE_INTERVAL = 3000; // Minimum time between heading updates (1 second)
-    const MIN_HEADING_CHANGE = 5; // Minimum heading change in degrees to trigger update
-    const steps = createStepsForMap(buttonLayouts);
+    const lastHeadingUpdate = useRef<number>(Date.now())
+    const MIN_HEADING_UPDATE_INTERVAL = 3000 // Minimum time between heading updates (1 second)
+    const MIN_HEADING_CHANGE = 5 // Minimum heading change in degrees to trigger update
+    const steps = createStepsForMap(buttonLayouts)
 
-    const onButtonLayout = useCallback(
-        (event: LayoutChangeEvent, index: number) => {
-            if (scrollViewRef.current) {
-                const scrollViewHandle = findNodeHandle(scrollViewRef.current);
-                if (scrollViewHandle) {
-                    event.target.measureLayout(
-                        scrollViewHandle,
-                        (x, y, width, height) => {
-                            setButtonLayouts((prevLayouts) => {
-                                const newLayouts = [...prevLayouts];
-                                newLayouts[index] = { x, y, width, height };
-                                // console.log(newLayouts);
-                                return newLayouts;
-                            });
-                        },
-                        () => console.error("Failed to measure layout")
-                    );
-                }
+    const onButtonLayout = useCallback((event: LayoutChangeEvent, index: number) => {
+        if (scrollViewRef.current) {
+            const scrollViewHandle = findNodeHandle(scrollViewRef.current)
+            if (scrollViewHandle) {
+                event.target.measureLayout(
+                    scrollViewHandle,
+                    (x, y, width, height) => {
+                        setButtonLayouts((prevLayouts) => {
+                            const newLayouts = [...prevLayouts]
+                            newLayouts[index] = { x, y, width, height }
+                            // console.log(newLayouts);
+                            return newLayouts
+                        })
+                    },
+                    () => console.error("Failed to measure layout"),
+                )
             }
-        },
-        []
-    );
+        }
+    }, [])
 
     const checkFirstTimeSignIn = async () => {
         // console.log(showWalkthrough);
         if (walkthroughData.showWalkThrough) {
-            setShowWalkthrough(true);
+            setShowWalkthrough(true)
         } else {
-            setShowWalkthrough(false);
+            setShowWalkthrough(false)
         }
-    };
+    }
 
-    const handleARPress = (
-        userLocation: userLocationType,
-        locations: ConsumedLocation[]
-    ) => {
-        const nearbyPins = getNearbyPins(userLocation, locations, 50);
-        console.log("Nearby pins:", nearbyPins.length);
+    const handleARPress = (userLocation: userLocationType, locations: ConsumedLocation[]) => {
+        const nearbyPins = getNearbyPins(userLocation, locations, 50)
         if (nearbyPins.length > 0) {
             setData({
                 nearbyPins: nearbyPins,
                 singleAR: false,
-            });
-            router.push("/ARScreen");
+            })
+            router.push("/ARScreen")
         } else {
-            onOpen("NearbyPin");
+            onOpen("NearbyPin")
         }
-    };
+    }
 
     const collectPinsSequentially = async (pins: ConsumedLocation[]) => {
         for (const pin of pins) {
             if (!autoCollectModeRef.current) {
                 // console.log("Auto collect mode paused");
-                break; // Exit if auto-collect is turned off
+                break // Exit if auto-collect is turned off
             }
             if (pin.collection_limit_remaining <= 0 || pin.collected) {
                 // console.log("Pin limit reached:", pin.id);
-                continue;
+                continue
             }
-            const response = await fetch(
-                new URL("api/game/locations/consume", BASE_URL).toString(),
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ location_id: pin.id.toString() }),
-                }
-            );
+            const response = await fetch(new URL("api/game/locations/consume", BASE_URL).toString(), {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ location_id: pin.id.toString() }),
+            })
 
             if (response.ok) {
-                console.log("Collected pin:", pin.id);
-                showPinCollectionAnimation();
+                showPinCollectionAnimation()
             }
 
-            await new Promise((resolve) => setTimeout(resolve, 20000)); // Wait 20 seconds
+            await new Promise((resolve) => setTimeout(resolve, 20000)) // Wait 20 seconds
         }
-    };
+    }
 
     const showPinCollectionAnimation = () => {
-        setShowAnimation(true);
-    };
+        setShowAnimation(true)
+    }
 
     const handleRecenter = () => {
         if (!userLocation || !cameraRef.current) {
-            toast.error("Unable to center the map. User location unavailable.");
-            return;
+            toast.error("Unable to center the map. User location unavailable.")
+            return
         }
-        setHandleRecenterPress(true);
+        setHandleRecenterPress(true)
         cameraRef.current.setCamera({
             centerCoordinate: [userLocation.longitude, userLocation.latitude],
             zoomLevel: 16,
             heading: 0,
-        });
+        })
 
         setTimeout(() => {
-            setHandleRecenterPress(false);
-        }, 8000);
+            setHandleRecenterPress(false)
+        }, 8000)
 
         setAccountActionData({
             ...accountActionData,
             trackingMode: true,
-        });
+        })
+        setFollowUserMode(true) // Update followUserMode when recentering
 
-        setTouchOnMap(false);
-    };
+        setTouchOnMap(false)
+    }
 
     const response = useQuery({
         queryKey: ["MapsAllPins", accountActionData.brandMode],
@@ -239,55 +201,54 @@ const HomeScreen = () => {
             getMapAllPins({
                 filterID: accountActionData.brandMode === BrandMode.FOLLOW ? "1" : "0",
             }),
-    });
+    })
     const balanceRes = useQuery({
         queryKey: ["balance"],
         queryFn: getUserPlatformAsset,
-    });
+    })
 
-    const locations = response.data?.locations ?? [];
+    const locations = response.data?.locations ?? []
 
     const calculateNearestPin = useCallback(() => {
-        if (!userLocation || locations.length === 0) return;
+        if (!userLocation || locations.length === 0) return
 
-        let nearest = null;
-        let minDistance = Infinity;
+        let nearest = null
+        let minDistance = Number.POSITIVE_INFINITY
 
         locations.forEach((location) => {
-            if (location.collected || location.collection_limit_remaining <= 0)
-                return;
+            if (location.collected || location.collection_limit_remaining <= 0) return
             const distance = getDistanceFromLatLonInMeters(
                 userLocation.latitude,
                 userLocation.longitude,
                 location.lat,
-                location.lng
-            );
+                location.lng,
+            )
             if (distance < minDistance) {
-                minDistance = distance;
-                nearest = location;
+                minDistance = distance
+                nearest = location
             }
-        });
-        setNearestPin(nearest);
-        setNearestPinDistance(minDistance);
-    }, [userLocation, locations]);
+        })
+        setNearestPin(nearest)
+        setNearestPinDistance(minDistance)
+    }, [userLocation, locations])
 
     useEffect(() => {
-        calculateNearestPin();
-    }, [userLocation, locations]);
+        calculateNearestPin()
+    }, [userLocation, locations])
 
     useFocusEffect(
         useCallback(() => {
-            if (!data.trackingMode) return; // Exit early if trackingMode is false
+            if (!data.trackingMode) return // Exit early if trackingMode is false
 
             // Request location permission and start watching the user's location
             const startWatchingLocation = async () => {
-                let { status } = await Location.requestForegroundPermissionsAsync();
+                const { status } = await Location.requestForegroundPermissionsAsync()
                 if (status !== "granted") {
-                    Alert.alert("Permission to access location was denied");
-                    return;
+                    Alert.alert("Permission to access location was denied")
+                    return
                 }
 
-                setLocationPermission(true);
+                setLocationPermission(true)
 
                 // Start watching the user's location
                 locationSubscriptionRef.current = await Location.watchPositionAsync(
@@ -297,130 +258,114 @@ const HomeScreen = () => {
                         timeInterval: 5000, // update position every 5 seconds
                     },
                     (location) => {
-                        const { latitude, longitude, speed } = location.coords;
+                        const { latitude, longitude, speed } = location.coords
 
-                        setLoading(false);
-                        setUserLocation({ latitude, longitude });
+                        setLoading(false)
+                        setUserLocation({ latitude, longitude })
                         setDirectionData((prevData?: DirectionDataType) => ({
                             destinationLocation: prevData?.destinationLocation, // Preserve current location
                             currentLocation: {
                                 latitude: latitude,
                                 longitude: longitude,
                             },
-                        }));
-                        console.log("User location:", latitude, longitude);
+                        }))
 
                         // Track user activity based on speed
                         if (speed! >= 3) {
-                            console.log("User is running");
+                            console.log("User is running")
                         } else if (speed! >= 0.5) {
-                            console.log("User is walking");
+                            console.log("User is walking")
                         } else {
-                            console.log("User is stationary");
+                            console.log("User is stationary")
                         }
 
                         setExtraInfo({
                             useCurrentLocation: { latitude, longitude },
-                        });
-                    }
-                );
-                headingSubscriptionRef.current = await Location.watchHeadingAsync(
-                    ({ trueHeading }) => {
-                        const now = Date.now();
-                        const timeSinceLastUpdate = now - lastHeadingUpdate.current;
+                        })
+                    },
+                )
+                headingSubscriptionRef.current = await Location.watchHeadingAsync(({ trueHeading }) => {
+                    const now = Date.now()
+                    const timeSinceLastUpdate = now - lastHeadingUpdate.current
 
-                        // Check if enough time has passed and heading change is significant
-                        if (
-                            timeSinceLastUpdate >= MIN_HEADING_UPDATE_INTERVAL &&
-                            Math.abs(trueHeading - userHeading) >= MIN_HEADING_CHANGE
-                        ) {
-                            setUserHeading(trueHeading);
-                            lastHeadingUpdate.current = now;
-                        }
+                    // Check if enough time has passed and heading change is significant
+                    if (
+                        timeSinceLastUpdate >= MIN_HEADING_UPDATE_INTERVAL &&
+                        Math.abs(trueHeading - userHeading) >= MIN_HEADING_CHANGE
+                    ) {
+                        setUserHeading(trueHeading)
+                        lastHeadingUpdate.current = now
                     }
-                );
-            };
+                })
+            }
 
-            startWatchingLocation();
+            startWatchingLocation()
 
             // Cleanup function in case the component unmounts while tracking
             return () => {
-                locationSubscriptionRef.current?.remove();
-                headingSubscriptionRef.current?.remove();
-            };
-        }, [data.trackingMode])
-    ); // Depend on trackingMode
+                locationSubscriptionRef.current?.remove()
+                headingSubscriptionRef.current?.remove()
+            }
+        }, [data.trackingMode]),
+    ) // Depend on trackingMode
 
     useEffect(() => {
         if (userHeading && nearestPin && userLocation) {
-            const bearing = calculateBearing(
-                userLocation.latitude,
-                userLocation.longitude,
-                nearestPin.lat,
-                nearestPin.lng
-            );
-            console.log("Bearing:", bearing);
-            console.log("User heading:", userHeading);
-            const relativeBearing = (bearing - userHeading) % 360;
+            const bearing = calculateBearing(userLocation.latitude, userLocation.longitude, nearestPin.lat, nearestPin.lng)
 
-            setBearing(relativeBearing);
+            const relativeBearing = (bearing - userHeading) % 360
+
+            setBearing(relativeBearing)
             Animated.timing(rotateAnim, {
                 toValue: relativeBearing,
                 duration: 300,
                 useNativeDriver: true,
                 easing: Easing.linear,
-            }).start();
+            }).start()
         }
-    }, [userHeading, nearestPin, userLocation]);
+    }, [userHeading, nearestPin, userLocation])
 
     useEffect(() => {
-        if (authLoading) return; // Exit if still loading
+        if (authLoading) return // Exit if still loading
 
         if (!isAuthenticated) {
-            router.replace("/Login");
+            router.replace("/Login")
         } else {
-            checkFirstTimeSignIn(); // Check if it's the first sign-in
+            checkFirstTimeSignIn() // Check if it's the first sign-in
         }
-    }, [authLoading, isAuthenticated, walkthroughData]);
+    }, [authLoading, isAuthenticated, walkthroughData])
 
     useEffect(() => {
-        console.log("Tracking mode:", data.trackingMode);
-    }, [data.trackingMode]);
+        console.log("Tracking mode:", data.trackingMode)
+    }, [data.trackingMode])
 
     useEffect(() => {
         if (countCurrentStep === 5) {
-            console.log("countCurrentStep", countCurrentStep);
-            showPinCollectionAnimation();
+            showPinCollectionAnimation()
         }
-    }, [countCurrentStep]);
+    }, [countCurrentStep])
 
     useFocusEffect(
         useCallback(() => {
-            console.log("Refetching data"), response.refetch();
-        }, [])
-    );
+            console.log("Refetching data"), response.refetch()
+        }, []),
+    )
 
     useEffect(() => {
         if (data.mode && locations) {
-            const autoCollectPins = getAutoCollectPins(userLocation, locations, 50);
+            const autoCollectPins = getAutoCollectPins(userLocation, locations, 50)
             if (autoCollectPins.length > 0) {
-                collectPinsSequentially(autoCollectPins);
+                collectPinsSequentially(autoCollectPins)
             }
         }
-    }, [data.mode, locations]);
+    }, [data.mode, locations])
 
     useEffect(() => {
-        autoCollectModeRef.current = data.mode;
-    }, [data.mode]);
+        autoCollectModeRef.current = data.mode
+    }, [data.mode])
 
-    if (
-        response.isLoading ||
-        loading ||
-        !locationPermission ||
-        !userLocation ||
-        authLoading
-    ) {
-        return <LoadingScreen />;
+    if (response.isLoading || loading || !locationPermission || !userLocation || authLoading) {
+        return <LoadingScreen />
     }
 
     return (
@@ -431,9 +376,11 @@ const HomeScreen = () => {
                     style={styles.map}
                     pitchEnabled={true}
                     logoEnabled={false}
+
                     onTouchMove={() => {
-                        setTouchOnMap(true);
-                        setHandleRecenterPress(false);
+                        setTouchOnMap(true)
+                        setHandleRecenterPress(false)
+                        setFollowUserMode(false) // Update followUserMode on touch move
                     }}
                     onCameraChanged={(event) => {
                         // console.log("Region is changing:", event);
@@ -442,7 +389,8 @@ const HomeScreen = () => {
                             setAccountActionData({
                                 ...accountActionData,
                                 trackingMode: false,
-                            });
+                            })
+                            setFollowUserMode(false) // Update followUserMode on camera change
                         }
                     }}
                 >
@@ -454,43 +402,34 @@ const HomeScreen = () => {
                         followZoomLevel={16}
                         followPitch={16}
                         heading={0}
+                        allowUpdates={true}
+                        followUserLocation={true}
+                        followUserMode={followUserMode ? UserTrackingMode.FollowWithHeading : UserTrackingMode.Follow} // Use followUserMode state
                         pitch={0}
                         ref={cameraRef}
                         centerCoordinate={[userLocation.longitude, userLocation.latitude]}
                     />
-                    <LocationPuck
-                        pulsing={{ isEnabled: true }}
-                        puckBearingEnabled
-                        puckBearing="heading"
-                    />
+
+                    <LocationPuck pulsing={{ isEnabled: true }} puckBearingEnabled puckBearing="heading" />
                     <Marker locations={locations} />
+
                 </MapView>
-                {nearestPin && userLocation && (
-                    <NearestPinIndicator bearing={bearing} distance={nearestPinDistance || 0}
+                {nearestPin && userLocation && !showWalkthrough && followUserMode && (
+                    <NearestPinIndicator
+                        bearing={bearing}
+                        distance={nearestPinDistance || 0}
                         userLocation={{
                             latitude: userLocation.latitude,
                             longitude: userLocation.longitude,
-                        }} pinLocation={{ latitude: nearestPin.lat, longitude: nearestPin.lng }}
-
+                        }}
+                        pinLocation={{ latitude: nearestPin.lat, longitude: nearestPin.lng }}
                         pin={nearestPin}
                     />
-
                 )}
-                <CollectionAnimation
-                    visible={showAnimation}
-                    onAnimationComplete={() => setShowAnimation(false)}
-                />
-                {showWalkthrough && (
-                    <View
-                        style={styles.welcome}
-                        onLayout={(event) => onButtonLayout(event, 0)}
-                    ></View>
-                )}
+                <CollectionAnimation visible={showAnimation} onAnimationComplete={() => setShowAnimation(false)} />
+                {showWalkthrough && <View style={styles.welcome} onLayout={(event) => onButtonLayout(event, 0)}></View>}
                 {/* Recenter button */}
-                <View
-                    style={styles.balance}
-                    onLayout={(event) => onButtonLayout(event, 2)}
-                >
+                <View style={styles.balance} onLayout={(event) => onButtonLayout(event, 2)}>
                     <Image
                         style={{
                             height: 20,
@@ -505,21 +444,15 @@ const HomeScreen = () => {
                             color: "white",
                         }}
                     >
-                        {Number(balanceRes.data) >= 0
-                            ? Number(balanceRes.data).toFixed(2)
-                            : 0}
+                        {Number(balanceRes.data) >= 0 ? Number(balanceRes.data).toFixed(2) : 0}
                     </Text>
                 </View>
                 <TouchableOpacity
-                    style={styles.recenterButton}
+                    style={[styles.recenterButton, { borderColor: followUserMode ? Color.wadzzo : "transparent" }]}
                     onPress={handleRecenter}
                     onLayout={(event) => onButtonLayout(event, 4)}
                 >
-                    <MaterialCommunityIcons
-                        name="crosshairs-gps"
-                        size={20}
-                        color={data.trackingMode ? Color.wadzzo : "black"}
-                    />
+                    <MaterialCommunityIcons name="crosshairs-gps" size={20} color={followUserMode ? Color.wadzzo : "black"} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -534,18 +467,13 @@ const HomeScreen = () => {
                     style={styles.Refresh}
                     onPress={async () => await response.refetch()}
                 >
-                    <FontAwesome name="refresh" size={20} color="black" />
+                    {response.isFetching ? <ActivityIndicator size={22} color={Color.wadzzo} />
+                        : <FontAwesome name="refresh" size={22} color="black" />}
                 </TouchableOpacity>
 
                 {showWalkthrough && countCurrentStep === 5 && (
-                    <View
-                        style={styles.pinCollectedAnim}
-                        onLayout={(event) => onButtonLayout(event, 1)}
-                    >
-                        <Image
-                            source={require("../../assets/images/wadzzo.png")}
-                            style={styles.pinImage}
-                        />
+                    <View style={styles.pinCollectedAnim} onLayout={(event) => onButtonLayout(event, 1)}>
+                        <Image source={require("../../assets/images/wadzzo.png")} style={styles.pinImage} />
                     </View>
                 )}
             </>
@@ -558,12 +486,12 @@ const HomeScreen = () => {
                 />
             )}
         </View>
-    );
-};
+    )
+}
 
 const Marker = ({ locations }: { locations: ConsumedLocation[] }) => {
-    const { onOpen } = useModal();
-    const pins = locations.map((location) => point([location.lng, location.lat]));
+    const { onOpen } = useModal()
+    const pins = locations.map((location) => point([location.lng, location.lat]))
     return (
         <>
             {locations.map((location: ConsumedLocation, index: number) => (
@@ -602,7 +530,7 @@ const Marker = ({ locations }: { locations: ConsumedLocation[] }) => {
                 </MarkerView>
             ))}
         </>
-    );
+    )
 };
 
 const styles = StyleSheet.create({
@@ -655,6 +583,7 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 8,
         zIndex: 10,
+        borderWidth: 2,
     },
     balance: {
         flex: 1,
@@ -743,6 +672,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginTop: 4,
     },
-});
+})
 
-export default HomeScreen;
+export default HomeScreen
+

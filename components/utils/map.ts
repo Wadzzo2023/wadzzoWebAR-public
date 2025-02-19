@@ -157,8 +157,7 @@ export function getEdgePosition(deg: number): { top: number; left: number } {
     const t = Math.min(tX, tY);
     const x = cx + t * dx;
     const y = cy + t * dy;
-    console.log({ top: y, left: x });
-    console.log("width: ", width, "height: ", height);
+
     return { top: y, left: x };
 }
 

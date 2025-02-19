@@ -54,7 +54,7 @@ Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
 const routeProfiles = [
     { id: 'walking', label: 'Walking', icon: 'walk' },
-    { id: 'cycling', label: 'Cylcing', icon: 'bicycle' },
+    { id: 'cycling', label: 'Cycling', icon: 'bicycle' },
     { id: 'driving', label: 'Driving', icon: 'car' },
 ];
 
@@ -77,9 +77,6 @@ const StoreLocation: React.FC = () => {
         useState<string>('walking');
     const route = useRoute<any>();
     const navigation = useNavigation<any>();
-
-    console.log("coords", coords);
-    console.log("destinationCoords", destinationCoords);
 
     useEffect(() => {
         if (selectedRouteProfile !== null) {
@@ -117,17 +114,14 @@ const StoreLocation: React.FC = () => {
     ): Promise<void> {
         const startCoords = `${coords[0]},${coords[1]}`;
         const endCoords = `${[destinationCoords[0], destinationCoords[1]]}`;
-        console.log("startCoords", startCoords);
-        console.log("endCoords", endCoords);
+
         const geometries = 'geojson';
         const url = `https://api.mapbox.com/directions/v5/mapbox/${routeProfile}/${startCoords};${endCoords}?alternatives=true&geometries=${geometries}&steps=true&banner_instructions=true&overview=full&voice_instructions=true&access_token=${process.env.EXPO_PUBLIC_MAPBOX_API}`;
 
         try {
             let response = await fetch(url);
             let json = await response.json();
-            console.log("json", json);
             const data = json.routes.map((data: any) => {
-                console.log(data);
                 setDistance((data.distance / 1000).toFixed(2));
                 setDuration((data.duration / 3600).toFixed(2));
             });
@@ -138,12 +132,12 @@ const StoreLocation: React.FC = () => {
             if (coordinates.length) {
                 const routerFeature = makeRouterFeature([...coordinates]);
                 setRouteDirections(routerFeature);
-                console.log("routerFeature", routerFeature);
+
             }
             setLoading(false);
         } catch (e) {
             setLoading(false);
-            console.log(e);
+
         }
     }
 
@@ -179,7 +173,7 @@ const StoreLocation: React.FC = () => {
                 pitchEnabled={true}
                 logoEnabled={false}
                 attributionEnabled={false}
-                styleURL="mapbox://styles/wadzzo/cm1xtphyn01ci01pi20jhfbto"
+                styleURL="mapbox://styles/mapbox/navigation-day-v1"
                 rotateEnabled={true}
             >
                 <Camera
