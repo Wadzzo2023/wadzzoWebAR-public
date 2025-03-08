@@ -90,7 +90,6 @@ const HomeScreen = () => {
     const [handleRecenterPress, setHandleRecenterPress] = useState(false)
     const [countCurrentStep, setCountCurrentStep] = useState(0)
     const [touchOnMap, setTouchOnMap] = useState(false)
-    const [followUserMode, setFollowUserMode] = useState(true) // Added state for followUserMode
 
     const lastHeadingUpdate = useRef<number>(Date.now())
     const MIN_HEADING_UPDATE_INTERVAL = 3000 // Minimum time between heading updates (1 second)
@@ -190,7 +189,6 @@ const HomeScreen = () => {
             ...accountActionData,
             trackingMode: true,
         })
-        setFollowUserMode(true) // Update followUserMode when recentering
 
         setTouchOnMap(false)
     }
@@ -380,17 +378,13 @@ const HomeScreen = () => {
                     onTouchMove={() => {
                         setTouchOnMap(true)
                         setHandleRecenterPress(false)
-                        setFollowUserMode(false) // Update followUserMode on touch move
                     }}
                     onCameraChanged={(event) => {
-                        // console.log("Region is changing:", event);
                         if (touchOnMap && data.trackingMode && !handleRecenterPress) {
-                            // console.log("Zoom level:", event.properties.zoom.toFixed(0));
                             setAccountActionData({
                                 ...accountActionData,
                                 trackingMode: false,
                             })
-                            setFollowUserMode(false) // Update followUserMode on camera change
                         }
                     }}
                 >
@@ -398,23 +392,21 @@ const HomeScreen = () => {
                         defaultSettings={{
                             centerCoordinate: [userLocation.longitude, userLocation.latitude],
                         }}
+                        animationMode={'flyTo'}
                         zoomLevel={16}
                         followZoomLevel={16}
                         followPitch={16}
                         heading={0}
                         allowUpdates={true}
-                        followUserLocation={true}
-                        followUserMode={followUserMode ? UserTrackingMode.FollowWithHeading : UserTrackingMode.Follow} // Use followUserMode state
                         pitch={0}
                         ref={cameraRef}
                         centerCoordinate={[userLocation.longitude, userLocation.latitude]}
                     />
-
                     <LocationPuck pulsing={{ isEnabled: true }} puckBearingEnabled puckBearing="heading" />
                     <Marker locations={locations} />
 
                 </MapView>
-                {nearestPin && userLocation && !showWalkthrough && followUserMode && (
+                {nearestPin && userLocation && !showWalkthrough && data.trackingMode && (
                     <NearestPinIndicator
                         bearing={bearing}
                         distance={nearestPinDistance || 0}
@@ -448,11 +440,11 @@ const HomeScreen = () => {
                     </Text>
                 </View>
                 <TouchableOpacity
-                    style={[styles.recenterButton, { borderColor: followUserMode ? Color.wadzzo : "transparent" }]}
+                    style={[styles.recenterButton, { borderColor: data.trackingMode ? Color.wadzzo : "transparent" }]}
                     onPress={handleRecenter}
                     onLayout={(event) => onButtonLayout(event, 4)}
                 >
-                    <MaterialCommunityIcons name="crosshairs-gps" size={20} color={followUserMode ? Color.wadzzo : "black"} />
+                    <MaterialCommunityIcons name="crosshairs-gps" size={20} color={data.trackingMode ? Color.wadzzo : "black"} />
                 </TouchableOpacity>
 
                 <TouchableOpacity

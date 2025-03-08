@@ -124,24 +124,16 @@ interface DirectionArrowProps {
 }
 
 const DirectionArrow: React.FC<DirectionArrowProps> = ({
-
     width = 20, // Half of original 113pt
     height = 20, // Half of original 97pt
     style
 }) => {
     return (
-        <Svg
-            width={width}
-            height={height}
-            viewBox="0 0 27 16"
-            style={style}
-            fill={'none'}
-        >
-            <Path d="M6.2561 14.3337L13.3224 7.83366C13.3224 7.83366 13.4306 7.83366 13.5 7.83366C13.5694 7.83366 13.6776 7.83366 13.6776 7.83366L20.7439 14.3337M4.28049 13.667L12.6713 2.44713C12.9319 2.09507 13.0621 1.91905 13.2443 1.86517C13.4025 1.81838 13.5885 1.81838 13.7467 1.86517C13.9289 1.91905 14.0591 2.09507 14.3198 2.44713L22.7195 13.667"
-
-                stroke="red" stroke-linecap="round" stroke-linejoin="round"
-            />
+        <Svg width="25" height="25" viewBox="0 0 16 17" fill="none" >
+            <Path d="M8.7044 1.86809L13.0391 10.5784C13.2704 11.0432 13.0347 11.605 12.5409 11.7655L2.21642 15.1218C1.50027 15.3546 0.857461 14.61 1.19228 13.9355L7.18206 1.86886C7.49433 1.23979 8.3915 1.23934 8.7044 1.86809Z" fill={Color.wadzzo} fill-opacity="0.5" stroke="white" stroke-width="0.3" />
+            <Path d="M7.24632 1.86898L2.87574 10.6551C2.64455 11.1199 2.88027 11.6815 3.3739 11.842L13.7838 15.2275C14.4999 15.4604 15.1428 14.7159 14.8081 14.0414L8.76878 1.86975C8.45656 1.24051 7.55917 1.24006 7.24632 1.86898Z" fill={Color.wadzzo} fill-opacity="0.5" stroke="white" stroke-width="0.3" />
         </Svg>
+
     );
 };
 
