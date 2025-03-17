@@ -84,6 +84,7 @@ const StoreLocation: React.FC = () => {
 
     useFocusEffect(
         useCallback(() => {
+            if (touchOnMap) return // Exit early if trackingMode is false
             const startWatchingLocation = async () => {
                 const { status } = await Location.requestForegroundPermissionsAsync()
                 if (status !== "granted") {
@@ -143,7 +144,7 @@ const StoreLocation: React.FC = () => {
             return () => {
                 locationSubscriptionRef.current?.remove()
             }
-        }, []),
+        }, [touchOnMap]),
     )
 
     // Effect to update map style when traffic toggle changes
