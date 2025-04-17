@@ -57,7 +57,7 @@ const StoreLocation: React.FC = () => {
     const { data } = useModal()
     const { data: DirectionData } = useDirectionStore()
     const [routeDirections, setRouteDirections] = useState<any | null>(null)
-    const [showTraffic, setShowTraffic] = useState(true) // New state for toggling traffic lines
+    const [showTraffic, setShowTraffic] = useState(false) // New state for toggling traffic lines
 
     const cameraRef = useRef<Camera>(null)
     const locationSubscriptionRef = useRef<Location.LocationSubscription | null>(null)

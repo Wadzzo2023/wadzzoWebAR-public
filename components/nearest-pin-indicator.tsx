@@ -1,10 +1,11 @@
-"use client"
-
 import React, { useMemo } from "react"
-import { View, StyleSheet, Animated, Dimensions, Text, TouchableOpacity } from "react-native"
-import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { View, StyleSheet, Animated, Text, TouchableOpacity } from "react-native"
 import { Color } from "@/components/utils/all-colors"
-import { getEdgePosition } from "./utils/map"
+import { useDirectionStore } from "./store/direction-store"
+import { useRouter } from "expo-router"
+import { useModal } from "./hooks/useModal"
+import { ConsumedLocation } from "./types/CollectionTypes"
+import Svg, { Circle, Line, Path, Text as SvgText } from "react-native-svg"
 
 interface NearestPinIndicatorProps {
     bearing: number
@@ -14,7 +15,13 @@ interface NearestPinIndicatorProps {
     pin: ConsumedLocation
 }
 
-const NearestPinIndicator: React.FC<NearestPinIndicatorProps> = ({ bearing, distance, pinLocation, userLocation, pin }) => {
+const NearestPinIndicator: React.FC<NearestPinIndicatorProps> = ({
+    bearing,
+    distance,
+    pinLocation,
+    userLocation,
+    pin
+}) => {
     const { setData } = useDirectionStore()
     const { setData: setModalData } = useModal()
     const router = useRouter()
@@ -25,9 +32,6 @@ const NearestPinIndicator: React.FC<NearestPinIndicatorProps> = ({ bearing, dist
         outputRange: ["0deg", "360deg"],
     })
 
-
-    const { top, left } = getEdgePosition(bearing)
-
     // Update the rotation when the bearing changes
     React.useEffect(() => {
         Animated.timing(rotateAnim, {
@@ -36,27 +40,26 @@ const NearestPinIndicator: React.FC<NearestPinIndicatorProps> = ({ bearing, dist
             useNativeDriver: true,
         }).start()
     }, [bearing, rotateAnim])
+
     const formatDistance = (meters: number) => {
         if (meters >= 1000) {
-            return `${(meters / 1000).toFixed(0)} KM`;
+            return `${(meters / 1000).toFixed(1)} KM`;
         }
         return `${Math.round(meters)}M`;
     };
+
     return (
-
-        <Animated.View
-
+        <View
             style={[
                 styles.container,
                 {
-                    top,
-                    left,
-                    transform: [{ rotate: rotateInterpolate }],
+                    top: 40,
+                    left: 10,
                 },
             ]}
         >
             <TouchableOpacity
-                style={{ alignItems: "center" }}
+                style={styles.compassContainer}
                 onPress={() => {
                     setData({
                         currentLocation: {
@@ -74,14 +77,52 @@ const NearestPinIndicator: React.FC<NearestPinIndicatorProps> = ({ bearing, dist
                         }
                     )
                     router.push("/direction")
-                }}>
-                <DirectionArrow width={50} height={40} />
+                }}
+            >
+                {/* Static compass background */}
+                <View style={styles.compassBackground}>
+                    <Svg height="70" width="70" viewBox="0 0 70 70">
+                        {/* Outer circle */}
+                        <Circle cx="35" cy="35" r="33" fill="rgba(255,255,255,0.9)" stroke="#ccc" strokeWidth="1" />
+
+                        {/* Cardinal direction markers */}
+
+
+                        {/* Cardinal direction labels */}
+                        <SvgText x="33" y="10" fontSize="10" textAnchor="middle" fill="#333" fontWeight="bold">N</SvgText>
+                        <SvgText x="33" y="63" fontSize="10" textAnchor="middle" fill="#333" fontWeight="bold">S</SvgText>
+                        <SvgText x="8" y="38" fontSize="10" textAnchor="middle" fill="#333" fontWeight="bold">W</SvgText>
+                        <SvgText x="62" y="38" fontSize="10" textAnchor="middle" fill="#333" fontWeight="bold">E</SvgText>
+                    </Svg>
+                </View>
+
+                {/* Rotating pointer - separate from the background */}
+                <Animated.View
+                    style={[
+                        styles.pointerContainer,
+                        {
+                            transform: [{ rotate: rotateInterpolate }],
+                        }
+                    ]}
+                >
+                    <Svg height="70" width="70" viewBox="0 0 70 70">
+                        {/* Pin direction pointer */}
+                        <Path
+                            d="M35,10 L40,35 L35,40 L30,35 Z"
+                            fill={Color.wadzzo}
+                            stroke="white"
+                            strokeWidth="0.5"
+                        />
+                        {/* Small circle in the middle */}
+                        <Circle cx="35" cy="35" r="3" fill={Color.wadzzo} stroke="white" strokeWidth="0.5" />
+                    </Svg>
+                </Animated.View>
+
                 <View style={styles.distanceContainer}>
-                    <Text style={styles.distanceText}>{Math.round(distance)}m</Text>
+                    <Text style={styles.distanceText}>{formatDistance(distance)}</Text>
                 </View>
             </TouchableOpacity>
-        </Animated.View>
-
+        </View>
     )
 }
 
@@ -91,49 +132,39 @@ const styles = StyleSheet.create({
         alignItems: "center",
         zIndex: 100,
     },
+    compassContainer: {
+        alignItems: "center",
+    },
+    compassBackground: {
+        width: 70,
+        height: 70,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    pointerContainer: {
+        position: 'absolute',
+        width: 70,
+        height: 70,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     distanceContainer: {
         backgroundColor: Color.wadzzo,
         borderRadius: 10,
-        padding: 2,
-        marginTop: 2,
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        marginTop: 4,
     },
     distanceText: {
         color: "white",
         fontSize: 12,
+        fontWeight: "bold",
     },
 });
 
-
 export default NearestPinIndicator
-
-
-
-
-import Svg, { Path } from 'react-native-svg';
-import { ViewStyle } from 'react-native';
-import { useDirectionStore } from "./store/direction-store"
-import { useRouter } from "expo-router"
-import { useModal } from "./hooks/useModal"
-import { ConsumedLocation } from "./types/CollectionTypes"
-
-interface DirectionArrowProps {
-    color?: string;
-    width?: number;
-    height?: number;
-    style?: ViewStyle;
-}
-
-const DirectionArrow: React.FC<DirectionArrowProps> = ({
-    width = 20, // Half of original 113pt
-    height = 20, // Half of original 97pt
-    style
-}) => {
-    return (
-        <Svg width="25" height="25" viewBox="0 0 16 17" fill="none" >
-            <Path d="M8.7044 1.86809L13.0391 10.5784C13.2704 11.0432 13.0347 11.605 12.5409 11.7655L2.21642 15.1218C1.50027 15.3546 0.857461 14.61 1.19228 13.9355L7.18206 1.86886C7.49433 1.23979 8.3915 1.23934 8.7044 1.86809Z" fill={Color.wadzzo} fill-opacity="0.5" stroke="white" stroke-width="0.3" />
-            <Path d="M7.24632 1.86898L2.87574 10.6551C2.64455 11.1199 2.88027 11.6815 3.3739 11.842L13.7838 15.2275C14.4999 15.4604 15.1428 14.7159 14.8081 14.0414L8.76878 1.86975C8.45656 1.24051 7.55917 1.24006 7.24632 1.86898Z" fill={Color.wadzzo} fill-opacity="0.5" stroke="white" stroke-width="0.3" />
-        </Svg>
-
-    );
-};
-

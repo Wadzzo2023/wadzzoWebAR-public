@@ -38,7 +38,7 @@ import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider"
 import { useWalkThrough } from "@/components/hooks/useWalkThrough"
 import { useAuth } from "@/components/lib/auth/Provider"
 import { CollectionAnimation } from "@/components/CollectionAnimation"
-import { point } from "@turf/turf"
+import { distance, point } from "@turf/turf"
 import { toast } from "@backpackapp-io/react-native-toast"
 import { type DirectionDataType, useDirectionStore } from "@/components/store/direction-store"
 import { getMapAllPins } from "../api/routes/get-Map-all-pins"
@@ -374,6 +374,8 @@ const HomeScreen = () => {
                     style={styles.map}
                     pitchEnabled={true}
                     logoEnabled={false}
+                    scaleBarEnabled={false}
+                    attributionEnabled={false}
 
                     onTouchMove={() => {
                         setTouchOnMap(true)
@@ -406,7 +408,7 @@ const HomeScreen = () => {
                     <Marker locations={locations} />
 
                 </MapView>
-                {nearestPin && userLocation && !showWalkthrough && data.trackingMode && (
+                {nearestPin && userLocation && !showWalkthrough && data.trackingMode && nearestPinDistance && nearestPinDistance < 5000 && (
                     <NearestPinIndicator
                         bearing={bearing}
                         distance={nearestPinDistance || 0}

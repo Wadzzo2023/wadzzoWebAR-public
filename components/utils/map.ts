@@ -12,17 +12,15 @@ export const getDistanceFromLatLonInMeters = (
     lat2: number,
     lon2: number
 ) => {
-    const R = 6371000; // Radius of the Earth in meters
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const R = 6371000; // Earth radius in meters
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
     const a =
-        0.5 -
-        Math.cos(dLat) / 2 +
-        (Math.cos((lat1 * Math.PI) / 180) *
-            Math.cos((lat2 * Math.PI) / 180) *
-            (1 - Math.cos(dLon))) /
-        2;
-    return R * 2 * Math.asin(Math.sqrt(a));
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
 };
 
 export const calculateBearing = (
