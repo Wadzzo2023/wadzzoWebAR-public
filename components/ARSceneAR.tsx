@@ -28,6 +28,7 @@ import { useWinnerAnimation } from "./hooks/useWinnerAnimation";
 import { useRouter } from "expo-router";
 import { ConsumedLocation } from "./types/CollectionTypes";
 import { Color } from "./utils/all-colors";
+import { useNearByPin } from "./hooks/useNearbyPin";
 const { width, height } = Dimensions.get("window");
 
 interface ARSceneARProps {
@@ -130,7 +131,48 @@ ViroAnimations.registerAnimations({
     },
     duration: 500,
   },
+  warningPulse: {
+    properties: {
+      scaleX: "1.0+0.2*sin(2*3.14*t/1000)",  // Oscillate between 1.0 and 1.2
+      scaleY: "1.0+0.2*sin(2*3.14*t/1000)",  // Oscillate between 1.0 and 1.2
+      scaleZ: "1.0+0.2*sin(2*3.14*t/1000)",  // Oscillate between 1.0 and 1.2
+      opacity: "0.8+0.2*sin(2*3.14*t/1000)"  // Oscillate between 0.8 and 1.0
+    },
+    duration: 1000,
+    easing: "EaseInEaseOut"
+  },
 });
+const renderNoItemsWarning = (nearbyPinDistance: number) => {
+
+  return (
+    <ViroFlexView
+      style={styles.warningContainer}
+      position={[0, 0, -4]} // Position it in front of the user
+      rotation={[0, 0, 0]}
+      height={1}
+      width={5}
+      transformBehaviors={["billboardY"]} // Always face the user
+      animation={{
+        name: "warningPulse",
+        run: true,
+        loop: true,
+      }}
+    >
+      <ViroText
+        text="There are no nearby pins available in 50 m."
+        style={styles.warningText}
+        width={5}
+        height={1}
+      />
+      <ViroText
+        text={`Nearest pin is ${nearbyPinDistance} m away`}
+        style={styles.warningText}
+        width={5}
+        height={1}
+      />
+    </ViroFlexView>
+  );
+};
 const renderItemDetail = (
   renderItemDetail: ConsumedLocation,
   position: number[]
@@ -217,6 +259,8 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
     null
   );
   const [position, setPosition] = useState([0, 0, 0]);
+  const hasNoItems = items.length === 0;
+  const { data: nearbyPinData } = useNearByPin()
   const onItemFocus = (item: ConsumedLocation) => {
     // console.log("Item focused", item);
     onCapture(item);
@@ -268,76 +312,85 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
         color="#FFFFFF"
         castsShadow={true}
       />
-
-      {trackingStatus == ViroTrackingStateConstants.TRACKING_NORMAL &&
-        items.slice(0, 20).map((item, index) => (
-          <ViroNode
-            key={`${index}-${item.id}`}
-            animation={{
-              name: "rotate",
-              run: true,
-              loop: true,
-            }}
-            position={
-              singleAR
-                ? [0, 0, -5]
-                : [
-                  itemPositions[index][0],
-                  itemPositions[index][1],
-                  itemPositions[index][2],
-                ]
-            }
-            onHover={(isHovering) => {
-              if (isHovering) {
-                onItemFocus(item);
-                setPosition(
+      {trackingStatus === ViroTrackingStateConstants.TRACKING_NORMAL && (
+        <>
+          {hasNoItems ? (
+            // Show warning message when there are no items
+            renderNoItemsWarning(nearbyPinData.nearestPinDistance ?? 0)
+          ) : (
+            // Render items when available
+            items.slice(0, 20).map((item, index) => (
+              <ViroNode
+                key={`${index}-${item.id}`}
+                animation={{
+                  name: "rotate",
+                  run: true,
+                  loop: true,
+                }}
+                position={
                   singleAR
-                    ? [0, 2.3, -5]
+                    ? [0, 0, -5]
                     : [
                       itemPositions[index][0],
-                      itemPositions[index][1] + 2.5,
+                      itemPositions[index][1],
                       itemPositions[index][2],
                     ]
-                );
-              } else {
-                onItemBlur();
-              }
-            }}
-          >
-            <Viro3DObject
-              rotation={[0, 0, 0]}
-              source={require("../assets/circle/10438_Circular_Grass_Patch_v1_iterations-2.obj")}
-              scale={[0.002, 0.002, 0.002]} // Slightly larger scale for distance
-              position={[0, 0.5, 0]}
-              type="OBJ"
-            />
-            {/* Front Side Image */}
-            <ViroImage
-              source={{ uri: item.image_url }}
-              height={1}
-              width={1}
-              rotation={[0, 180, 0]}
-              scale={[0.4, 0.4, 0]} // Larger scale for better visibility
-              position={[0, 0.5, -0.022]}
-            />
-            {/* Back Side Image */}
-            <ViroImage
-              source={{ uri: item.image_url }}
-              height={1}
-              width={1}
-              rotation={[0, 0, 0]}
-              scale={[0.4, 0.4, 0]} // Larger scale for back image as well
-              position={[0, 0.5, 0.022]}
-            />
+                }
+                onHover={(isHovering) => {
+                  if (isHovering) {
+                    onItemFocus(item);
+                    setPosition(
+                      singleAR
+                        ? [0, 2.3, -5]
+                        : [
+                          itemPositions[index][0],
+                          itemPositions[index][1] + 2.5,
+                          itemPositions[index][2],
+                        ]
+                    );
+                  } else {
+                    onItemBlur();
+                  }
+                }}
+              >
+                <Viro3DObject
+                  rotation={[0, 0, 0]}
+                  source={require("../assets/circle/10438_Circular_Grass_Patch_v1_iterations-2.obj")}
+                  scale={[0.002, 0.002, 0.002]} // Slightly larger scale for distance
+                  position={[0, 0.5, 0]}
+                  type="OBJ"
+                />
+                {/* Front Side Image */}
+                <ViroImage
+                  source={{ uri: item.image_url }}
+                  height={1}
+                  width={1}
+                  rotation={[0, 180, 0]}
+                  scale={[0.4, 0.4, 0]} // Larger scale for better visibility
+                  position={[0, 0.5, -0.022]}
+                />
+                {/* Back Side Image */}
+                <ViroImage
+                  source={{ uri: item.image_url }}
+                  height={1}
+                  width={1}
+                  rotation={[0, 0, 0]}
+                  scale={[0.4, 0.4, 0]} // Larger scale for back image as well
+                  position={[0, 0.5, 0.022]}
+                />
 
-            <ViroText
-              text={item.title}
-              scale={[0.7, 0.7, 0.7]} // Larger text scale
-              position={[0, 1.1, 0]}
-              style={styles.itemTitle}
-            />
-          </ViroNode>
-        ))}
+                <ViroText
+                  text={item.title}
+                  scale={[0.7, 0.7, 0.7]} // Larger text scale
+                  position={[0, 1.1, 0]}
+                  style={styles.itemTitle}
+                />
+              </ViroNode>
+            ))
+          )}
+        </>
+      )}
+
       {data.showWinnerAnimation && renderWinnerAnimation()}
       {onFocusedItem && renderItemDetail(onFocusedItem, position)}
     </ViroARScene>
@@ -438,6 +491,22 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
     textAlign: "left",
     padding: 0.05,
+  },
+  warningContainer: {
+    flexDirection: "column",
+    backgroundColor: "rgba(0,0,0,0.7)",
+    padding: 0.2,
+    borderRadius: 0.1,
+    borderWidth: 0.02,
+    borderColor: Color.wadzzo,
+  },
+  warningText: {
+    fontFamily: "Arial",
+    fontSize: 20,
+    color: "#FFFFFF",
+    textAlignVertical: "center",
+    textAlign: "center",
+    fontWeight: "bold",
   },
 });
 

@@ -126,16 +126,15 @@ const HomeScreen = () => {
     }
 
     const handleARPress = (userLocation: userLocationType, locations: ConsumedLocation[]) => {
-        const nearbyPins = getNearbyPins(userLocation, locations, 50)
-        if (nearbyPins.length > 0) {
-            setData({
-                nearbyPins: nearbyPins,
-                singleAR: false,
-            })
-            router.push("/ARScreen")
-        } else {
-            onOpen("NearbyPin")
-        }
+        const nearbyPins = getNearbyPins(userLocation, locations, 75)
+        setData({
+            nearbyPins: nearbyPins,
+            singleAR: false,
+            nearestPinDistance: Number(nearestPinDistance?.toFixed(2)) ?? 0,
+        })
+
+        router.push("/ARScreen")
+
     }
 
     const collectPinsSequentially = async (pins: ConsumedLocation[]) => {
@@ -228,6 +227,10 @@ const HomeScreen = () => {
         })
         setNearestPin(nearest)
         setNearestPinDistance(minDistance)
+        console.log("Nearest pin:", minDistance)
+        setData({
+            nearestPinDistance: minDistance,
+        })
     }, [userLocation, locations])
 
     useEffect(() => {
