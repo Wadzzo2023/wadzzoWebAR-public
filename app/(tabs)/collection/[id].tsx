@@ -1,5 +1,12 @@
 import React from "react";
-import { Image, Linking, Platform, ScrollView, StyleSheet, View } from "react-native";
+import {
+  Image,
+  Linking,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import {
   Appbar,
   Avatar,
@@ -15,19 +22,21 @@ import Mapbox, { Camera, MapView, MarkerView } from "@rnmapbox/maps";
 
 import { useRouter } from "expo-router";
 import { useCollection } from "@/components/hooks/useCollection";
-import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import { BASE_URL } from "@/components/utils/Common";
 import { Color } from "@/components/utils/all-colors";
+import { useLocationService } from "@/components/hooks/useLocationService";
+import { set } from "zod";
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
 const SingleCollectionItem = () => {
   const { data } = useCollection();
-  const { setData } = useNearByPin();
+  const { setSingleAr } = useLocationService();
+  // const { setData } = useNearByPin();
   const router = useRouter();
   if (!data.collections) return null;
 
   return (
-    <View style={styles.container} >
+    <View style={styles.container}>
       <Appbar.Header style={styles.appbar}>
         <Appbar.BackAction color="white" onPress={() => router.back()} />
         <Appbar.Content
@@ -106,7 +115,9 @@ const SingleCollectionItem = () => {
                 style={styles.button}
                 icon="hand-coin"
                 mode="outlined"
-                onPress={() => Linking.openURL(new URL("maps/pins/my", BASE_URL).href)}
+                onPress={() =>
+                  Linking.openURL(new URL("maps/pins/my", BASE_URL).href)
+                }
               >
                 Claim
               </Button>
@@ -115,10 +126,7 @@ const SingleCollectionItem = () => {
                 icon="cube-scan"
                 mode="outlined"
                 onPress={() => {
-                  setData({
-                    nearbyPins: data.collections ? [data.collections] : [],
-                    singleAR: true,
-                  });
+                  setSingleAr(data.collections);
                   router.push("/ARScreen");
                 }}
               >

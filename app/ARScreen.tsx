@@ -20,12 +20,12 @@ import Svg, {
   Polygon,
   Image as SvgImage,
 } from "react-native-svg";
-import { useNearByPin } from "../components/hooks/useNearbyPin";
 import { ConsumedLocation } from "../components/types/CollectionTypes";
 import { useWinnerAnimation } from "../components/hooks/useWinnerAnimation";
 import { BASE_URL } from "../components/utils/Common";
 import ARSceneAR from "../components/ARSceneAR";
 import { Color } from "../components/utils/all-colors";
+import { useLocationService } from "@/components/hooks/useLocationService";
 const { width, height } = Dimensions.get("window");
 
 ViroAnimations.registerAnimations({
@@ -106,9 +106,9 @@ const HexagonalImage = ({ source }: { source: string; style?: any }) => {
   );
 };
 const ARScene = () => {
-  const { data } = useNearByPin();
-  const items = data?.nearbyPins || [];
-  const singleAR = data.singleAR;
+  const { nearbyPins: items, singleAr } = useLocationService();
+  console.log(">>>>> xxx:Ar secren ", items.length, singleAr);
+  const singleAR = singleAr;
   const router = useRouter();
   const [capturedItem, setCapturedItem] = useState<ConsumedLocation | null>(
     null
