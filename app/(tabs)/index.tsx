@@ -473,7 +473,7 @@ const HomeScreen = () => {
         >
           <MaterialCommunityIcons
             name="crosshairs-gps"
-            size={20}
+            size={19}
             color={data.trackingMode ? Color.wadzzo : "black"}
           />
         </TouchableOpacity>
@@ -481,9 +481,13 @@ const HomeScreen = () => {
         <TouchableOpacity
           onLayout={(event) => onButtonLayout(event, 5)}
           style={styles.AR}
+          disabled={response.isLoading || response.isFetching}
           onPress={() => handleARPress()}
         >
-          <MaterialCommunityIcons name="cube-scan" size={20} color="white" />
+          {response.isLoading || response.isFetching ? (
+            <ActivityIndicator size={22} color={Color.white} />
+          ) : (
+            <MaterialCommunityIcons name="cube-scan" size={22} color="white" />)}
         </TouchableOpacity>
         <TouchableOpacity
           onLayout={(event) => onButtonLayout(event, 3)}

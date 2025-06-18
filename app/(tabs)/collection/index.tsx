@@ -39,7 +39,6 @@ import { ConsumedLocation } from "@/components/types/CollectionTypes";
 import { Color } from "@/components/utils/all-colors";
 import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
 import { useLocationService } from "@/components/hooks/useLocationService";
-import { set } from "zod";
 
 type ButtonLayout = {
   x: number;
@@ -220,14 +219,22 @@ export default function MyCollectionScreen() {
         <Appbar.Header>
           <Appbar.Content title="My Collection" />
         </Appbar.Header>
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <Text>Error fetching collections</Text>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ marginBottom: 16, color: "red" }}>
+            Error fetching collections
+          </Text>
+          <Button
+            mode="contained"
+            onPress={() => response.refetch()}
+            style={{ backgroundColor: Color.wadzzo }}
+          >
+            Refresh
+          </Button>
         </View>
       </View>
     );
   }
+
 
   const renderCollectionItem = ({
     item,

@@ -163,6 +163,28 @@ export default function BountyScreen() {
   }, [isAuthenticated, walkthroughData]);
 
   if (response.isLoading) return <LoadingScreen />;
+
+  if (response.isError) {
+    return (
+      <View style={styles.container}>
+        <Appbar.Header>
+          <Appbar.Content title="My Collection" />
+        </Appbar.Header>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ marginBottom: 16, color: "red" }}>
+            Error fetching bounties: {response.error.message}
+          </Text>
+          <Button
+            mode="contained"
+            onPress={() => response.refetch()}
+            style={{ backgroundColor: Color.wadzzo }}
+          >
+            Refresh
+          </Button>
+        </View>
+      </View>
+    );
+  }
   const toggleJoin = (id: string, isAlreadyJoin: boolean, bounty: Bounty) => {
     if (isAlreadyJoin || bounty.isOwner) {
       setData({ item: bounty });
