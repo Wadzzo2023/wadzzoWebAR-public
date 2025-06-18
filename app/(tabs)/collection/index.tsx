@@ -34,11 +34,12 @@ import { useModal } from "@/components/hooks/useModal";
 import { useWalkThrough } from "@/components/hooks/useWalkThrough";
 import { useAuth } from "@/components/lib/auth/Provider";
 import { useCollection } from "@/components/hooks/useCollection";
-import { useNearByPin } from "@/components/hooks/useNearbyPin";
 import { BASE_URL } from "@/components/utils/Common";
 import { ConsumedLocation } from "@/components/types/CollectionTypes";
 import { Color } from "@/components/utils/all-colors";
 import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
+import { useLocationService } from "@/components/hooks/useLocationService";
+import { set } from "zod";
 
 type ButtonLayout = {
   x: number;
@@ -59,7 +60,7 @@ export default function MyCollectionScreen() {
   const { user, isAuthenticated } = useAuth();
 
   const { setData } = useCollection();
-  const { setData: setNearByPinData } = useNearByPin();
+  const { setSingleAr } = useLocationService();
   const steps = [
     {
       target: buttonLayouts[0],
@@ -155,10 +156,11 @@ export default function MyCollectionScreen() {
     queryFn: getCollections,
   });
   const onARPress = (item: ConsumedLocation) => {
-    setNearByPinData({
-      nearbyPins: item ? [item] : [],
-      singleAR: true,
-    });
+    setSingleAr(item);
+    // setNearByPinData({
+    //   nearbyPins: item ? [item] : [],
+    //   singleAR: true,
+    // });
     router.push("/ARScreen");
   };
   const checkFirstTimeSignIn = async () => {
@@ -353,15 +355,15 @@ export default function MyCollectionScreen() {
               setSortBy("title");
               setSortMenuVisible(false);
             }}
-
-
             style={sortBy === "title" ? styles.selectedMenuItem : null} // Highlight selected option
           >
-            <View style={{
-              flex: 1,
-              flexDirection: 'row',
-              gap: 4
-            }}>
+            <View
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                gap: 4,
+              }}
+            >
               <Text>Sort By</Text>
               <Text>Title (A-Z)</Text>
             </View>
@@ -371,44 +373,51 @@ export default function MyCollectionScreen() {
               setSortBy("remaining");
               setSortMenuVisible(false);
             }}
-
             style={sortBy === "remaining" ? styles.selectedMenuItem : null} // Highlight selected option
           >
-            <View style={{
-              flex: 1,
-              flexDirection: 'row',
-              gap: 4
-            }}>
+            <View
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                gap: 4,
+              }}
+            >
               <Text>Sort By</Text>
               <Text>Limit (High to Low)</Text>
             </View>
-
           </Button>
         </Menu>
       </Appbar.Header>
-      {
-        showWalkthrough ? renderCollectionItem({ item: dummyCollection[0], index: 0 }) :
-          <>
-            {sortedLocations.length === 0 && (
-              <View
-                style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-              >
-                <Text>No collections found</Text>
-              </View>
-            )}
-            <FlatList
-              data={sortedLocations}
-              showsVerticalScrollIndicator={false}
-              renderItem={renderCollectionItem}
-              keyExtractor={(item, index) => `${item.id}-${index}`}
-              contentContainerStyle={[styles.list, { paddingBottom: 80 }]}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-              }
-            />
-          </>
-      }
-
+      {showWalkthrough ? (
+        renderCollectionItem({ item: dummyCollection[0], index: 0 })
+      ) : (
+        <>
+          {sortedLocations.length === 0 && (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <Text>No collections found</Text>
+            </View>
+          )}
+          <FlatList
+            data={sortedLocations}
+            showsVerticalScrollIndicator={false}
+            renderItem={renderCollectionItem}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            contentContainerStyle={[styles.list, { paddingBottom: 80 }]}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
+            }
+          />
+        </>
+      )}
 
       {showWalkthrough && (
         <Walkthrough steps={steps} onFinish={() => setShowWalkthrough(false)} />
