@@ -12,13 +12,13 @@ interface LocationServiceState {
   nearbyPins: ConsumedLocation[];
   nearestPin: ConsumedLocation | null;
   nearestPinDistance: number | null;
+  nearestPinDistanceForAR: number | null;
   singleAr?: boolean;
 
   // Actions
   setUserLocation: (location: { latitude: number; longitude: number }) => void;
   setAllLocations: (locations: ConsumedLocation[]) => void;
   calculateNearbyData: () => void;
-  getNearbyPinsForAR: (radius?: number) => ConsumedLocation[];
   setSingleAr: (location?: ConsumedLocation) => void;
   setMultipleAr: () => void;
 }
@@ -29,6 +29,7 @@ export const useLocationService = create<LocationServiceState>((set, get) => ({
   nearbyPins: [],
   nearestPin: null,
   nearestPinDistance: null,
+  nearestPinDistanceForAR: null,
   singleAr: undefined,
 
   setUserLocation: (userLocation) => {
@@ -51,27 +52,44 @@ export const useLocationService = create<LocationServiceState>((set, get) => ({
     // Calculate nearest pin
     let nearest = null;
     let minDistance = Number.POSITIVE_INFINITY;
-
+    let minDistanceForAR = Number.POSITIVE_INFINITY;
     allLocations.forEach((location) => {
       if (location.collected || location.collection_limit_remaining <= 0)
         return;
+      if (!location.auto_collect) {
+        const distance = getDistanceFromLatLonInMeters(
+          userLocation.latitude,
+          userLocation.longitude,
+          location.lat,
+          location.lng
+        );
+
+        if (distance < minDistanceForAR) {
+          minDistanceForAR = distance;
+          nearest = location;
+        }
+      }
+
       const distance = getDistanceFromLatLonInMeters(
         userLocation.latitude,
         userLocation.longitude,
         location.lat,
         location.lng
       );
+
       if (distance < minDistance) {
         minDistance = distance;
         nearest = location;
       }
-    });
 
+    });
     set({
       nearbyPins,
       nearestPin: nearest,
       nearestPinDistance:
         minDistance === Number.POSITIVE_INFINITY ? null : minDistance,
+      nearestPinDistanceForAR:
+        minDistanceForAR === Number.POSITIVE_INFINITY ? null : minDistanceForAR,
     });
   },
 
@@ -86,4 +104,7 @@ export const useLocationService = create<LocationServiceState>((set, get) => ({
     set({ singleAr: false });
     get().calculateNearbyData();
   },
+
+
+
 }));

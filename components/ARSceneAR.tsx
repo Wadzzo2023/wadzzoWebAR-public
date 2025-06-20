@@ -165,7 +165,7 @@ const renderNoItemsWarning = (nearbyPinDistance: number) => {
         height={1}
       />
       <ViroText
-        text={`Nearest pin is ${nearbyPinDistance} m away`}
+        text={`Nearest AR collectible is at ${nearbyPinDistance.toFixed(2)} m away`}
         style={styles.warningText}
         width={5}
         height={1}
@@ -218,9 +218,8 @@ const renderItemDetail = (
         width={3.5}
       />
       <ViroText
-        text={`Description: ${
-          renderItemDetail.description ?? "No description"
-        }`}
+        text={`Description: ${renderItemDetail.description ?? "No description"
+          }`}
         style={styles.itemDetailText}
         height={0.6}
         width={3}
@@ -261,7 +260,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
   const [position, setPosition] = useState([0, 0, 0]);
   const hasNoItems = items.length === 0;
   // const { data: nearbyPinData } = useNearByPin();
-  const { nearbyPins: nearbyPinData, nearestPinDistance } =
+  const { nearbyPins: nearbyPinData, nearestPinDistanceForAR } =
     useLocationService();
   const onItemFocus = (item: ConsumedLocation) => {
     // console.log("Item focused", item);
@@ -318,76 +317,76 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
         <>
           {hasNoItems
             ? // Show warning message when there are no items
-              renderNoItemsWarning(nearestPinDistance ?? 0)
+            renderNoItemsWarning(nearestPinDistanceForAR ?? 0)
             : // Render items when available
-              items.slice(0, 20).map((item, index) => (
-                <ViroNode
-                  key={`${index}-${item.id}`}
-                  animation={{
-                    name: "rotate",
-                    run: true,
-                    loop: true,
-                  }}
-                  position={
-                    singleAR
-                      ? [0, 0, -5]
-                      : [
+            items.slice(0, 20).map((item, index) => (
+              <ViroNode
+                key={`${index}-${item.id}`}
+                animation={{
+                  name: "rotate",
+                  run: true,
+                  loop: true,
+                }}
+                position={
+                  singleAR
+                    ? [0, 0, -5]
+                    : [
+                      itemPositions[index][0],
+                      itemPositions[index][1],
+                      itemPositions[index][2],
+                    ]
+                }
+                onHover={(isHovering) => {
+                  if (isHovering) {
+                    onItemFocus(item);
+                    setPosition(
+                      singleAR
+                        ? [0, 2.3, -5]
+                        : [
                           itemPositions[index][0],
-                          itemPositions[index][1],
+                          itemPositions[index][1] + 2.5,
                           itemPositions[index][2],
                         ]
+                    );
+                  } else {
+                    onItemBlur();
                   }
-                  onHover={(isHovering) => {
-                    if (isHovering) {
-                      onItemFocus(item);
-                      setPosition(
-                        singleAR
-                          ? [0, 2.3, -5]
-                          : [
-                              itemPositions[index][0],
-                              itemPositions[index][1] + 2.5,
-                              itemPositions[index][2],
-                            ]
-                      );
-                    } else {
-                      onItemBlur();
-                    }
-                  }}
-                >
-                  <Viro3DObject
-                    rotation={[0, 0, 0]}
-                    source={require("../assets/circle/10438_Circular_Grass_Patch_v1_iterations-2.obj")}
-                    scale={[0.002, 0.002, 0.002]} // Slightly larger scale for distance
-                    position={[0, 0.5, 0]}
-                    type="OBJ"
-                  />
-                  {/* Front Side Image */}
-                  <ViroImage
-                    source={{ uri: item.image_url }}
-                    height={1}
-                    width={1}
-                    rotation={[0, 180, 0]}
-                    scale={[0.4, 0.4, 0]} // Larger scale for better visibility
-                    position={[0, 0.5, -0.022]}
-                  />
-                  {/* Back Side Image */}
-                  <ViroImage
-                    source={{ uri: item.image_url }}
-                    height={1}
-                    width={1}
-                    rotation={[0, 0, 0]}
-                    scale={[0.4, 0.4, 0]} // Larger scale for back image as well
-                    position={[0, 0.5, 0.022]}
-                  />
+                }}
+              >
+                <Viro3DObject
+                  rotation={[0, 0, 0]}
+                  source={require("../assets/circle/10438_Circular_Grass_Patch_v1_iterations-2.obj")}
+                  scale={[0.002, 0.002, 0.002]} // Slightly larger scale for distance
+                  position={[0, 0.5, 0]}
+                  type="OBJ"
+                />
+                {/* Front Side Image */}
+                <ViroImage
+                  source={{ uri: item.image_url }}
+                  height={1}
+                  width={1}
+                  rotation={[0, 180, 0]}
+                  scale={[0.4, 0.4, 0]} // Larger scale for better visibility
+                  position={[0, 0.5, -0.022]}
+                />
+                {/* Back Side Image */}
+                <ViroImage
+                  source={{ uri: item.image_url }}
+                  height={1}
+                  width={1}
+                  rotation={[0, 0, 0]}
+                  scale={[0.4, 0.4, 0]} // Larger scale for back image as well
+                  position={[0, 0.5, 0.022]}
+                />
 
-                  <ViroText
-                    text={item.title}
-                    scale={[0.7, 0.7, 0.7]} // Larger text scale
-                    position={[0, 1.1, 0]}
-                    style={styles.itemTitle}
-                  />
-                </ViroNode>
-              ))}
+                <ViroText
+                  text={item.title}
+                  scale={[0.7, 0.7, 0.7]} // Larger text scale
+                  position={[0, 1.1, 0]}
+                  style={styles.itemTitle}
+                />
+              </ViroNode>
+            ))}
         </>
       )}
 

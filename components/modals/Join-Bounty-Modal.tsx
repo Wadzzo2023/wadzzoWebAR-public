@@ -123,6 +123,11 @@ const JoinBountyModal = () => {
         {bounty.requiredBalance > balance && (
           <Text style={{ color: "red", textAlign: "center", padding: 2 }}>
             You do not have enough balance to join this bounty.
+
+            <Text style={{ fontWeight: "bold", textAlign: "center", color: Color.wadzzo }}>
+              {"\n"} Required: {bounty.requiredBalance} WADZZO
+            </Text>
+
           </Text>
         )}
         <Dialog.Actions>

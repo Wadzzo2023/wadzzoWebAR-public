@@ -107,7 +107,7 @@ export const CollectionAnimation: React.FC<ParticleAnimationProps> = ({
     if (!visible) return null;
 
     return (
-        <View style={StyleSheet.absoluteFill}>
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
             {particles.map((particle, index) => (
                 <Animated.View
                     key={index}

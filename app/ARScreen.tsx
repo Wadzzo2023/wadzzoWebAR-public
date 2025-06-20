@@ -266,7 +266,9 @@ const ARScene = () => {
   return (
     <View style={styles.container}>
       <Appbar.Header style={styles.appbar}>
-        <Appbar.BackAction color="white" onPress={() => router.back()} />
+        <Appbar.BackAction
+          disabled={loading}
+          color="white" onPress={() => router.back()} />
         <Appbar.Content title={"AR Scanner"} titleStyle={styles.appbarTitle} />
       </Appbar.Header>
       {!singleAR && (

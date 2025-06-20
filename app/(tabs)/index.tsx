@@ -141,39 +141,34 @@ const HomeScreen = () => {
     router.push("/ARScreen");
   };
 
-  const collectPinsSequentially = async (pins: ConsumedLocation[]) => {
-    for (const pin of pins) {
-      if (!autoCollectModeRef.current) {
-        // console.log("Auto collect mode paused");
-        break; // Exit if auto-collect is turned off
-      }
-      if (pin.collection_limit_remaining <= 0 || pin.collected) {
-        // console.log("Pin limit reached:", pin.id);
-        continue;
-      }
-      const response = await fetch(
-        new URL("api/game/locations/consume", BASE_URL).toString(),
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ location_id: pin.id.toString() }),
-        }
-      );
+  const collectPinsSequentially = async (pins: ConsumedLocation) => {
 
-      if (response.ok) {
-        showPinCollectionAnimation();
-      }
 
-      await new Promise((resolve) => setTimeout(resolve, 20000)); // Wait 20 seconds
+    if (pins.collection_limit_remaining <= 0 || pins.collected) {
+      // console.log("Pin limit reached:", pin.id);
+      return;
     }
+    const res = await fetch(
+      new URL("api/game/locations/consume", BASE_URL).toString(),
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ location_id: pins.id.toString() }),
+      }
+    );
+
+    if (res.ok) {
+      setShowAnimation(true);        // start animation
+      setTimeout(() => {
+        response.refetch();
+      }, 4000);
+    }
+
   };
 
-  const showPinCollectionAnimation = () => {
-    setShowAnimation(true);
-  };
 
   const handleRecenter = () => {
     if (!userLocation || !cameraRef.current) {
@@ -334,7 +329,7 @@ const HomeScreen = () => {
 
   useEffect(() => {
     if (countCurrentStep === 5) {
-      showPinCollectionAnimation();
+      setShowAnimation(true);
     }
   }, [countCurrentStep]);
 
@@ -346,17 +341,18 @@ const HomeScreen = () => {
   );
 
   useEffect(() => {
-    if (data.mode && locations) {
+    if (data.mode && locations && userLocation) {
       const autoCollectPins = getAutoCollectPins(userLocation, locations, 50);
       if (autoCollectPins.length > 0) {
-        collectPinsSequentially(autoCollectPins);
+        collectPinsSequentially(autoCollectPins[0]);
       }
     }
-  }, [data.mode, locations]);
+  }, [data.mode, locations, userLocation]);
 
   useEffect(() => {
     autoCollectModeRef.current = data.mode;
   }, [data.mode]);
+
 
   if (
     response.isLoading ||
@@ -417,7 +413,7 @@ const HomeScreen = () => {
           !showWalkthrough &&
           data.trackingMode &&
           nearestPinDistance &&
-          nearestPinDistance < 5000 && (
+          nearestPinDistance <= 200 && (
             <NearestPinIndicator
               bearing={bearing}
               distance={nearestPinDistance || 0}
