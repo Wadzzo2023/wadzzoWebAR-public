@@ -2,7 +2,7 @@
   "expo": {
     "name": "Wadzzo",
     "slug": "Wadzzo",
-    "version": "4.3.4",
+    "version": "4.4.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "com.thebillboardapp.wadzzo",
@@ -100,7 +100,6 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to use your camera to access camera and use Augmented Reality(AR) functionality."
         }
       ],
-      "@reactvision/react-viro",
       [
         "expo-image-picker",
         {

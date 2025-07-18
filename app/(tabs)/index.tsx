@@ -130,16 +130,7 @@ const HomeScreen = () => {
     }
   };
 
-  const handleARPress = () => {
-    setMultipleAr();
-    console.log(
-      ">>>>>> nearest pin",
-      nearestPin?.brand_name,
-      nearestPinDistance,
-      nearbyPins.length
-    );
-    router.push("/ARScreen");
-  };
+
 
   const collectPinsSequentially = async (pins: ConsumedLocation) => {
 
@@ -328,7 +319,7 @@ const HomeScreen = () => {
   }, [data.trackingMode]);
 
   useEffect(() => {
-    if (countCurrentStep === 5) {
+    if (countCurrentStep === 4) {
       setShowAnimation(true);
     }
   }, [countCurrentStep]);
@@ -474,17 +465,7 @@ const HomeScreen = () => {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onLayout={(event) => onButtonLayout(event, 5)}
-          style={styles.AR}
-          disabled={response.isLoading || response.isFetching}
-          onPress={() => handleARPress()}
-        >
-          {response.isLoading || response.isFetching ? (
-            <ActivityIndicator size={22} color={Color.white} />
-          ) : (
-            <MaterialCommunityIcons name="cube-scan" size={22} color="white" />)}
-        </TouchableOpacity>
+
         <TouchableOpacity
           onLayout={(event) => onButtonLayout(event, 3)}
           style={styles.Refresh}
@@ -497,7 +478,7 @@ const HomeScreen = () => {
           )}
         </TouchableOpacity>
 
-        {showWalkthrough && countCurrentStep === 5 && (
+        {showWalkthrough && countCurrentStep === 4 && (
           <View
             style={styles.pinCollectedAnim}
             onLayout={(event) => onButtonLayout(event, 1)}

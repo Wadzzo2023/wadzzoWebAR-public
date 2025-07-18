@@ -66,20 +66,15 @@ export default function MyCollectionScreen() {
       title: "Filter Collection",
       content: "User can filter Collection between Title and Remaining Limit.",
     },
+
     {
       target: buttonLayouts[1],
-      title: "View in AR",
-      content:
-        "Press the AR button to view your digital item in AR mode.  In AR, explore your surroundings and see your pin as a real-life item.",
-    },
-    {
-      target: buttonLayouts[2],
       title: "Delete Collection",
       content:
         "Once you've redeemed a reward, use it to permanently remove the pin from your collection.",
     },
     {
-      target: buttonLayouts[3],
+      target: buttonLayouts[2],
       title: "View Collection",
       content:
         "Pressing View on a pin reveals details like the brand, collection date, item info, a Claim button for more details, collection limits, and more.",
@@ -154,14 +149,7 @@ export default function MyCollectionScreen() {
     queryKey: ["collection"],
     queryFn: getCollections,
   });
-  const onARPress = (item: ConsumedLocation) => {
-    setSingleAr(item);
-    // setNearByPinData({
-    //   nearbyPins: item ? [item] : [],
-    //   singleAR: true,
-    // });
-    router.push("/ARScreen");
-  };
+
   const checkFirstTimeSignIn = async () => {
     // console.log(showWalkthrough);
     if (walkthroughData.showWalkThrough) {
@@ -259,35 +247,12 @@ export default function MyCollectionScreen() {
       </Card.Content>
       <Card.Actions style={styles.actions}>
         <View style={styles.leftButtons}>
+
           <Button
             onLayout={(event: LayoutChangeEvent) => {
               if (index === 0) {
                 // Only apply layout for the button when index is 1
                 onButtonLayout(event, 1);
-              }
-            }}
-            onPress={() => onARPress(item)}
-            style={[
-              styles.smallButton,
-              {
-                backgroundColor: Color.wadzzo,
-              },
-            ]}
-            mode="outlined"
-          >
-            <Text>
-              <MaterialCommunityIcons
-                name="cube-scan"
-                size={15}
-                color={"white"}
-              />
-            </Text>
-          </Button>
-          <Button
-            onLayout={(event: LayoutChangeEvent) => {
-              if (index === 0) {
-                // Only apply layout for the button when index is 1
-                onButtonLayout(event, 2);
               }
             }}
             onPress={() =>
@@ -307,7 +272,7 @@ export default function MyCollectionScreen() {
         <Button
           onLayout={(event: LayoutChangeEvent) => {
             if (index === 0) {
-              onButtonLayout(event, 3);
+              onButtonLayout(event, 2);
             }
           }}
           onPress={() => {

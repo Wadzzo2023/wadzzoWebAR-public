@@ -121,17 +121,7 @@ const SingleCollectionItem = () => {
               >
                 Claim
               </Button>
-              <Button
-                style={styles.button}
-                icon="cube-scan"
-                mode="outlined"
-                onPress={() => {
-                  setSingleAr(data.collections);
-                  router.push("/ARScreen");
-                }}
-              >
-                AR
-              </Button>
+
             </View>
           </Card.Content>
         </Card>

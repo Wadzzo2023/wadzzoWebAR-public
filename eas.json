@@ -16,15 +16,17 @@
       "ios": {
         "image": "macos-sequoia-15.3-xcode-16.2"
       }
-    },
-    "apk": {
-      "android": {
-        "buildType": "apk"
-      }
     }
   },
   "submit": {
     "development": {
+      "ios": {
+        "appleId": "billboardcollector@gmail.com",
+        "ascAppId": "1639649037",
+        "appleTeamId": "L5747V2LKA"
+      }
+    },
+    "production": {
       "ios": {
         "appleId": "billboardcollector@gmail.com",
         "ascAppId": "1639649037",

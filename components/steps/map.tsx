@@ -30,12 +30,7 @@ export const createStepsForMap = (buttonLayouts: ButtonLayout[]) => [
         content:
             "Press the Re-center button to center your map view to your current location",
     },
-    {
-        target: buttonLayouts[5],
-        title: "AR button",
-        content:
-            "To collect manual pins, press the AR button on your map to view your surroundings.  Locate the icon on your screen, then press the Collect button that appears below it to add the item to your collection.",
-    },
+
     {
         target: buttonLayouts[1],
         title: "Pin Auto Collection",
