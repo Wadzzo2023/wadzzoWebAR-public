@@ -30,6 +30,7 @@ import {
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { useRouter } from "expo-router";
+import * as MailComposer from "expo-mail-composer";
 
 import AsyncStorage from "@react-native-async-storage/async-storage"; // import AsyncStorage
 import { useAuth } from "@/components/lib/auth/Provider";

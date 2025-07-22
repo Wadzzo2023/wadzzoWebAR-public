@@ -9,7 +9,7 @@ import { BASE_URL } from "@/components/utils/Common";
 import { Color } from "@/components/utils/all-colors";
 import { useAuth } from "@/components/lib/auth/Provider";
 import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
-
+import Svg, { Circle } from 'react-native-svg';
 import { MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
 import * as ImageManipulator from 'expo-image-manipulator';
 
