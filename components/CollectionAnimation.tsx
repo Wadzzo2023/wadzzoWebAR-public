@@ -1,157 +1,393 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, Dimensions, StyleSheet, View, Image } from 'react-native';
+"use client"
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const NUM_PARTICLES = 40;
+import type React from "react"
+import { useEffect, useRef } from "react"
+import { Animated, Dimensions, StyleSheet, View, Text, Image } from "react-native"
+import { MaterialCommunityIcons } from "@expo/vector-icons"
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window")
+const NUM_COINS = 25
+const NUM_SPARKLES = 15
 
 interface ParticleAnimationProps {
-    visible: boolean;
-    onAnimationComplete?: () => void;
+    visible: boolean
+    onAnimationComplete?: () => void
 }
 
-export const CollectionAnimation: React.FC<ParticleAnimationProps> = ({
-    visible,
-    onAnimationComplete,
-}) => {
-    const particles = useRef(
-        Array.from({ length: NUM_PARTICLES }, () => ({
+export const CollectionAnimation: React.FC<ParticleAnimationProps> = ({ visible, onAnimationComplete }) => {
+    // Coin particles
+    const coins = useRef(
+        Array.from({ length: NUM_COINS }, () => ({
             translateY: new Animated.Value(-100),
             translateX: new Animated.Value(0),
-            scale: new Animated.Value(0.5),
+            scale: new Animated.Value(0),
             opacity: new Animated.Value(0),
             rotation: new Animated.Value(0),
-        }))
-    ).current;
+        })),
+    ).current
+
+    // Sparkle particles
+    const sparkles = useRef(
+        Array.from({ length: NUM_SPARKLES }, () => ({
+            translateY: new Animated.Value(SCREEN_HEIGHT / 2),
+            translateX: new Animated.Value(SCREEN_WIDTH / 2),
+            scale: new Animated.Value(0),
+            opacity: new Animated.Value(0),
+            rotation: new Animated.Value(0),
+        })),
+    ).current
+
+    // Success text animation
+    const successText = useRef({
+        scale: new Animated.Value(0),
+        opacity: new Animated.Value(0),
+        translateY: new Animated.Value(50),
+    }).current
 
     useEffect(() => {
         if (visible) {
-            // Reset and start animation for each particle
-            particles.forEach((particle, index) => {
-                particle.translateY.setValue(-100);
-                particle.translateX.setValue(0);
-                particle.scale.setValue(0.5);
-                particle.opacity.setValue(0);
-                particle.rotation.setValue(0);
+            // Reset all animations
+            coins.forEach((coin) => {
+                coin.translateY.setValue(-100)
+                coin.translateX.setValue(SCREEN_WIDTH / 2)
+                coin.scale.setValue(0)
+                coin.opacity.setValue(0)
+                coin.rotation.setValue(0)
+            })
 
-                const delay = index * 100;
-                const startX = Math.random() * SCREEN_WIDTH;
+            sparkles.forEach((sparkle) => {
+                sparkle.translateY.setValue(SCREEN_HEIGHT / 2)
+                sparkle.translateX.setValue(SCREEN_WIDTH / 2)
+                sparkle.scale.setValue(0)
+                sparkle.opacity.setValue(0)
+                sparkle.rotation.setValue(0)
+            })
+
+            successText.scale.setValue(0)
+            successText.opacity.setValue(0)
+            successText.translateY.setValue(50)
+
+            // Success text animation
+            Animated.sequence([
+                Animated.delay(200),
+                Animated.parallel([
+                    Animated.spring(successText.scale, {
+                        toValue: 1.2,
+                        tension: 100,
+                        friction: 8,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(successText.opacity, {
+                        toValue: 1,
+                        duration: 300,
+                        useNativeDriver: true,
+                    }),
+                    Animated.spring(successText.translateY, {
+                        toValue: 0,
+                        tension: 100,
+                        friction: 8,
+                        useNativeDriver: true,
+                    }),
+                ]),
+                Animated.delay(1000),
+                Animated.parallel([
+                    Animated.timing(successText.scale, {
+                        toValue: 0.8,
+                        duration: 500,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(successText.opacity, {
+                        toValue: 0,
+                        duration: 500,
+                        useNativeDriver: true,
+                    }),
+                ]),
+            ]).start()
+
+            // Coin explosion animation
+            coins.forEach((coin, index) => {
+                const delay = index * 50
+                const angle = (index / NUM_COINS) * 2 * Math.PI
+                const radius = 150 + Math.random() * 100
+                const endX = SCREEN_WIDTH / 2 + Math.cos(angle) * radius
+                const endY = SCREEN_HEIGHT / 2 + Math.sin(angle) * radius
 
                 Animated.parallel([
-                    // Falling animation
-                    Animated.timing(particle.translateY, {
-                        toValue: SCREEN_HEIGHT,
-                        duration: 2000,
-                        useNativeDriver: true,
-                        delay,
-                    }),
-                    // // Horizontal swaying
-                    // Animated.sequence([
-                    //     Animated.timing(particle.translateX, {
-                    //         toValue: startX - 50 + Math.random() * 100,
-                    //         duration: 1000,
-                    //         useNativeDriver: true,
-                    //         delay,
-                    //     }),
-                    //     Animated.timing(particle.translateX, {
-                    //         toValue: startX + 50 + Math.random() * 100,
-                    //         duration: 1000,
-                    //         useNativeDriver: true,
-                    //     }),
-                    // ]),
-                    // // Scale and fade in/out
+                    // Explosion outward
                     Animated.sequence([
-                        Animated.timing(particle.scale, {
-                            toValue: 1 + Math.random() * 0.5,
-                            duration: 500,
+                        Animated.delay(delay),
+                        Animated.timing(coin.translateX, {
+                            toValue: endX,
+                            duration: 800,
                             useNativeDriver: true,
-                            delay,
-                        }),
-                        Animated.timing(particle.scale, {
-                            toValue: 0,
-                            duration: 500,
-                            useNativeDriver: true,
-                            delay: 1500,
                         }),
                     ]),
-                    // Opacity
                     Animated.sequence([
-                        Animated.timing(particle.opacity, {
-                            toValue: 0.8,
-                            duration: 500,
+                        Animated.delay(delay),
+                        Animated.timing(coin.translateY, {
+                            toValue: endY,
+                            duration: 800,
                             useNativeDriver: true,
-                            delay,
                         }),
-                        Animated.timing(particle.opacity, {
-                            toValue: 0,
-                            duration: 500,
+                    ]),
+                    // Scale animation
+                    Animated.sequence([
+                        Animated.delay(delay),
+                        Animated.spring(coin.scale, {
+                            toValue: 1 + Math.random() * 0.5,
+                            tension: 100,
+                            friction: 6,
                             useNativeDriver: true,
-                            delay: 1500,
+                        }),
+                        Animated.delay(400),
+                        Animated.timing(coin.scale, {
+                            toValue: 0,
+                            duration: 400,
+                            useNativeDriver: true,
+                        }),
+                    ]),
+                    // Opacity animation
+                    Animated.sequence([
+                        Animated.delay(delay),
+                        Animated.timing(coin.opacity, {
+                            toValue: 0.9,
+                            duration: 300,
+                            useNativeDriver: true,
+                        }),
+                        Animated.delay(500),
+                        Animated.timing(coin.opacity, {
+                            toValue: 0,
+                            duration: 400,
+                            useNativeDriver: true,
                         }),
                     ]),
                     // Rotation
-                    Animated.timing(particle.rotation, {
-                        toValue: 360 * (Math.random() > 0.5 ? 1 : -1),
-                        duration: 2000,
-                        useNativeDriver: true,
-                        delay,
-                    }),
-                ]).start();
-            });
+                    Animated.sequence([
+                        Animated.delay(delay),
+                        Animated.timing(coin.rotation, {
+                            toValue: 720 * (Math.random() > 0.5 ? 1 : -1),
+                            duration: 1200,
+                            useNativeDriver: true,
+                        }),
+                    ]),
+                ]).start()
+            })
 
+            // Sparkle burst animation
+            sparkles.forEach((sparkle, index) => {
+                const delay = 300 + index * 30
+                const angle = (index / NUM_SPARKLES) * 2 * Math.PI
+                const radius = 80 + Math.random() * 60
+                const endX = SCREEN_WIDTH / 2 + Math.cos(angle) * radius
+                const endY = SCREEN_HEIGHT / 2 + Math.sin(angle) * radius
+
+                Animated.parallel([
+                    // Sparkle burst
+                    Animated.sequence([
+                        Animated.delay(delay),
+                        Animated.timing(sparkle.translateX, {
+                            toValue: endX,
+                            duration: 600,
+                            useNativeDriver: true,
+                        }),
+                    ]),
+                    Animated.sequence([
+                        Animated.delay(delay),
+                        Animated.timing(sparkle.translateY, {
+                            toValue: endY,
+                            duration: 600,
+                            useNativeDriver: true,
+                        }),
+                    ]),
+                    // Scale animation
+                    Animated.sequence([
+                        Animated.delay(delay),
+                        Animated.spring(sparkle.scale, {
+                            toValue: 1,
+                            tension: 150,
+                            friction: 4,
+                            useNativeDriver: true,
+                        }),
+                        Animated.delay(200),
+                        Animated.timing(sparkle.scale, {
+                            toValue: 0,
+                            duration: 300,
+                            useNativeDriver: true,
+                        }),
+                    ]),
+                    // Opacity animation
+                    Animated.sequence([
+                        Animated.delay(delay),
+                        Animated.timing(sparkle.opacity, {
+                            toValue: 1,
+                            duration: 200,
+                            useNativeDriver: true,
+                        }),
+                        Animated.delay(200),
+                        Animated.timing(sparkle.opacity, {
+                            toValue: 0,
+                            duration: 300,
+                            useNativeDriver: true,
+                        }),
+                    ]),
+                    // Rotation
+                    Animated.sequence([
+                        Animated.delay(delay),
+                        Animated.timing(sparkle.rotation, {
+                            toValue: 360,
+                            duration: 800,
+                            useNativeDriver: true,
+                        }),
+                    ]),
+                ]).start()
+            })
+
+            // Complete animation after all effects
             setTimeout(() => {
-                onAnimationComplete?.();
-            }, 4000);
+                onAnimationComplete?.()
+            }, 2500)
         }
-    }, [visible, onAnimationComplete]);
+    }, [visible, onAnimationComplete])
 
-    if (!visible) return null;
+    if (!visible) return null
 
     return (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            {particles.map((particle, index) => (
+            {/* Success Text */}
+            <Animated.View
+                style={[
+                    styles.successTextContainer,
+                    {
+                        transform: [{ scale: successText.scale }, { translateY: successText.translateY }],
+                        opacity: successText.opacity,
+                    },
+                ]}
+            >
+                <Text style={styles.successText}>COLLECTED!</Text>
+                <MaterialCommunityIcons name="check-circle" size={40} color="#00ff00" />
+            </Animated.View>
+
+            {/* Coin Particles */}
+            {coins.map((coin, index) => (
                 <Animated.View
-                    key={index}
+                    key={`coin-${index}`}
                     style={[
-                        styles.particle,
+                        styles.coinParticle,
                         {
                             transform: [
-                                { translateX: particle.translateX },
-                                { translateY: particle.translateY },
-                                { scale: particle.scale },
+                                { translateX: coin.translateX },
+                                { translateY: coin.translateY },
+                                { scale: coin.scale },
                                 {
-                                    rotate: particle.rotation.interpolate({
+                                    rotate: coin.rotation.interpolate({
                                         inputRange: [0, 360],
-                                        outputRange: ['0deg', '360deg'],
+                                        outputRange: ["0deg", "360deg"],
                                     }),
                                 },
                             ],
-                            opacity: particle.opacity,
-                            left: Math.random() * SCREEN_WIDTH,
+                            opacity: coin.opacity,
                         },
                     ]}
                 >
                     <Image
-                        source={require('../assets/images/wadzzo.png')}
-                        style={styles.wadzzoImage}
+                        source={require("../assets/images/wadzzo.png")} // Replace with your coin image
+                        style={[{ width: 40, height: 40 }]}
                     />
                 </Animated.View>
             ))}
+
+            {/* Sparkle Particles */}
+            {sparkles.map((sparkle, index) => (
+                <Animated.View
+                    key={`sparkle-${index}`}
+                    style={[
+                        styles.sparkleParticle,
+                        {
+                            transform: [
+                                { translateX: sparkle.translateX },
+                                { translateY: sparkle.translateY },
+                                { scale: sparkle.scale },
+                                {
+                                    rotate: sparkle.rotation.interpolate({
+                                        inputRange: [0, 360],
+                                        outputRange: ["0deg", "360deg"],
+                                    }),
+                                },
+                            ],
+                            opacity: sparkle.opacity,
+                        },
+                    ]}
+                >
+                    <MaterialCommunityIcons name="star-four-points" size={20} color="#00ffff" style={styles.sparkleIcon} />
+                </Animated.View>
+            ))}
+
+            {/* Background Glow Effect */}
+            <Animated.View
+                style={[
+                    styles.glowBackground,
+                    {
+                        opacity: successText.opacity.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, 0.3],
+                        }),
+                    },
+                ]}
+            />
         </View>
-    );
-};
+    )
+}
 
 const styles = StyleSheet.create({
-    particle: {
-        position: 'absolute',
-        width: 80,
-        height: 80,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    wadzzoImage: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'contain',
-    },
-});
+    successTextContainer: {
+        position: "absolute",
+        top: SCREEN_HEIGHT * 0.4,
+        left: 0,
+        right: 0,
+        alignItems: "center",
+        justifyContent: "center",
 
+    },
+    successText: {
+        fontSize: 32,
+        fontWeight: "bold",
+        color: "#00ff00",
+        textAlign: "center",
+        marginBottom: 10,
+        textShadowColor: "rgba(0, 255, 0, 0.8)",
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 10,
+    },
+    coinParticle: {
+        position: "absolute",
+        width: 40,
+        height: 40,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    coinIcon: {
+        textShadowColor: "rgba(255, 215, 0, 0.8)",
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 8,
+    },
+    sparkleParticle: {
+        position: "absolute",
+        width: 30,
+        height: 30,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    sparkleIcon: {
+        textShadowColor: "rgba(0, 255, 255, 0.8)",
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 6,
+    },
+    glowBackground: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "#00ff00",
+    },
+})

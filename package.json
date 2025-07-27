@@ -27,6 +27,7 @@
     "expo-auth-session": "~5.4.0",
     "expo-barcode-scanner": "~12.9.3",
     "expo-blur": "~12.9.2",
+    "expo-camera": "~15.0.1",
     "expo-clipboard": "~5.0.1",
     "expo-constants": "~15.4.6",
     "expo-document-picker": "~11.10.1",
@@ -58,8 +59,7 @@
     "react-native-web": "~0.19.6",
     "react-native-webview": "13.6.4",
     "zod": "^4.0.5",
-    "zustand": "^5.0.6",
-    "expo-camera": "~15.0.1"
+    "zustand": "^5.0.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

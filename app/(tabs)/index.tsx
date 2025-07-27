@@ -49,12 +49,13 @@ import { useLocationService } from "@/components/hooks/useLocationService";
 import { Balance } from "@/components/screen/map/Balance";
 import { Marker } from "@/components/screen/map/Marker";
 import { mapScreenStyles as styles } from "@/components/screen/map/style";
+import { useARSelection } from "@/components/hooks/use-ARSelection";
 
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
 const HomeScreen = () => {
   const [locationPermission, setLocationPermission] = useState(false);
-
+  const { data: ARSelectionData, setVisible, setSelectAR, setSelectQR, setTutorialMode, closeModal } = useARSelection()
   const router = useRouter();
   const { setData: setExtraInfo } = useExtraInfo();
   const { setData: setDirectionData } = useDirectionStore();
@@ -92,7 +93,7 @@ const HomeScreen = () => {
   const [handleRecenterPress, setHandleRecenterPress] = useState(false);
   const [countCurrentStep, setCountCurrentStep] = useState(0);
   const [touchOnMap, setTouchOnMap] = useState(false);
-
+  const [hoveredCoin, setHoveredCoin] = useState<ConsumedLocation | null>(null)
   const lastHeadingUpdate = useRef<number>(Date.now());
   const MIN_HEADING_UPDATE_INTERVAL = 3000; // Minimum time between heading updates (1 second)
   const MIN_HEADING_CHANGE = 5; // Minimum heading change in degrees to trigger update
@@ -129,18 +130,36 @@ const HomeScreen = () => {
       setShowWalkthrough(false);
     }
   };
+  const handleQRScanned = (data: string) => {
+    setSelectQR(false)
+    setSelectAR(true)
+    setTutorialMode(true)
 
+  }
+  const handleShowCollectButton = (pin: ConsumedLocation | null) => {
+    setHoveredCoin(pin)
+  }
   const handleARPress = () => {
-    setMultipleAr();
-    console.log(
-      ">>>>>> nearest pin",
-      nearestPin?.brand_name,
-      nearestPinDistance,
-      nearbyPins.length
-    );
-    router.push("/ARScreen");
+    setVisible(true)
   };
+  const handleARClose = () => {
+    setSelectAR(false)
+    setSelectQR(false)
+    setVisible(false)
+    setTutorialMode(false)
 
+    setHoveredCoin(null)
+
+  }
+  const handleQRClose = () => {
+    setSelectAR(false)
+    setSelectQR(false)
+    setVisible(false)
+    setTutorialMode(false)
+
+    setHoveredCoin(null)
+
+  }
   const collectPinsSequentially = async (pins: ConsumedLocation) => {
 
 
@@ -408,6 +427,8 @@ const HomeScreen = () => {
           />
           <Marker locations={locations} />
         </MapView>
+
+
         {nearestPin &&
           userLocation &&
           !showWalkthrough &&

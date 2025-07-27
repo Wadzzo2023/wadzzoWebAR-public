@@ -3,6 +3,7 @@ import DeleteCollectionModal from "../modals/Delete-Collection-Modal";
 import LocationInformationModal from "../modals/Location-Info-Modal";
 import JoinBountyModal from "../modals/Join-Bounty-Modal";
 import NearbyPinModal from "../modals/NearBy-Pin-Modal";
+import { ARQRSelectionModal } from "../modals/AR-QR-Selection-modal";
 
 const ModalProvider = () => {
   const [isMounted, setIsMounted] = useState(false);
@@ -19,6 +20,7 @@ const ModalProvider = () => {
       <DeleteCollectionModal />
       <LocationInformationModal />
       <NearbyPinModal />
+      <ARQRSelectionModal />
     </>
   );
 };
