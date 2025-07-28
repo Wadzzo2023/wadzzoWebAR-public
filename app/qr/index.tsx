@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { Color } from "@/components/utils/all-colors"
 import { useARSelection } from "@/components/hooks/use-ARSelection"
 import { useRouter } from "expo-router"
+import { toast, ToastPosition } from "@backpackapp-io/react-native-toast"
 
 const QRScanner = () => {
     const [hasPermission, setHasPermission] = useState<boolean | null>(null)
@@ -62,8 +63,17 @@ const QRScanner = () => {
                 qrData = JSON.parse(data)
                 id = qrData.id
             } catch (parseError) {
-                console.log("QR data is not JSON, using as direct ID")
-                id = data
+                toast.error("Invalid QR Code format. Please scan a valid QR code.", {
+                    position: ToastPosition.BOTTOM,
+                    duration: 3000,
+                })
+                setCameraActive(true)
+                setTimeout(() => {
+                    setScanned(false)
+                    setIsProcessing(false)
+                }, 2000)
+                return
+
             }
 
             if (!id) {

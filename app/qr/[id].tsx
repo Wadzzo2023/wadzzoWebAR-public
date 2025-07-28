@@ -44,7 +44,7 @@ export interface QRItemResponse {
 const ARViewScreen = () => {
     const router = useRouter()
     const params = useLocalSearchParams()
-    const id = (params.id as string) || "111"
+    const id = (params.id as string)
     const [trackingState, setTrackingState] = useState("Initializing")
     const [loading, setLoading] = useState(true)
     const [arReady, setArReady] = useState(false)
