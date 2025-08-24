@@ -107,7 +107,6 @@ const HexagonalImage = ({ source }: { source: string; style?: any }) => {
 };
 const ARScene = () => {
   const { nearbyPins: items, singleAr } = useLocationService();
-  console.log(">>>>> xxx:Ar secren ", items.length, singleAr);
   const singleAR = singleAr;
   const router = useRouter();
   const [capturedItem, setCapturedItem] = useState<ConsumedLocation | null>(

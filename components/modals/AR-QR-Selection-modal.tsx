@@ -10,7 +10,7 @@ import { useRouter } from "expo-router"
 const { width, height } = Dimensions.get("window")
 
 export const ARQRSelectionModal: React.FC = () => {
-    const { data, setVisible, setSelectAR, setSelectQR, closeModal } = useARSelection()
+    const { data, setVisible, closeModal } = useARSelection()
     const [loadingForAR, setLoadingForAR] = useState(false)
     const [loadingForQR, setLoadingForQR] = useState(false)
 
@@ -42,7 +42,7 @@ export const ARQRSelectionModal: React.FC = () => {
             await new Promise(resolve => setTimeout(resolve, 2000))
 
             // Set AR selection state
-            setSelectAR(true)
+
             setMultipleAr()
 
             // Close modal first
@@ -75,7 +75,7 @@ export const ARQRSelectionModal: React.FC = () => {
             await new Promise(resolve => setTimeout(resolve, 2000))
 
             // Set QR selection state
-            setSelectQR(true)
+
 
             setVisible(false)
 

@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import {
     ViroARScene,
@@ -46,6 +45,7 @@ interface ARSceneWithIDProps {
     qrItemData: QRItemData
     onModelLoadStart?: () => void
     onModelLoadEnd?: () => void
+    modelScale: number
 }
 
 interface BillboardPosition {
@@ -54,10 +54,22 @@ interface BillboardPosition {
     z: number
 }
 
-const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onModelLoadEnd }: ARSceneWithIDProps) => {
+const EnhancedMultiDescriptionAR = ({
+    qrId,
+    qrItemData,
+    onModelLoadStart,
+    onModelLoadEnd,
+    modelScale,
+}: ARSceneWithIDProps) => {
     const [trackingStatus, setTrackingStatus] = useState<ViroTrackingStateConstants>(
         ViroTrackingStateConstants.TRACKING_UNAVAILABLE,
     )
+
+    // Add a scale key to force re-render when scale changes
+    const [scaleKey, setScaleKey] = useState(0)
+
+    console.log("Current modelScale in QRscreenAR:", modelScale)
+
     const [arInitialized, setArInitialized] = useState(false)
     const [modelLoaded, setModelLoaded] = useState(false)
     const [modelError, setModelError] = useState(false)
@@ -67,13 +79,15 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
     const [isRetrying, setIsRetrying] = useState(false)
     const [modelKey, setModelKey] = useState(0)
     const [modelBounds, setModelBounds] = useState({ width: 1, height: 1, depth: 1 })
-    const [modelScale, setModelScale] = useState(0.8)
     const [showBillboards, setShowBillboards] = useState(true)
 
     const MAX_RETRY_ATTEMPTS = 3
 
-
-
+    // Update scale key when modelScale changes to force re-render
+    useEffect(() => {
+        console.log("Scale changed to:", modelScale)
+        setScaleKey((prev) => prev + 1)
+    }, [modelScale])
 
     const getBillboardPositions = (count: number): BillboardPosition[] => {
         const positions: BillboardPosition[] = []
@@ -102,48 +116,34 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
             default:
                 positions.push({ x: baseDistance, y: yOffset, z: 0 })
         }
-
         return positions
     }
+
     const getBillboardRotation = (count: number): BillboardPosition[] => {
         const Rotation: BillboardPosition[] = []
-
         switch (count) {
             case 1:
-                Rotation.push({ x: 0, y: 0, z: 0 })
+                Rotation.push({ x: 0, y: -25, z: 0 })
+                break
             case 2:
                 Rotation.push({ x: 0, y: 25, z: 0 })
                 Rotation.push({ x: 0, y: -25, z: 0 })
+                break
             case 3:
                 Rotation.push({ x: 0, y: 25, z: 0 })
                 Rotation.push({ x: 0, y: -25, z: 0 })
                 Rotation.push({ x: 0, y: 0, z: 0 })
+                break
             case 4:
                 Rotation.push({ x: 0, y: 25, z: 0 })
                 Rotation.push({ x: 0, y: 25, z: 0 })
                 Rotation.push({ x: 0, y: -25, z: 0 })
                 Rotation.push({ x: 0, y: -25, z: 0 })
+                break
             default:
                 Rotation.push({ x: 0, y: 0, z: 0 })
-                return Rotation
         }
-    }
-    const formatTextForDisplay = (text: string, maxLineLength = 60) => {
-        const words = text.split(" ")
-        const lines = []
-        let currentLine = ""
-
-        words.forEach((word) => {
-            if ((currentLine + word).length <= maxLineLength) {
-                currentLine += (currentLine ? " " : "") + word
-            } else {
-                if (currentLine) lines.push(currentLine)
-                currentLine = word
-            }
-        })
-
-        if (currentLine) lines.push(currentLine)
-        return lines.join("\n")
+        return Rotation
     }
 
     // Progress bar animation
@@ -202,7 +202,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
         }
     }
 
-
     const handleModelHover = () => {
         if (modelLoaded && !showInfo) {
             setShowInfo(true)
@@ -233,15 +232,18 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
         return [0, yOffset, -4]
     }
 
-    const getModelType = (url: string) => {
+    const getModelType = (url: string): "GLB" | "OBJ" | "VRX" | "GLTF" => {
         const extension = url.split(".").pop()?.toLowerCase()
         switch (extension) {
             case "obj":
                 return "OBJ"
+            case "gltf":
+                return "GLTF"
+            case "vrx":
+                return "VRX"
             case "glb":
-                return "GLB"
             default:
-                return "OBJ"
+                return "GLB"
         }
     }
 
@@ -256,6 +258,7 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
     const sortedDescriptions = qrItemData.descriptions.sort((a, b) => a.order - b.order)
     const billboardPositions = getBillboardPositions(sortedDescriptions.length)
     const billboardRotations = getBillboardRotation(sortedDescriptions.length)
+
     return (
         <ViroARScene onTrackingUpdated={handleARInitialized}>
             {/* Enhanced Lighting */}
@@ -293,7 +296,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                     {!modelLoaded && !modelError && qrItemData.modelUrl && (
                         <ViroNode position={[0, 0, 0]}>
                             <ViroQuad position={[0, 0, -0.01]} scale={[4, 3, 1]} materials={["loadingBg"]} />
-
                             <ViroNode position={[0, 0.6, 0]}>
                                 <ViroSphere
                                     radius={0.1}
@@ -319,7 +321,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                     animation={{ name: "orbitSpin", run: true, loop: true }}
                                 />
                             </ViroNode>
-
                             <ViroText
                                 text={isRetrying ? `Retrying... (${retryCount}/${MAX_RETRY_ATTEMPTS})` : "Loading 3D Model"}
                                 position={[0, 0, 0]}
@@ -332,7 +333,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                 }}
                                 materials={["textGlow"]}
                             />
-
                             <ViroNode position={[0, -0.5, 0.01]}>
                                 <ViroQuad position={[0, 0, 0]} scale={[3, 0.1, 1]} materials={["progressBg"]} />
                                 <ViroQuad
@@ -352,7 +352,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                     materials={["textGlow"]}
                                 />
                             </ViroNode>
-
                             {isRetrying && (
                                 <ViroText
                                     text="Connection issue detected, retrying..."
@@ -370,11 +369,11 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                         </ViroNode>
                     )}
 
-                    {/* 3D Model */}
+                    {/* 3D Model with Enhanced Scaling */}
                     {qrItemData.modelUrl && !modelError && (
                         <ViroNode position={[0, 0, 0]}>
                             <Viro3DObject
-                                key={modelKey}
+                                key={`${modelKey}-${scaleKey}`} // Force re-render when scale changes
                                 source={{ uri: qrItemData.modelUrl }}
                                 type={getModelType(qrItemData.modelUrl)}
                                 position={[0, 0, 0]}
@@ -386,7 +385,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                 onHover={handleModelHover}
                                 opacity={modelLoaded ? 1.0 : 0.0}
                             />
-
                             {modelLoaded && !showInfo && (
                                 <ViroNode position={[0, modelBounds.height * modelScale + 0.6, 0]}>
                                     <ViroSphere
@@ -411,13 +409,31 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                         </ViroNode>
                     )}
 
+                    {/* Debug Scale Display */}
+                    {modelLoaded && (
+                        <ViroNode position={[0, -2, 0]}>
+                            <ViroText
+                                text={`Current Scale: ${modelScale.toFixed(1)}x`}
+                                position={[0, 0, 0]}
+                                style={{
+                                    fontSize: 16,
+                                    color: "#FFB74D",
+                                    textAlign: "center",
+                                    fontWeight: "400",
+                                }}
+                                materials={["textGlow"]}
+                            />
+                        </ViroNode>
+                    )}
+
                     {/* Main Title and Creator Billboard (Above Model) */}
                     {showBillboards && modelLoaded && (
                         <ViroNode
                             scale={[0.3, 0.3, 0.3]}
-                            position={getMainBillboardPosition()} animation={{ name: "slideIn", run: showBillboards }}>
+                            position={getMainBillboardPosition()}
+                            animation={{ name: "slideIn", run: showBillboards }}
+                        >
                             <ViroQuad position={[0, 0, -0.01]} scale={[5, 1.5, 1]} materials={["mainBillboardBg"]} />
-
                             {/* Main Title */}
                             <ViroText
                                 text={qrItemData.title}
@@ -431,7 +447,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                 }}
                                 materials={["titleGlow"]}
                             />
-
                             {/* Creator */}
                             <ViroText
                                 text={`Created by: ${qrItemData.creator.name}`}
@@ -445,7 +460,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                 }}
                                 materials={["textGlow"]}
                             />
-
                             {/* Date Range */}
                             <ViroText
                                 text={`${formatDate(qrItemData.startDate)} - ${formatDate(qrItemData.endDate)}`}
@@ -459,7 +473,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                 }}
                                 materials={["textGlow"]}
                             />
-
                             {/* Main Billboard border */}
                             <ViroQuad position={[-2.49, 0, 0.005]} scale={[0.02, 1.5, 1]} materials={["holoBorder"]} />
                             <ViroQuad position={[2.49, 0, 0.005]} scale={[0.02, 1.5, 1]} materials={["holoBorder"]} />
@@ -476,18 +489,16 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                             const rotation = billboardRotations[index]
                             if (!position) return null
 
-
                             return (
                                 <ViroNode
                                     scale={[0.1, 0.1, 0.1]}
-                                    rotation={[rotation.x, rotation.y, rotation.z]} // Face the camera
+                                    rotation={[rotation.x, rotation.y, rotation.z]}
                                     key={description.id}
                                     position={[position.x, position.y, position.z]}
                                     animation={{ name: "slideIn", run: showInfo }}
                                 >
                                     {/* Large Billboard Background */}
                                     <ViroQuad position={[0, 0, -0.01]} scale={[4.5, 6, 1]} materials={["descriptionBillboardBg"]} />
-
                                     {/* Scan Lines Effect */}
                                     <ViroQuad
                                         position={[0, 0, 0]}
@@ -495,7 +506,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                         materials={["scanLine"]}
                                         animation={{ name: "scanLineMove", run: true, loop: true }}
                                     />
-
                                     {/* Description Header */}
                                     <ViroNode position={[0, 2.5, 0.01]}>
                                         <ViroText
@@ -512,10 +522,8 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                         />
                                         <ViroQuad position={[0, -0.2, 0]} scale={[3, 0.03, 1]} materials={["accentLine"]} />
                                     </ViroNode>
-
                                     {/* Description Content */}
                                     <ViroNode position={[0, 0.5, 0.01]}>
-
                                         <ViroText
                                             text={description.content}
                                             position={[0, -3.5, 0]}
@@ -524,16 +532,10 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                             style={{
                                                 fontSize: 20,
                                                 color: "#E0E0E0",
-
                                             }}
                                             materials={["textGlow"]}
                                         />
-
                                     </ViroNode>
-
-                                    {/* Pagination Controls */}
-
-
                                     {/* Order Indicator */}
                                     <ViroNode position={[0, -2.8, 0.01]}>
                                         <ViroText
@@ -548,13 +550,11 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                             materials={["textGlow"]}
                                         />
                                     </ViroNode>
-
                                     {/* Billboard Borders */}
                                     <ViroQuad position={[-2.24, 0, 0.005]} scale={[0.02, 5.9, 1]} materials={["holoBorder"]} />
                                     <ViroQuad position={[2.24, 0, 0.005]} scale={[0.02, 5.9, 1]} materials={["holoBorder"]} />
                                     <ViroQuad position={[0, 2.99, 0.005]} scale={[4.5, 0.02, 1]} materials={["holoBorder"]} />
                                     <ViroQuad position={[0, -2.99, 0.005]} scale={[4.5, 0.02, 1]} materials={["holoBorder"]} />
-
                                     {/* Corner Accents */}
                                     <ViroQuad position={[-2.1, 2.8, 0.01]} scale={[0.3, 0.02, 1]} materials={["cornerAccent"]} />
                                     <ViroQuad position={[-2.2, 2.7, 0.01]} scale={[0.02, 0.3, 1]} materials={["cornerAccent"]} />
@@ -568,14 +568,12 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                     {modelError && (
                         <ViroNode position={[0, 0, 0]}>
                             <ViroQuad position={[0, 0, -0.01]} scale={[4, 3, 1]} materials={["errorBg"]} />
-
                             <ViroSphere
                                 radius={0.2}
                                 position={[0, 0.7, 0]}
                                 materials={["errorSphere"]}
                                 animation={{ name: "errorPulse", run: true, loop: true }}
                             />
-
                             <ViroText
                                 text="Failed to Load Model"
                                 position={[0, 0.2, 0]}
@@ -587,7 +585,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                 }}
                                 materials={["textGlow"]}
                             />
-
                             <ViroText
                                 text={`Tried ${MAX_RETRY_ATTEMPTS} times. Check your connection.`}
                                 position={[0, -0.2, 0]}
@@ -599,8 +596,6 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                                 }}
                                 materials={["textGlow"]}
                             />
-
-
                         </ViroNode>
                     )}
 
@@ -609,7 +604,7 @@ const EnhancedMultiDescriptionAR = ({ qrId, qrItemData, onModelLoadStart, onMode
                         <ViroNode position={[0, 0, 0]}>
                             <ViroBox
                                 position={[0, 0, 0]}
-                                scale={[1, 1, 1]}
+                                scale={[modelScale, modelScale, modelScale]} // Apply scale to fallback too
                                 materials={["fallbackCube"]}
                                 animation={{ name: "staticFloat", run: true, loop: true }}
                                 onHover={handleModelHover}

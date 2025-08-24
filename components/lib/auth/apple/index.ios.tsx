@@ -15,7 +15,6 @@ import { getPublicKeyAPISchema, WalletType } from "../types";
 import { toast } from "@backpackapp-io/react-native-toast";
 import { USER_ACCOUNT_URL } from "@/components/utils/Common";
 import axios from "axios";
-import { submitActiveAcountXdr } from "@/components/utils/submitActiveAccountXDR";
 import { getUser } from "@/app/api/routes/get-user";
 import { Text } from "react-native-paper";
 import { Color } from "@/components/utils/all-colors";
@@ -64,11 +63,7 @@ export function AppleLogin() {
           },
 
         );
-        console.log(response.data)
-        const { publicKey, extra } = await getPublicKeyAPISchema.parseAsync(
-          response.data,
-        );
-        await submitActiveAcountXdr(extra);
+
       }
     } catch (e) {
       console.log("e", e);

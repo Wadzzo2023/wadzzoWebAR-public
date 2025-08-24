@@ -1,8 +1,7 @@
 "use client"
-
 import { ViroARSceneNavigator } from "@reactvision/react-viro"
 import { useRouter, useLocalSearchParams } from "expo-router"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { Dimensions, StyleSheet, View, Text, TouchableOpacity, StatusBar } from "react-native"
 import { ActivityIndicator, Appbar } from "react-native-paper"
 import { Color } from "@/components/utils/all-colors"
@@ -20,11 +19,11 @@ export interface QRItemData {
         name: string
     }
     descriptions: {
-        id: string;
-        title: string;
-        content: string;
-        order: number;
-        qrItemId: string;
+        id: string
+        title: string
+        content: string
+        order: number
+        qrItemId: string
     }[]
     endDate: string
     externalLink: string | null
@@ -44,15 +43,67 @@ export interface QRItemResponse {
 const ARViewScreen = () => {
     const router = useRouter()
     const params = useLocalSearchParams()
-    const id = (params.id as string)
+    const id = params.id as string
     const [trackingState, setTrackingState] = useState("Initializing")
     const [loading, setLoading] = useState(true)
     const [arReady, setArReady] = useState(false)
-
     const [qrItemData, setQrItemData] = useState<QRItemData | null>(null)
     const [dataLoading, setDataLoading] = useState(true)
-    const [modelLoading, setModelLoading] = useState(false)
+    const [modelLoading, setModelLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [scale, setScale] = useState(1)
+    const [sceneKey, setSceneKey] = useState(0) // Add scene key for forcing re-render
+
+    // Zoom constants
+    const MIN_SCALE = 0.5
+    const MAX_SCALE = 3.0
+    const SCALE_STEP = 0.5
+
+    // Enhanced zoom functions with proper constraints and debugging
+    const handleZoomIn = useCallback(() => {
+        console.log("🔍 Zoom In button pressed - Current scale:", scale)
+        setScale((prevScale) => {
+            const newScale = prevScale + SCALE_STEP
+            const clampedScale = Math.min(newScale, MAX_SCALE)
+            console.log("🔍 Zoom In - Previous:", prevScale, "New:", clampedScale)
+            return clampedScale
+        })
+    }, [scale])
+
+    const handleZoomOut = useCallback(() => {
+        console.log("🔍 Zoom Out button pressed - Current scale:", scale)
+        setScale((prevScale) => {
+            const newScale = prevScale - SCALE_STEP
+            const clampedScale = Math.max(newScale, MIN_SCALE)
+            console.log("🔍 Zoom Out - Previous:", prevScale, "New:", clampedScale)
+            return clampedScale
+        })
+    }, [scale])
+
+    // Force scene re-render when scale changes
+    useEffect(() => {
+        console.log("📏 Scale state changed in ARViewScreen:", scale)
+        setSceneKey((prev) => prev + 1) // Force ViroARSceneNavigator to re-render
+    }, [scale])
+
+    // Memoize the scene configuration to ensure it updates with scale changes
+    const sceneConfig = useMemo(() => {
+        console.log("🎬 Creating AR Scene config with scale:", scale)
+        return {
+            scene: () => {
+                console.log("🎭 Scene function called with scale:", scale)
+                return (
+                    <QRscreenAR
+                        qrId={id}
+                        qrItemData={qrItemData!}
+                        onModelLoadStart={() => setModelLoading(true)}
+                        onModelLoadEnd={() => setModelLoading(false)}
+                        modelScale={scale}
+                    />
+                )
+            },
+        }
+    }, [id, qrItemData, scale]) // Dependencies include scale
 
     // Add delay before initializing AR to ensure camera is released
     useEffect(() => {
@@ -60,7 +111,6 @@ const ARViewScreen = () => {
             setArReady(true)
             setLoading(false)
         }, 500)
-
         return () => clearTimeout(timer)
     }, [])
 
@@ -118,7 +168,6 @@ const ARViewScreen = () => {
                         </View>
                         <View style={styles.headerSpacer} />
                     </View>
-
                     <View style={styles.errorContainer}>
                         <View style={styles.errorIconContainer}>
                             <View style={styles.iconBackground}>
@@ -147,7 +196,6 @@ const ARViewScreen = () => {
                     <Appbar.BackAction disabled={loading} color="white" onPress={handleBackPress} />
                     <Appbar.Content title="AR Scanner" titleStyle={styles.appbarTitle} />
                 </Appbar.Header>
-
                 <LinearGradient colors={["#000000", "#1a1a2e", "#16213e"]} style={styles.loadingGradient}>
                     <View style={styles.loadingContainer}>
                         <View style={styles.loadingSpinnerContainer}>
@@ -155,14 +203,12 @@ const ARViewScreen = () => {
                                 <ActivityIndicator size="large" color={Color.wadzzo} />
                             </View>
                         </View>
-
                         <View style={styles.loadingTextContainer}>
                             <Text style={styles.loadingTitle}>{dataLoading ? "Preparing AR Experience" : "Initializing Camera"}</Text>
                             <Text style={styles.loadingSubtitle}>
                                 {dataLoading ? "Fetching 3D content and details" : "Setting up augmented reality"}
                             </Text>
                         </View>
-
                         <View style={styles.loadingProgress}>
                             <View style={styles.progressBarContainer}>
                                 <View style={styles.progressBar}>
@@ -185,7 +231,6 @@ const ARViewScreen = () => {
                     <Appbar.BackAction disabled={loading} color="white" onPress={handleBackPress} />
                     <Appbar.Content title="AR Scanner" titleStyle={styles.appbarTitle} />
                 </Appbar.Header>
-
                 <LinearGradient colors={["#000000", "#1a1a2e", "#16213e"]} style={styles.errorGradient}>
                     <View style={styles.errorContainer}>
                         <View style={styles.errorIconContainer}>
@@ -207,29 +252,22 @@ const ARViewScreen = () => {
         )
     }
 
+    console.log("🎯 Rendering AR with scale:", scale, "sceneKey:", sceneKey)
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={Color.wadzzo} />
-
             {/* Modern Header */}
             <Appbar.Header style={styles.appbar}>
                 <Appbar.BackAction disabled={loading} color="white" onPress={handleBackPress} />
                 <Appbar.Content title="QR Scanner" titleStyle={styles.appbarTitle} />
             </Appbar.Header>
 
-            {/* AR View */}
+            {/* AR View with key to force re-render */}
             <ViroARSceneNavigator
+                key={sceneKey} // Force re-render when scale changes
                 autofocus={true}
-                initialScene={{
-                    scene: () => (
-                        <QRscreenAR
-                            qrId={id}
-                            qrItemData={qrItemData}
-                            onModelLoadStart={() => setModelLoading(true)}
-                            onModelLoadEnd={() => setModelLoading(false)}
-                        />
-                    ),
-                }}
+                initialScene={sceneConfig}
                 style={styles.arNavigator}
                 worldAlignment="Gravity"
                 videoQuality="High"
@@ -256,19 +294,52 @@ const ARViewScreen = () => {
                         </View>
                     </View>
 
-                    <View style={styles.instructionSection}>
-                        <Text style={styles.instructionTitle}>{modelLoading ? "Please Wait" : "Ready to Explore"}</Text>
-                        <Text style={styles.instructionText}>
-                            {modelLoading
-                                ? "Your 3D model is being prepared for the best AR experience"
-                                : "Tap the 3D model to view detailed information and interact with the content"}
-                        </Text>
-                    </View>
+
 
                     {modelLoading && (
                         <View style={styles.loadingIndicator}>
                             <ActivityIndicator size="small" color={Color.wadzzo} />
                             <Text style={styles.loadingIndicatorText}>Processing 3D assets...</Text>
+                        </View>
+                    )}
+
+                    {!modelLoading && (
+                        <View style={styles.zoomControlsContainer}>
+                            {/* Scale Display */}
+                            <View style={styles.scaleDisplay}>
+                                <Text style={styles.scaleText}>Scale: {scale.toFixed(1)}x</Text>
+                            </View>
+
+                            {/* Zoom Controls */}
+                            <View style={styles.zoomButtonsContainer}>
+                                <TouchableOpacity
+                                    style={[styles.zoomButton, scale >= MAX_SCALE && styles.disabledButton]}
+                                    onPress={handleZoomIn}
+                                    disabled={scale >= MAX_SCALE}
+                                >
+                                    <LinearGradient
+                                        colors={scale >= MAX_SCALE ? ["#666", "#444"] : [Color.wadzzo, "#357ABD"]}
+                                        style={styles.zoomButtonGradient}
+                                    >
+                                        <MaterialCommunityIcons name="plus" size={24} color={scale >= MAX_SCALE ? "#999" : "#ffffff"} />
+                                    </LinearGradient>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={[styles.zoomButton, scale <= MIN_SCALE && styles.disabledButton]}
+                                    onPress={handleZoomOut}
+                                    disabled={scale <= MIN_SCALE}
+                                >
+                                    <LinearGradient
+                                        colors={scale <= MIN_SCALE ? ["#666", "#444"] : [Color.wadzzo, "#357ABD"]}
+                                        style={styles.zoomButtonGradient}
+                                    >
+                                        <MaterialCommunityIcons name="minus" size={24} color={scale <= MIN_SCALE ? "#999" : "#ffffff"} />
+                                    </LinearGradient>
+                                </TouchableOpacity>
+                            </View>
+
+
                         </View>
                     )}
                 </LinearGradient>
@@ -531,18 +602,82 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         marginTop: 20,
-        backgroundColor: `rgba(${Number.parseInt(Color.wadzzo.slice(1, 3), 16)}, ${Number.parseInt(Color.wadzzo.slice(3, 5), 16)}, ${Number.parseInt(Color.wadzzo.slice(5, 7), 16)}, 0.15)`,
+        backgroundColor: `rgba(${Number.parseInt(Color.wadzzo.slice(1, 3), 16)}, ${Number.parseInt(
+            Color.wadzzo.slice(3, 5),
+            16,
+        )}, ${Number.parseInt(Color.wadzzo.slice(5, 7), 16)}, 0.15)`,
         paddingHorizontal: 24,
         paddingVertical: 12,
         borderRadius: 25,
         borderWidth: 1,
-        borderColor: `rgba(${Number.parseInt(Color.wadzzo.slice(1, 3), 16)}, ${Number.parseInt(Color.wadzzo.slice(3, 5), 16)}, ${Number.parseInt(Color.wadzzo.slice(5, 7), 16)}, 0.3)`,
+        borderColor: `rgba(${Number.parseInt(Color.wadzzo.slice(1, 3), 16)}, ${Number.parseInt(
+            Color.wadzzo.slice(3, 5),
+            16,
+        )}, ${Number.parseInt(Color.wadzzo.slice(5, 7), 16)}, 0.3)`,
     },
     loadingIndicatorText: {
         color: Color.wadzzo,
         fontSize: 13,
         fontWeight: "500",
         marginLeft: 10,
+    },
+    // New zoom control styles
+    zoomControlsContainer: {
+        marginTop: 20,
+        alignItems: "center",
+    },
+    scaleDisplay: {
+        backgroundColor: "rgba(255, 255, 255, 0.1)",
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.2)",
+    },
+    scaleText: {
+        color: "#ffffff",
+        fontSize: 14,
+        fontWeight: "600",
+        textAlign: "center",
+    },
+    zoomButtonsContainer: {
+        flexDirection: "row",
+        gap: 16,
+        marginBottom: 12,
+    },
+    zoomButton: {
+        borderRadius: 25,
+        overflow: "hidden",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    zoomButtonGradient: {
+        width: 50,
+        height: 50,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    disabledButton: {
+        opacity: 0.5,
+    },
+    // Debug styles
+    debugContainer: {
+        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: "rgba(255, 255, 255, 0.1)",
+    },
+    debugText: {
+        color: "#FFB74D",
+        fontSize: 12,
+        fontWeight: "400",
+        textAlign: "center",
     },
 })
 

@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from "react-native"
-import { Camera, CameraView } from "expo-camera"
+import { Camera, CameraType } from "expo-camera"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { Color } from "@/components/utils/all-colors"
 import { useARSelection } from "@/components/hooks/use-ARSelection"
@@ -13,7 +13,7 @@ const QRScanner = () => {
     const [scanned, setScanned] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
     const [cameraActive, setCameraActive] = useState(true)
-    const { data: ARSelectionData, setVisible, setSelectAR, setSelectQR, setTutorialMode, closeModal } = useARSelection()
+    const { data: ARSelectionData, setVisible, } = useARSelection()
     const router = useRouter()
 
     useEffect(() => {
@@ -36,10 +36,9 @@ const QRScanner = () => {
     const handleQRClose = () => {
         console.log("QR Scanner closed")
         setCameraActive(false) // Deactivate camera first
-        setSelectAR(false)
-        setSelectQR(false)
+
         setVisible(false)
-        setTutorialMode(false)
+
 
         // Add small delay to ensure camera is released
         setTimeout(() => {
@@ -87,8 +86,7 @@ const QRScanner = () => {
             console.log("QR Code scanned with ID:", id)
 
             // Update AR selection state
-            setSelectQR(false)
-            setSelectAR(true)
+
 
             // Add delay to ensure camera is properly released before AR starts
             setTimeout(() => {
@@ -145,11 +143,10 @@ const QRScanner = () => {
     return (
         <View style={styles.containerMaximized}>
             {cameraActive && (
-                <CameraView
+                <Camera
+                    type={CameraType.back}
                     style={StyleSheet.absoluteFillObject}
-                    facing={"back"}
-                    barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-                    onBarcodeScanned={cameraActive ? handleQRCodeScanned : undefined}
+                    onBarCodeScanned={cameraActive ? handleQRCodeScanned : undefined}
                 >
                     <View style={styles.header}>
                         <TouchableOpacity style={styles.closeButtonCamera} onPress={handleQRClose}>
@@ -185,7 +182,7 @@ const QRScanner = () => {
                             </View>
                         )}
                     </View>
-                </CameraView>
+                </Camera>
             )}
         </View>
     )

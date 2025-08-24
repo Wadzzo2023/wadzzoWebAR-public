@@ -105,6 +105,4 @@ export const useLocationService = create<LocationServiceState>((set, get) => ({
     get().calculateNearbyData();
   },
 
-
-
 }));

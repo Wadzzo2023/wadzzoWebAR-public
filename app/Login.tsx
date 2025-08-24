@@ -25,11 +25,9 @@ import { AppleLogin } from "../components/lib/auth/apple/index.ios";
 import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
 import { set, z } from "zod";
 import axios from "axios";
-import { submitActiveAcountXdr } from "@/components/utils/submitActiveAccountXDR";
 import { getUser } from "./api/routes/get-user";
 import base64 from "react-native-base64";
-import { submitSignedXDRToServer4User } from "@/components/utils/submitSignedXDRtoServer4User";
-import { AuthErrorCodes } from "firebase/auth";
+
 import { handleFireBaseAuthError } from "@/components/firebase-error";
 const webPlatform = Platform.OS === "web";
 export const extraSchema = z.object({
@@ -144,14 +142,7 @@ const LoginScreen = () => {
             success: "Received public key",
             error: "Unable to get public key",
           },
-
         );
-        console.log(res.data);
-        const { publicKey, extra } = await getPublicKeyAPISchema.parseAsync(
-          res.data,
-        );
-        await submitActiveAcountXdr(extra);
-
 
         setGoogleLoading(false);
       }
@@ -234,24 +225,6 @@ const LoginScreen = () => {
 
         );
         console.log(res.data);
-        const xdr = res.data.xdr as string;
-        if (xdr) {
-          // console.log(xdr, "xdr");
-          const res = await toast.promise(
-            submitSignedXDRToServer4User(xdr),
-            {
-              loading: "Activating account...",
-              success: "Request completed successfully",
-              error: "While activating account error happened, Try again later",
-            },
-          );
-
-          if (res) {
-            toast.success("Account activated");
-          } else {
-            toast.error("Account activation failed");
-          }
-        }
         setLoading(false);
       }
     },

@@ -55,7 +55,7 @@ Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
 const HomeScreen = () => {
   const [locationPermission, setLocationPermission] = useState(false);
-  const { data: ARSelectionData, setVisible, setSelectAR, setSelectQR, setTutorialMode, closeModal } = useARSelection()
+  const { data: ARSelectionData, setVisible } = useARSelection()
   const router = useRouter();
   const { setData: setExtraInfo } = useExtraInfo();
   const { setData: setDirectionData } = useDirectionStore();
@@ -93,7 +93,6 @@ const HomeScreen = () => {
   const [handleRecenterPress, setHandleRecenterPress] = useState(false);
   const [countCurrentStep, setCountCurrentStep] = useState(0);
   const [touchOnMap, setTouchOnMap] = useState(false);
-  const [hoveredCoin, setHoveredCoin] = useState<ConsumedLocation | null>(null)
   const lastHeadingUpdate = useRef<number>(Date.now());
   const MIN_HEADING_UPDATE_INTERVAL = 3000; // Minimum time between heading updates (1 second)
   const MIN_HEADING_CHANGE = 5; // Minimum heading change in degrees to trigger update
@@ -130,36 +129,12 @@ const HomeScreen = () => {
       setShowWalkthrough(false);
     }
   };
-  const handleQRScanned = (data: string) => {
-    setSelectQR(false)
-    setSelectAR(true)
-    setTutorialMode(true)
 
-  }
-  const handleShowCollectButton = (pin: ConsumedLocation | null) => {
-    setHoveredCoin(pin)
-  }
-  const handleARPress = () => {
+  const handleARPress = async () => {
+    await response.refetch();
     setVisible(true)
   };
-  const handleARClose = () => {
-    setSelectAR(false)
-    setSelectQR(false)
-    setVisible(false)
-    setTutorialMode(false)
 
-    setHoveredCoin(null)
-
-  }
-  const handleQRClose = () => {
-    setSelectAR(false)
-    setSelectQR(false)
-    setVisible(false)
-    setTutorialMode(false)
-
-    setHoveredCoin(null)
-
-  }
   const collectPinsSequentially = async (pins: ConsumedLocation) => {
 
 
@@ -181,8 +156,8 @@ const HomeScreen = () => {
 
     if (res.ok) {
       setShowAnimation(true);        // start animation
-      setTimeout(() => {
-        response.refetch();
+      setTimeout(async () => {
+        await response.refetch();
       }, 4000);
     }
 
@@ -356,6 +331,10 @@ const HomeScreen = () => {
     useCallback(() => {
       console.log("Refetching data");
       response.refetch();
+
+      return () => {
+        // Optional cleanup function
+      };
     }, [])
   );
 
