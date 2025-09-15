@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, Text } from "react-native";
+import { View, StyleSheet, ScrollView, Text, Linking } from "react-native";
 import { useModal } from "../hooks/useModal";
 import {
   Portal,
@@ -24,6 +24,7 @@ interface LocationData {
   lng: number;
   brand_name: string;
   image_url: string;
+  url: string;
   collection_limit_remaining: number;
   brand_image_url: string;
 }
@@ -83,7 +84,7 @@ const LocationInformationModal = () => {
                   size={24}
                   color="#666"
                 />
-                <Paragraph>
+                <Paragraph >
                   Latitude: {locationData.lat.toFixed(6)}, Longitude:{" "}
                   {locationData.lng.toFixed(6)}
                 </Paragraph>
@@ -94,7 +95,12 @@ const LocationInformationModal = () => {
                   size={24}
                   color="#666"
                 />
-                <Paragraph>ID: {locationData.id}</Paragraph>
+                <Paragraph style={styles.urlText} onPress={() =>
+                  Linking.openURL(
+                    locationData.url
+                  )
+                }>{locationData.url.length > 40 ? `${locationData.url.substring(0, 40)}...` : locationData.url}
+                </Paragraph>
               </View>
               <View style={styles.infoContainer}>
                 <MaterialCommunityIcons
@@ -193,6 +199,13 @@ const styles = StyleSheet.create({
   description: {
     flex: 1,
     marginLeft: 10,
+  },
+  urlText: {
+    flex: 1,
+    marginLeft: 4,
+    color: "#007AFF", // iOS blue link color
+    textDecorationLine: "underline",
+    fontSize: 14,
   },
 });
 
