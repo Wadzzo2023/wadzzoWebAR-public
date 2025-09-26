@@ -80,17 +80,6 @@ const LocationInformationModal = () => {
               </View>
               <View style={styles.infoContainer}>
                 <MaterialCommunityIcons
-                  name="map-marker"
-                  size={24}
-                  color="#666"
-                />
-                <Paragraph >
-                  Latitude: {locationData.lat.toFixed(6)}, Longitude:{" "}
-                  {locationData.lng.toFixed(6)}
-                </Paragraph>
-              </View>
-              <View style={styles.infoContainer}>
-                <MaterialCommunityIcons
                   name="tag-multiple"
                   size={24}
                   color="#666"
