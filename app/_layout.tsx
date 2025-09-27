@@ -1,49 +1,37 @@
-import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
-import "react-native-reanimated";
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { DarkTheme, DefaultTheme, ThemeProvider as NavigationThemeProvider } from '@react-navigation/native';
+import { useFonts } from 'expo-font';
+import { Stack } from 'expo-router';
+import { ThemeProvider } from '../components/theme/ThemeProvider';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
+import 'react-native-reanimated';
+import { PaperProvider } from 'react-native-paper';
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import merge from "deepmerge";
-import { Dimensions, useColorScheme } from "react-native";
-import {
-  MD3DarkTheme,
-  MD3LightTheme,
-  PaperProvider,
-  adaptNavigationTheme,
-} from "react-native-paper";
+export {
+  // Catch any errors thrown by the Layout component.
+  ErrorBoundary,
+} from 'expo-router';
 
-import {
-  DarkTheme as NavigationDarkTheme,
-  DefaultTheme as NavigationDefaultTheme,
-} from "@react-navigation/native";
-import { Color } from "../components/utils/all-colors";
-import { AuthProvider } from "../components/lib/auth/Provider";
-import ModalProvider from "../components/provider/modal-provider";
-import { toast, Toasts } from '@backpackapp-io/react-native-toast';
-import { GestureHandlerRootView } from "react-native-gesture-handler";
+export const unstable_settings = {
+  // Ensure that reloading on `/modal` keeps a back button present.
+  initialRouteName: '(tabs)',
+};
 
-const customDarkTheme = { ...MD3DarkTheme, colors: Color.dark };
-const customLightTheme = { ...MD3LightTheme, colors: Color.light };
-const MARGIN = 8;
-const WIDTH = Dimensions.get("window").width - 2 * MARGIN;
-const { LightTheme, DarkTheme } = adaptNavigationTheme({
-  reactNavigationLight: NavigationDefaultTheme,
-  reactNavigationDark: NavigationDarkTheme,
-});
-const CombinedLightTheme = merge(LightTheme, customLightTheme);
-
+// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
-const queryClient = new QueryClient();
 
 export default function RootLayout() {
-  let colorScheme = useColorScheme();
-
-  const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+  const [loaded, error] = useFonts({
+    SpaceMono: require('../assets/fonts/WorkSans-Regular.ttf'),
+    ...FontAwesome.font,
   });
+
+  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
+  useEffect(() => {
+    if (error) throw error;
+  }, [error]);
 
   useEffect(() => {
     if (loaded) {
@@ -55,34 +43,17 @@ export default function RootLayout() {
     return null;
   }
 
+  return <RootLayoutNav />;
+}
+
+function RootLayoutNav() {
   return (
-
-    <QueryClientProvider client={queryClient}>
-      <GestureHandlerRootView style={
-        { flex: 1, }
-      }>
-
-        <AuthProvider>
-          <PaperProvider theme={CombinedLightTheme}>
-
-            <ModalProvider />
-
-            <Stack
-              initialRouteName="index"
-              screenOptions={{ headerShown: false }}
-            >
-              <Stack.Screen name="index" />
-              <Stack.Screen name="Login" />
-              <Stack.Screen name="Signup" />
-              <Stack.Screen name="(tabs)" />
-            </Stack>
-
-          </PaperProvider>
-          <Toasts />
-
-        </AuthProvider>
-      </GestureHandlerRootView>
-    </QueryClientProvider>
-
+    <PaperProvider>
+      <ThemeProvider>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+        </Stack>
+      </ThemeProvider>
+    </PaperProvider>
   );
 }
