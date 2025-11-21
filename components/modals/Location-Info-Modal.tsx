@@ -15,6 +15,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Color } from "../utils/all-colors";
 import { router } from "expo-router";
 import { DirectionDataType, useDirectionStore } from "../store/direction-store";
+import { LocationAddressDisplay } from "../LocationAddressDisplay";
 
 interface LocationData {
   id: string;
@@ -90,6 +91,31 @@ const LocationInformationModal = () => {
                   )
                 }>{locationData.url.length > 40 ? `${locationData.url.substring(0, 40)}...` : locationData.url}
                 </Paragraph>
+
+              </View>
+              <View style={styles.infoContainer}>
+                <MaterialCommunityIcons
+                  name="pin"
+                  size={24}
+                  color="#666"
+                />
+                <Paragraph style={styles.description}>
+                  {locationData.lat.toFixed(3)} (Lat), {locationData.lng.toFixed(3)} (Lng)
+                </Paragraph>
+
+              </View>
+              <View style={styles.infoContainer}>
+                <MaterialCommunityIcons
+                  name="map"
+                  size={24}
+                  color="#666"
+                />
+                <LocationAddressDisplay
+                  latitude={locationData.lat}
+                  longitude={locationData.lng}
+                />
+
+
               </View>
               <View style={styles.infoContainer}>
                 <MaterialCommunityIcons

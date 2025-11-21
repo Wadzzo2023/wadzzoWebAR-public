@@ -39,6 +39,8 @@ import { ConsumedLocation } from "@/components/types/CollectionTypes";
 import { Color } from "@/components/utils/all-colors";
 import { Walkthrough } from "@/components/walkthrough/WalkthroughProvider";
 import { useLocationService } from "@/components/hooks/useLocationService";
+import { useGeolocation } from "@/components/hooks/use-geolocation";
+import { LocationAddressDisplay } from "@/components/LocationAddressDisplay";
 
 type ButtonLayout = {
   x: number;
@@ -57,7 +59,6 @@ export default function MyCollectionScreen() {
   const { onOpen } = useModal();
   const { data: walkthroughData } = useWalkThrough();
   const { user, isAuthenticated } = useAuth();
-
   const { setData } = useCollection();
   const { setSingleAr } = useLocationService();
   const steps = [
@@ -256,6 +257,12 @@ export default function MyCollectionScreen() {
         <Paragraph style={styles.coordinates}>
           Lat: {item.lat.toFixed(4)}, Lng: {item.lng.toFixed(4)}
         </Paragraph>
+
+        <LocationAddressDisplay
+          latitude={item.lat}
+          longitude={item.lng}
+        />
+
       </Card.Content>
       <Card.Actions style={styles.actions}>
         <View style={styles.leftButtons}>

@@ -26,6 +26,7 @@ import { BASE_URL } from "@/components/utils/Common";
 import { Color } from "@/components/utils/all-colors";
 import { useLocationService } from "@/components/hooks/useLocationService";
 import { set } from "zod";
+import { LocationAddressDisplay } from "@/components/LocationAddressDisplay";
 Mapbox.setAccessToken(process.env.EXPO_PUBLIC_MAPBOX_API!);
 
 const SingleCollectionItem = () => {
@@ -72,6 +73,12 @@ const SingleCollectionItem = () => {
               <Chip icon="map-marker" style={styles.chip}>
                 {data.collections.lat.toFixed(4)},{" "}
                 {data.collections.lng.toFixed(4)}
+              </Chip>
+              <Chip icon="map-marker" style={styles.chip}>
+                <LocationAddressDisplay
+                  latitude={data.collections.lat}
+                  longitude={data.collections.lng}
+                />
               </Chip>
               <Chip icon="tag" style={styles.chip}>
                 ID: {data.collections.id}
