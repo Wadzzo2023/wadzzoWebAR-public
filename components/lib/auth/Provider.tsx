@@ -17,7 +17,10 @@ export type User = {
   name?: string | null;
   email?: string | null;
   image?: string | null;
+  coverImage?: string | null;
+  pronouns?: string | null;
   id: string;
+  pinsCollected?: number;
   walletType: WalletType;
   emailVerified: boolean;
   bio?: string | null;

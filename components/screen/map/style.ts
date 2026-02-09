@@ -44,7 +44,7 @@ export const mapScreenStyles = StyleSheet.create({
 
   recenterButton: {
     position: "absolute",
-    bottom: Platform.OS === "ios" ? 90 : 80,
+    bottom: Platform.OS === "ios" ? 100 : 80,
     right: 10,
     backgroundColor: Color.white,
     padding: 12,
@@ -73,7 +73,7 @@ export const mapScreenStyles = StyleSheet.create({
 
   AR: {
     position: "absolute",
-    bottom: Platform.OS === "ios" ? 150 : 140,
+    bottom: Platform.OS === "ios" ? 160 : 140,
     right: 10,
     backgroundColor: Color.wadzzo,
     padding: 12,
@@ -82,7 +82,7 @@ export const mapScreenStyles = StyleSheet.create({
   },
   Refresh: {
     position: "absolute",
-    bottom: Platform.OS === "ios" ? 90 : 80,
+    bottom: Platform.OS === "ios" ? 100 : 80,
     right: 60,
     backgroundColor: Color.white,
     padding: 12,

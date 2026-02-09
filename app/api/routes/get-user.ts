@@ -15,7 +15,7 @@ export const getUser = async () => {
     }
 
     const data = (await response.json()) as User;
-
+    console.log("Fetched user:", data);
     return data;
   } catch (error) {
     console.error("Error fetching user:", error);
