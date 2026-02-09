@@ -15,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { Text } from "react-native-paper";
+import { BlurView } from "expo-blur";
 
 import { useQuery } from "@tanstack/react-query";
 
@@ -438,11 +439,8 @@ const HomeScreen = () => {
             onLayout={(event) => onButtonLayout(event, 0)}
           ></View>
         )}
-        {/* Recenter button */}
-        <View
-          style={styles.balance}
-          onLayout={(event) => onButtonLayout(event, 2)}
-        >
+        {/* Balance with Glass Morphism */}
+        <BlurView intensity={60} tint="light" style={styles.balance} onLayout={(event) => onButtonLayout(event, 2)}>
           <Image
             style={{
               height: 20,
@@ -453,7 +451,7 @@ const HomeScreen = () => {
             width={100}
           />
           <Balance />
-        </View>
+        </BlurView>
         {/* <View style={styles.balance}>
           <Text>
             d, {nearestPin?.brand_name.slice(2)} {nearestPinDistance}

@@ -3,7 +3,7 @@
 import { useRouter, Tabs } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { View, Image, Text, StyleSheet, Platform, Pressable } from "react-native";
-import { AntDesign, Entypo, FontAwesome5, Octicons } from "@expo/vector-icons";
+import { AntDesign, Entypo, EvilIcons, FontAwesome5, Octicons } from "@expo/vector-icons";
 import { getUser } from "../api/routes/get-user";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
@@ -16,6 +16,7 @@ import Animated, {
   interpolate,
   Easing,
 } from "react-native-reanimated";
+import { Grayscale } from "react-native-color-matrix-image-filters";
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const activeTabPosition = useSharedValue(0);
@@ -82,7 +83,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const translateX = interpolate(
       isCollapsed.value,
       [0, 1],
-      [0, 400] // Slide out to the right
+      [0, 150] // Slide out to the right
     );
 
     const opacity = interpolate(
@@ -435,7 +436,53 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ focused }) => (
-            <Entypo name="user" size={focused ? 26 : 22} color={focused ? "#4CAF50" : "#666"} />
+            <>
+              {!focused && userImage ? (
+                <Grayscale>
+                  <Image
+                    source={{ uri: userImage }}
+                    style={
+                      {
+                        height: 22,
+                        width: 22,
+                        borderRadius: 11,
+
+                      }
+                    }
+                  />
+                </Grayscale>
+              ) : <Image
+                source={userImage ? { uri: userImage } : require("../../assets/images/avatar-icon.png")}
+                style={
+                  {
+                    height: focused ? 26 : 22,
+                    width: focused ? 26 : 22,
+                    borderRadius: userImage ? 13 : 0,
+                    borderWidth: focused ? 2 : 0,
+                    borderColor: focused ? "#4CAF50" : "transparent",
+                    opacity: focused ? 1 : 0.4
+
+                  }
+                }
+              />}
+
+              {/* <Image
+                source={userImage ? { uri: userImage } : require("../../assets/images/avatar-icon.png")}
+                style={
+                  {
+                    height: focused ? 26 : 22,
+                    width: focused ? 26 : 22,
+                    borderRadius: userImage ? 13 : 0,
+                    borderWidth: focused ? 2 : 0,
+                    borderColor: focused ? "#4CAF50" : "transparent",
+                    opacity: focused ? 1 : 0.4
+
+                  }
+                }
+              /> */}
+            </>
+
+
           ),
         }}
       />
@@ -445,13 +492,13 @@ export default function TabLayout() {
           title: "",
           tabBarIcon: ({ focused, color }) => (
             <Image
-              source={require("../../assets/images/wadzzo.png")}
+              source={require("../../assets/images/icon.png")}
               height={40}
               width={40}
               resizeMode="contain"
               style={{
-                width: 50,
-                height: 50,
+                width: 45,
+                height: 45,
                 marginTop: 20,
               }}
             />
