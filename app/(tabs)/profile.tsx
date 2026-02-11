@@ -219,7 +219,6 @@ export default function SettingScreen() {
   };
 
   const handleChangeCoverImage = useCallback(() => {
-    console.log("[v0] Opening image picker for cover");
     setImageTarget("cover");
     setTimeout(() => {
       setShowImageOptions(true);
@@ -227,7 +226,6 @@ export default function SettingScreen() {
   }, []);
 
   const handleChangeProfileImage = useCallback(() => {
-    console.log("[v0] Opening image picker for profile");
     setImageTarget("profile");
     setTimeout(() => {
       setShowImageOptions(true);
@@ -254,13 +252,11 @@ export default function SettingScreen() {
         ? ImagePicker.launchCameraAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           allowsEditing: true,
-          aspect: target === "profile" ? [1, 1] : [16, 9],
           quality: 1,
         })
         : ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           allowsEditing: true,
-          aspect: target === "profile" ? [1, 1] : [16, 9],
           quality: 1,
         })
       );
@@ -269,7 +265,6 @@ export default function SettingScreen() {
 
       if (target === "profile") setProfileUploading(true);
       else setCoverUploading(true);
-
       const picked = result.assets[0];
       const imageUri = picked.uri;
       let fileExtension = imageUri.split(".").pop()?.toLowerCase();
@@ -278,17 +273,9 @@ export default function SettingScreen() {
         Alert.alert("Invalid File Type", "Please select a JPG, PNG, WebP, or GIF image.");
         return;
       }
-
-      // resize/compress
-      const resizeOptions = target === "profile" ? { width: 400, height: 400 } : { width: 1200, height: 675 };
-      const compressed = await ImageManipulator.manipulateAsync(imageUri, [{ resize: resizeOptions }], {
-        compress: 0.6,
-        format: ImageManipulator.SaveFormat.JPEG,
-      });
-
       const contentType = `image/${fileExtension === "jpg" ? "jpeg" : fileExtension}`;
       const extractedFileName = `${Date.now()}.${fileExtension}`;
-      const resp = await fetch(compressed.uri);
+      const resp = await fetch(imageUri);
       const blob = await resp.blob();
 
       const signedUrlResp = await fetch(new URL("/api/game/get-signed-url", BASE_URL).toString(), {
@@ -323,7 +310,6 @@ export default function SettingScreen() {
         setCoverUploading(false);
         setShowImageOptions(false);
         setImageTarget(null);
-        console.log("[v0] Image picker dialog closed and state reset");
       }, 300);
     }
   };
@@ -411,7 +397,7 @@ export default function SettingScreen() {
             source={{
               uri: data?.coverImage ?? "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
             }}
-            style={styles.coverImage}
+            style={[styles.coverImage]}
           />
 
           {/* Top Right Buttons - Sign Out and Edit */}
@@ -897,11 +883,13 @@ const styles = StyleSheet.create({
     position: "relative",
     height: COVER_HEIGHT,
     width: "100%",
+
   },
   coverImage: {
     width: "100%",
     height: "100%",
     backgroundColor: Color.wadzzo,
+
   },
   coverCameraButton: {
     position: "absolute",
