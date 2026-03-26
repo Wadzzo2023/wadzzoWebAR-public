@@ -103,6 +103,8 @@ export default function MyCollectionScreen() {
       brand_name: "Dummy Brand",
       modal_url: "https://www.google.com",
       viewed: true,
+      redeemCode: "DUMMYCODE123",
+      isRedeemed: false,
     },
   ];
   const onButtonLayout = useCallback(
@@ -155,6 +157,7 @@ export default function MyCollectionScreen() {
     queryKey: ["collection"],
     queryFn: getCollections,
   });
+  console.log("Collection response:", response.data);
   const onARPress = (item: ConsumedLocation) => {
     setSingleAr(item);
     // setNearByPinData({

@@ -14,4 +14,6 @@ export type ConsumedLocation = {
     brand_id: string;
     modal_url: string;
     viewed: boolean;
+    redeemCode: string | null
+    isRedeemed: boolean | null
 };
