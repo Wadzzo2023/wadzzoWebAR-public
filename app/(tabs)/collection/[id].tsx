@@ -318,8 +318,6 @@ const SingleCollectionItem = () => {
             <ActionButton
               icon="🎁"
               label="Claim"
-              disabled={isRedeemed}
-              variant={isRedeemed ? undefined : "primary"}
               onPress={() =>
                 Linking.openURL(new URL("maps/pins/my", BASE_URL).href)
               }
