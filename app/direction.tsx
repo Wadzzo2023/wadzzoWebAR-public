@@ -404,7 +404,7 @@ const StoreLocation: React.FC = () => {
                         <View style={styles.destinationMarker}>
                             <Image
                                 source={{
-                                    uri: data.Collection?.brand_image_url,
+                                    uri: data.Collection?.image_url ?? data.Collection?.brand_image_url,
                                 }}
                                 style={styles.destinationImage}
                             />
@@ -460,8 +460,8 @@ const StoreLocation: React.FC = () => {
                             <View style={styles.destinationHeader}>
                                 <View style={styles.destinationLeftContent}>
                                     <View style={styles.destinationImageContainer}>
-                                        {data.Collection?.brand_image_url ? (
-                                            <Image source={{ uri: data.Collection?.brand_image_url }} style={styles.destinationCardImage} />
+                                        {data.Collection?.image_url ?? data.Collection?.brand_image_url ? (
+                                            <Image source={{ uri: data.Collection?.image_url ?? data.Collection?.brand_image_url }} style={styles.destinationCardImage} />
                                         ) : (
                                             <View style={styles.destinationIconPlaceholder}>
                                                 <MaterialCommunityIcons name="map-marker" size={24} color={Color.wadzzo} />

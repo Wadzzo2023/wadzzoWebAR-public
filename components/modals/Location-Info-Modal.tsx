@@ -55,7 +55,10 @@ const LocationInformationModal = () => {
         contentContainerStyle={styles.modalContainer}
       >
         <Card>
-          <Card.Cover source={{ uri: locationData.image_url }} />
+          <Card.Cover style={{
+            objectFit: "cover",
+            height: 300,
+          }} source={{ uri: locationData.image_url }} />
           <Card.Content>
             <View style={styles.headerContainer}>
               <Avatar.Image

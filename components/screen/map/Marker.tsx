@@ -28,7 +28,7 @@ export const Marker = ({ locations }: { locations: ConsumedLocation[] }) => {
             }
           >
             <Image
-              source={{ uri: location.brand_image_url }}
+              source={{ uri: location.image_url ?? location.brand_image_url }}
               height={30}
               width={30}
               style={[
