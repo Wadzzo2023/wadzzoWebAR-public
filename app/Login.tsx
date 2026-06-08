@@ -244,10 +244,10 @@ const LoginScreen = () => {
 
   useEffect(() => {
     if (isAuthenticated && user?.image) {
-      router.replace("/(tabs)/");
+      router.replace("/(tabs)");
     }
     else if (isAuthenticated && user && !user?.image) {
-      router.replace("/onboardprofile/");
+      router.replace("/onboardprofile");
     }
   }, [isAuthenticated, user, user?.image]);
 

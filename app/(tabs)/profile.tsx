@@ -4,15 +4,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import * as Clipboard from "expo-clipboard";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Dimensions,
-  findNodeHandle,
   Image,
   LayoutChangeEvent,
   Linking,
-  Platform,
   ScrollView,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   View,
   Alert,
@@ -30,7 +26,6 @@ import {
 
 import { Feather, MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import * as ImageManipulator from "expo-image-manipulator";
 import BottomSheet, { BottomSheetView, BottomSheetScrollView, BottomSheetTextInput } from "@gorhom/bottom-sheet";
 
 import { useRouter } from "expo-router";
@@ -104,22 +99,13 @@ export default function SettingScreen() {
 
   const onButtonLayout = useCallback(
     (event: LayoutChangeEvent, index: number) => {
-      if (scrollViewRef.current) {
-        const scrollViewHandle = findNodeHandle(scrollViewRef.current);
-        if (scrollViewHandle) {
-          event.target.measureLayout(
-            scrollViewHandle,
-            (x, y, width, height) => {
-              setButtonLayouts((prevLayouts) => {
-                const newLayouts = [...prevLayouts];
-                newLayouts[index] = { x, y, width, height };
-                return newLayouts;
-              });
-            },
-            () => console.error("Failed to measure layout")
-          );
-        }
-      }
+      event.target.measureInWindow((x, y, width, height) => {
+        setButtonLayouts((prevLayouts) => {
+          const newLayouts = [...prevLayouts];
+          newLayouts[index] = { x, y, width, height };
+          return newLayouts;
+        });
+      });
     },
     []
   );
@@ -250,12 +236,12 @@ export default function SettingScreen() {
 
       const result = await (source === "camera"
         ? ImagePicker.launchCameraAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ['images'] as ImagePicker.MediaType[],
           allowsEditing: true,
           quality: 1,
         })
         : ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          mediaTypes: ['images'] as ImagePicker.MediaType[],
           allowsEditing: true,
           quality: 1,
         })

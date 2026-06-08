@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   StyleSheet,
   Image,
-  Dimensions,
   Linking,
 } from "react-native";
 import {
@@ -15,17 +14,17 @@ import {
   ViroNode,
   ViroAnimations,
   ViroImage,
-  ViroFlexView,
+  ViroQuad,
+  ViroMaterials,
+  ViroSphere,
   ViroParticleEmitter,
-  ViroTrackingReason,
+  type ViroTrackingReason,
 } from "@reactvision/react-viro";
 
 import { useWinnerAnimation } from "./hooks/useWinnerAnimation";
 import { ConsumedLocation } from "./types/CollectionTypes";
 import { Color } from "./utils/all-colors";
 import { useLocationService } from "./hooks/useLocationService";
-
-const { width } = Dimensions.get("window");
 
 interface ARSceneARProps {
   items: ConsumedLocation[];
@@ -54,73 +53,94 @@ ViroAnimations.registerAnimations({
   },
   warningPulse: {
     properties: {
-      scaleX: "1.0+0.2*sin(2*3.14*t/1000)",
-      scaleY: "1.0+0.2*sin(2*3.14*t/1000)",
-      scaleZ: "1.0+0.2*sin(2*3.14*t/1000)",
-      opacity: "0.8+0.2*sin(2*3.14*t/1000)",
+      scaleX: 1.2,
+      scaleY: 1.2,
+      scaleZ: 1.2,
+      opacity: 1.0,
     },
     duration: 1000,
     easing: "EaseInEaseOut",
+  },
+  billboardFadeIn: {
+    properties: {
+      scaleX: 1,
+      scaleY: 1,
+      scaleZ: 1,
+      opacity: 1,
+    },
+    duration: 300,
+    easing: "EaseOut",
+  },
+  dotPulse: {
+    properties: {
+      scaleX: 1.4,
+      scaleY: 1.4,
+      scaleZ: 1.4,
+      opacity: 0.4,
+    },
+    duration: 1200,
   },
 });
 
 // ─── Winner Animation ─────────────────────────────────────────────────────────
 
-const WinnerAnimation = React.memo(() => (
-  <ViroParticleEmitter
-    position={[0, 4.5, 0]}
-    duration={4000}
-    visible={true}
-    delay={0}
-    run={true}
-    loop={true}
-    fixedToEmitter={true}
-    image={{
-      source: require("../assets/images/wadzzo.png"),
-      height: 0.1,
-      width: 0.1,
-      bloomThreshold: 1.0,
-    }}
-    spawnBehavior={{
-      particleLifetime: [4000, 4000],
-      emissionRatePerSecond: [150, 200],
-      spawnVolume: {
-        shape: "box",
-        params: [20, 1, 20],
-        spawnOnSurface: false,
-      },
-      maxParticles: 400,
-    }}
-    particleAppearance={{
-      opacity: {
-        initialRange: [0, 0],
-        factor: "time",
-        interpolation: [
-          { endValue: 0.5, interval: [0, 500] },
-          { endValue: 1.0, interval: [4000, 5000] },
-        ],
-      },
-      rotation: {
-        initialRange: [0, 360],
-        factor: "time",
-        interpolation: [{ endValue: 1080, interval: [0, 5000] }],
-      },
-      scale: {
-        initialRange: [[5, 5, 5], [10, 10, 10]],
-        factor: "time",
-        interpolation: [
-          { endValue: [3, 3, 3], interval: [0, 4000] },
-          { endValue: [0, 0, 0], interval: [4000, 5000] },
-        ],
-      },
-    }}
-    particlePhysics={{
-      velocity: {
-        initialRange: [[-2, -0.5, 0], [2, -3.5, 0]],
-      },
-    }}
-  />
-));
+function WinnerAnimation() {
+  return (
+    <ViroParticleEmitter
+      position={[0, 4.5, 0]}
+      duration={4000}
+      visible={true}
+      delay={0}
+      run={true}
+      loop={true}
+      fixedToEmitter={true}
+      image={{
+        source: require("../assets/images/wadzzo.png"),
+        height: 0.1,
+        width: 0.1,
+        bloomThreshold: 1.0,
+      }}
+      spawnBehavior={{
+        particleLifetime: [4000, 4000],
+        emissionRatePerSecond: [150, 200],
+        spawnVolume: {
+          shape: "box",
+          params: [20, 1, 20],
+          spawnOnSurface: false,
+        },
+        maxParticles: 400,
+      }}
+      particleAppearance={{
+        opacity: {
+          initialRange: [0, 0],
+          factor: "time",
+          interpolation: [
+            { endValue: 0.5, interval: [0, 500] },
+            { endValue: 1.0, interval: [4000, 5000] },
+          ],
+        },
+        rotation: {
+          initialRange: [0, 360],
+          factor: "time",
+          interpolation: [{ endValue: 1080, interval: [0, 5000] }],
+        },
+        scale: {
+          initialRange: [[5, 5, 5], [10, 10, 10]],
+          factor: "time",
+          interpolation: [
+            { endValue: [3, 3, 3], interval: [0, 4000] },
+            { endValue: [0, 0, 0], interval: [4000, 5000] },
+          ],
+        },
+      }}
+      particlePhysics={{
+        velocity: {
+          initialRange: [[-2, -0.5, 0], [2, -3.5, 0]],
+        },
+      }}
+    />
+  );
+}
 
 // ─── No Items Warning ─────────────────────────────────────────────────────────
 
@@ -128,37 +148,37 @@ interface NoItemsWarningProps {
   nearbyPinDistance: number;
 }
 
-const NoItemsWarning = React.memo(({ nearbyPinDistance }: NoItemsWarningProps) => (
-  <ViroFlexView
-    style={styles.warningContainer}
-    position={[0, 0, -4]}
-    rotation={[0, 0, 0]}
-    height={1}
-    width={5}
-    transformBehaviors={["billboardY"]}
-    animation={{ name: "warningPulse", run: true, loop: true }}
-  >
-    <ViroText
-      text="There are no nearby pins available in 50 m."
-      style={styles.warningText}
-      width={5}
-      height={1}
-    />
-    <ViroText
-      text={`Nearest AR collectible is at ${nearbyPinDistance.toFixed(2)} m away`}
-      style={styles.warningText}
-      width={5}
-      height={1}
-    />
-  </ViroFlexView>
-));
+function NoItemsWarning({ nearbyPinDistance }: NoItemsWarningProps) {
+  return (
+    <ViroNode
+      position={[0, 0, -4]}
+      transformBehaviors={["billboardY"]}
+      animation={{ name: "warningPulse", run: true, loop: true }}
+    >
+      <ViroQuad
+        position={[0, 0, -0.01]}
+        scale={[4.5, 1.2, 1]}
+        materials={["warningBg"]}
+      />
+      <ViroText
+        text="There are no nearby pins available in 50 m."
+        style={styles.warningText}
+        width={4}
+        height={0.4}
+        position={[0, 0.2, 0]}
+      />
+      <ViroText
+        text={`Nearest AR collectible is at ${nearbyPinDistance.toFixed(2)} m away`}
+        style={styles.warningText}
+        width={4}
+        height={0.4}
+        position={[0, -0.2, 0]}
+      />
+    </ViroNode>
+  );
+}
 
 // ─── AR Pin ───────────────────────────────────────────────────────────────────
-//
-// KEY FIX: The detail panel (billboard with ViroImage) lives INSIDE each pin
-// and is ALWAYS MOUNTED. We toggle `visible` on a wrapper ViroNode instead of
-// mounting/unmounting the panel. This means ViroImage is created once per pin
-// and never has to reload from the network on re-hover.
 
 interface ARPinProps {
   item: ConsumedLocation;
@@ -169,138 +189,192 @@ interface ARPinProps {
   onBlur: () => void;
 }
 
-const ARPin = React.memo(
-  ({ item, position, singleAR, imageSource, onFocus, onBlur }: ARPinProps) => {
-    const [isHovered, setIsHovered] = useState(false);
+function ARPin({ item, position, singleAR, imageSource, onFocus, onBlur }: ARPinProps) {
+  const [isHovered, setIsHovered] = useState(false);
 
-    const resolvedPosition: [number, number, number] = singleAR
-      ? [0, 0, -5]
-      : position;
+  const resolvedPosition: [number, number, number] = singleAR
+    ? [0, 0, -5]
+    : position;
 
-    const handleHover = useCallback(
-      (hovering: boolean) => {
-        setIsHovered(hovering);
-        if (hovering) {
-          onFocus(item);
-        } else {
-          onBlur();
-        }
-      },
-      [item, onFocus, onBlur]
-    );
+  const handleHover = useCallback(
+    (hovering: boolean) => {
+      setIsHovered(hovering);
+      if (hovering) {
+        onFocus(item);
+      } else {
+        onBlur();
+      }
+    },
+    [item, onFocus, onBlur]
+  );
 
-    const handleLinkPress = useCallback(() => {
+  const handleLinkPress = useCallback(() => {
+    if (item.url) {
       Linking.openURL(item.url).catch((err) =>
         console.error("Failed to open URL:", err)
       );
-    }, [item.url]);
+    }
+  }, [item.url]);
 
-    return (
+  const truncatedTitle = item.title && item.title.length > 28
+    ? item.title.slice(0, 28) + "..."
+    : (item.title ?? "No title");
+
+  const truncatedDesc = item.description
+    ? item.description.length > 120
+      ? item.description.slice(0, 120) + "..."
+      : item.description
+    : "No description available";
+
+  return (
+    <ViroNode
+      animation={{ name: "rotate", run: true, loop: true }}
+      position={resolvedPosition}
+      onHover={handleHover}
+    >
+      {/* ── Coin base ── */}
+      <Viro3DObject
+        rotation={[0, 0, 0]}
+        source={require("../assets/circle/10438_Circular_Grass_Patch_v1_iterations-2.obj")}
+        scale={[0.002, 0.002, 0.002]}
+        position={[0, 0.5, 0]}
+        type="OBJ"
+      />
+
+      {/* ── Coin face images ── */}
+      <ViroImage
+        source={imageSource}
+        height={1}
+        width={1}
+        rotation={[0, 180, 0]}
+        scale={[0.4, 0.4, 0.01]}
+        position={[0, 0.5, -0.022]}
+      />
+      <ViroImage
+        source={imageSource}
+        height={1}
+        width={1}
+        rotation={[0, 0, 0]}
+        scale={[0.4, 0.4, 0.01]}
+        position={[0, 0.5, 0.022]}
+      />
+
+      {/* ── Coin label ── */}
+      <ViroText
+        text={item.title}
+        scale={[0.7, 0.7, 0.7]}
+        position={[0, 1.1, 0]}
+        style={styles.itemTitle}
+      />
+
+      {/* ── Detail billboard ── */}
       <ViroNode
-        animation={{ name: "rotate", run: true, loop: true }}
-        position={resolvedPosition}
-        onHover={handleHover}
+        visible={isHovered}
+        position={[0, 2.6, 0]}
+        transformBehaviors={["billboardY"]}
+        animation={{ name: "billboardFadeIn", run: isHovered, loop: false }}
+        scale={[0.8, 0.8, 0.8]}
+        opacity={0}
       >
-        {/* ── Coin base ── */}
-        <Viro3DObject
-          rotation={[0, 0, 0]}
-          source={require("../assets/circle/10438_Circular_Grass_Patch_v1_iterations-2.obj")}
-          scale={[0.002, 0.002, 0.002]}
-          position={[0, 0.5, 0]}
-          type="OBJ"
+        {/* Card background */}
+        <ViroQuad
+          position={[0, 0, -0.02]}
+          scale={[3.4, 2.8, 1]}
+          materials={["billboardBg"]}
+        />
+        {/* Left accent strip */}
+        <ViroQuad
+          position={[-1.68, 0, -0.01]}
+          scale={[0.06, 2.8, 1]}
+          materials={["billboardAccent"]}
         />
 
-        {/* ── Coin face images — loaded once on first mount, cached forever ── */}
+        {/* ── Header row ── */}
         <ViroImage
           source={imageSource}
-          height={1}
-          width={1}
-          rotation={[0, 180, 0]}
-          scale={[0.4, 0.4, 0]}
-          position={[0, 0.5, -0.022]}
+          height={0.6}
+          width={0.6}
+          position={[-1.1, 0.85, 0]}
         />
-        <ViroImage
-          source={imageSource}
-          height={1}
-          width={1}
-          rotation={[0, 0, 0]}
-          scale={[0.4, 0.4, 0]}
-          position={[0, 0.5, 0.022]}
-        />
-
-        {/* ── Coin label ── */}
         <ViroText
-          text={item.title}
-          scale={[0.7, 0.7, 0.7]}
-          position={[0, 1.1, 0]}
-          style={styles.itemTitle}
+          text={truncatedTitle}
+          style={styles.billboardTitle}
+          width={2.0}
+          height={0.35}
+          position={[0.15, 0.95, 0]}
+        />
+        <ViroText
+          text={item.brand_name}
+          style={styles.billboardBrand}
+          width={2.0}
+          height={0.2}
+          position={[0.15, 0.7, 0]}
         />
 
-        {/* ── Detail billboard ──
-            Always mounted in the scene tree, just invisible when not hovered.
-            `visible={false}` hides it with zero GPU cost but keeps the texture
-            in VRAM — so the next hover shows it instantly with no reload. ── */}
-        <ViroNode visible={isHovered} position={[0, 2.5, 0]}>
-          <ViroFlexView
-            style={styles.itemDetailContainer}
-            position={[0, 0, 0]}
-            rotation={[0, 0, 0]}
-            height={2.5}
-            width={3}
-            transformBehaviors={["billboardY"]}
-          >
-            <ViroFlexView style={styles.itemDetailHeader}>
-              {/* Reuses the same imageSource already in VRAM — instant display */}
-              <ViroImage
-                source={imageSource}
-                style={styles.itemDetailImage}
-                height={0.8}
-                width={0.8}
-              />
-              <ViroText
-                text={item.title ?? "No title"}
-                style={styles.itemDetailTitle}
-                height={0.5}
-                width={1}
-              />
-            </ViroFlexView>
+        {/* Divider */}
+        <ViroQuad
+          position={[0, 0.48, -0.01]}
+          scale={[2.9, 0.012, 1]}
+          materials={["billboardDivider"]}
+        />
 
-            <ViroText
-              text={`Brand: ${item.brand_name}`}
-              style={styles.itemDetailText}
-              height={0.2}
-              width={3.5}
-            />
-            <ViroText
-              text={`Description: ${item.description ?? "No description"}`}
-              style={styles.itemDetailText}
-              height={0.6}
-              width={3}
-            />
-            <ViroText
-              text={`Remaining: ${item.collection_limit_remaining}`}
-              style={styles.itemDetailText}
-              height={0.2}
-              width={1}
-            />
-            <ViroText
-              onClick={handleLinkPress}
-              text={`Link: ${item.url.slice(0, 35)}...`}
-              style={styles.itemDetailText}
-              height={0.2}
-              width={3.5}
-            />
-          </ViroFlexView>
+        {/* ── Description ── */}
+        <ViroText
+          text={truncatedDesc}
+          style={styles.billboardDesc}
+          width={2.9}
+          height={0.7}
+          position={[0, 0.02, 0]}
+        />
+
+        {/* Divider */}
+        <ViroQuad
+          position={[0, -0.4, -0.01]}
+          scale={[2.9, 0.012, 1]}
+          materials={["billboardDivider"]}
+        />
+
+        {/* ── Footer ── */}
+        <ViroNode position={[-0.7, -0.6, 0]}>
+          <ViroSphere
+            radius={0.06}
+            materials={["footerDot"]}
+            position={[-0.35, 0, 0]}
+            animation={{ name: "dotPulse", run: true, loop: true }}
+          />
+          <ViroText
+            text={`${item.collection_limit_remaining} remaining`}
+            style={styles.billboardFooterLeft}
+            width={1.2}
+            height={0.2}
+            position={[0.15, 0, 0]}
+          />
         </ViroNode>
+
+        {/* Link button — ViroQuad as tap target for reliable iOS clicks */}
+        {item.url ? (
+          <ViroNode
+            position={[0.75, -0.6, 0]}
+            onClick={handleLinkPress}
+          >
+            <ViroQuad
+              position={[0, 0, -0.005]}
+              scale={[1.2, 0.3, 1]}
+              materials={["linkButtonBg"]}
+            />
+            <ViroText
+              text="Open Link  >"
+              style={styles.billboardLink}
+              width={1.1}
+              height={0.2}
+              position={[0, 0, 0]}
+            />
+          </ViroNode>
+        ) : null}
       </ViroNode>
-    );
-  },
-  // Only re-render this pin if its own data changes
-  (prev, next) =>
-    prev.item.id === next.item.id &&
-    prev.singleAR === next.singleAR &&
-    prev.imageSource.uri === next.imageSource.uri
-);
+    </ViroNode>
+  );
+}
 
 // ─── Main AR Scene ────────────────────────────────────────────────────────────
 
@@ -402,6 +476,35 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
   );
 };
 
+// ─── Materials ────────────────────────────────────────────────────────────────
+
+ViroMaterials.createMaterials({
+  billboardBg: {
+    diffuseColor: "#111827",
+    lightingModel: "Constant",
+  },
+  billboardAccent: {
+    diffuseColor: Color.wadzzo,
+    lightingModel: "Constant",
+  },
+  billboardDivider: {
+    diffuseColor: "rgba(255,255,255,0.12)",
+    lightingModel: "Constant",
+  },
+  footerDot: {
+    diffuseColor: "#4ade80",
+    lightingModel: "Constant",
+  },
+  linkButtonBg: {
+    diffuseColor: Color.wadzzo,
+    lightingModel: "Constant",
+  },
+  warningBg: {
+    diffuseColor: "rgba(0,0,0,0.8)",
+    lightingModel: "Constant",
+  },
+});
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
@@ -412,42 +515,44 @@ const styles = StyleSheet.create({
     textAlignVertical: "center",
     textAlign: "center",
   },
-  itemDetailContainer: {
-    flexDirection: "column",
-    backgroundColor: "rgba(0,0,0,0.8)",
-    padding: 0.1,
-  },
-  itemDetailHeader: {
-    flexDirection: "row",
-    height: 1,
-  },
-  itemDetailImage: {
-    height: 1,
-    width: 1,
-  },
-  itemDetailTitle: {
+  billboardTitle: {
     fontFamily: "Arial",
-    fontSize: 20,
+    fontSize: 22,
     color: "#FFFFFF",
     textAlignVertical: "center",
     textAlign: "left",
-    flex: 1,
+    fontWeight: "bold",
   },
-  itemDetailText: {
+  billboardBrand: {
+    fontFamily: "Arial",
+    fontSize: 13,
+    color: Color.wadzzo,
+    textAlignVertical: "center",
+    textAlign: "left",
+    fontWeight: "600",
+  },
+  billboardDesc: {
     fontFamily: "Arial",
     fontSize: 14,
-    color: "#FFFFFF",
+    color: "#d1d5db",
+    textAlignVertical: "top",
+    textAlign: "left",
+  },
+  billboardFooterLeft: {
+    fontFamily: "Arial",
+    fontSize: 13,
+    color: "#4ade80",
     textAlignVertical: "center",
     textAlign: "left",
-    padding: 0.05,
+    fontWeight: "bold",
   },
-  warningContainer: {
-    flexDirection: "column",
-    backgroundColor: "rgba(0,0,0,0.7)",
-    padding: 0.2,
-    borderRadius: 0.1,
-    borderWidth: 0.02,
-    borderColor: Color.wadzzo,
+  billboardLink: {
+    fontFamily: "Arial",
+    fontSize: 13,
+    color: "#FFFFFF",
+    textAlignVertical: "center",
+    textAlign: "center",
+    fontWeight: "bold",
   },
   warningText: {
     fontFamily: "Arial",

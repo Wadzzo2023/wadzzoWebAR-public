@@ -2,7 +2,7 @@ import { ViroARSceneNavigator, ViroAnimations } from "@reactvision/react-viro";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Animated,
@@ -262,12 +262,26 @@ const ARScene = () => {
     }
   }, [isFirstTime]);
 
+  const ARSceneComponent = useMemo(() => {
+    const SceneComponent = () => (
+      <ARSceneAR
+        onCapture={setCapturedItem}
+        items={items}
+        singleAR={singleAR}
+      />
+    );
+
+    SceneComponent.displayName = "ARSceneComponent";
+
+    return SceneComponent;
+  }, [items, singleAR]);
+
   return (
     <View style={styles.container}>
       <Appbar.Header style={styles.appbar}>
-        <Appbar.BackAction
+        <Appbar.Action icon="arrow-left"
           disabled={loading}
-          color="white" onPress={() => router.back()} />
+          iconColor="white" onPress={() => router.back()} />
         <Appbar.Content title={"AR Scanner"} titleStyle={styles.appbarTitle} />
       </Appbar.Header>
       {!singleAR && (
@@ -283,13 +297,7 @@ const ARScene = () => {
       <ViroARSceneNavigator
         autofocus={true}
         initialScene={{
-          scene: () => (
-            <ARSceneAR
-              onCapture={setCapturedItem}
-              items={items}
-              singleAR={singleAR}
-            />
-          ),
+          scene: ARSceneComponent,
         }}
         style={styles.f1}
       />

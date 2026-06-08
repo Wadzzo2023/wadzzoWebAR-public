@@ -8,6 +8,7 @@ const CollectionLayout = () => {
       }}
     >
       <Stack.Screen name="index" />
+      <Stack.Screen name="[id]" />
     </Stack>
   );
 };

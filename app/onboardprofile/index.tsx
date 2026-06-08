@@ -11,7 +11,7 @@ import { useAuth } from "@/components/lib/auth/Provider";
 import { toast, ToastPosition } from "@backpackapp-io/react-native-toast";
 import Svg, { Circle } from 'react-native-svg';
 import { MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
-import * as ImageManipulator from 'expo-image-manipulator';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 
 const size = 150;
 const strokeWidth = 2;
@@ -86,13 +86,13 @@ const OnBoarding = () => {
 
             const result = await (source === 'camera'
                 ? ImagePicker.launchCameraAsync({
-                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    mediaTypes: ['images'] as ImagePicker.MediaType[],
                     allowsEditing: true,
                     aspect: [1, 1],
                     quality: 1, // Set to 1 as we'll compress later
                 })
                 : ImagePicker.launchImageLibraryAsync({
-                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    mediaTypes: ['images'] as ImagePicker.MediaType[],
                     allowsEditing: true,
                     aspect: [1, 1],
                     quality: 1, // Set to 1 as we'll compress later
@@ -114,14 +114,14 @@ const OnBoarding = () => {
                 return;
             }
             // Compress and resize image
-            const compressedImage = await ImageManipulator.manipulateAsync(
+            const compressedImage = await manipulateAsync(
                 result.assets[0].uri,
                 [
-                    { resize: { width: 200, height: 200 } } // Resize to max width of 800px
+                    { resize: { width: 200, height: 200 } }
                 ],
                 {
-                    compress: 0.5, // 50% quality
-                    format: ImageManipulator.SaveFormat.JPEG
+                    compress: 0.5,
+                    format: SaveFormat.JPEG
                 }
             );
 
@@ -200,7 +200,7 @@ const OnBoarding = () => {
                     view: { backgroundColor: Color.wadzzo, borderRadius: 8 },
                 },
             });
-            router.replace("/(tabs)/");
+            router.replace("/(tabs)");
             setSaveLoading(false);
         } else {
             Alert.alert("Error", "Failed to save profile. Please try again.");
@@ -210,7 +210,7 @@ const OnBoarding = () => {
 
     useEffect(() => {
         if (isAuthenticated && user?.image) {
-            router.replace("/(tabs)/");
+            router.replace("/(tabs)");
         }
     }, [isAuthenticated, user?.image]);
 

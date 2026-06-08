@@ -10,7 +10,6 @@ import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
-  findNodeHandle,
   FlatList,
   Image,
   LayoutChangeEvent,
@@ -108,22 +107,13 @@ export default function CreatorPage() {
 
   const onButtonLayout = useCallback(
     (event: LayoutChangeEvent, index: number) => {
-      if (scrollViewRef.current) {
-        const scrollViewHandle = findNodeHandle(scrollViewRef.current);
-        if (scrollViewHandle) {
-          event.target.measureLayout(
-            scrollViewHandle,
-            (x, y, width, height) => {
-              setButtonLayouts((prevLayouts) => {
-                const newLayouts = [...prevLayouts];
-                newLayouts[index] = { x, y, width, height };
-                return newLayouts;
-              });
-            },
-            () => console.error("Failed to measure layout")
-          );
-        }
-      }
+      event.target.measureInWindow((x, y, width, height) => {
+        setButtonLayouts((prevLayouts) => {
+          const newLayouts = [...prevLayouts];
+          newLayouts[index] = { x, y, width, height };
+          return newLayouts;
+        });
+      });
     },
     []
   );
@@ -310,9 +300,6 @@ export default function CreatorPage() {
   const renderBrandItem = ({ item, index }: { item: Brand; index: number }) => (
     <View style={styles.brandItem}>
       <Image source={{ uri: item.logo ?? 'https://app.wadzzo.com/images/loading.png' }}
-        height={50}
-        width={50}
-
         style={styles.brandImage} />
       <Text style={styles.brandName}>{item.first_name}</Text>
       <Button

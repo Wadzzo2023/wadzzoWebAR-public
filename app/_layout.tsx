@@ -75,6 +75,12 @@ export default function RootLayout() {
               <Stack.Screen name="Login" />
               <Stack.Screen name="Signup" />
               <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="ARScreen" />
+              <Stack.Screen name="direction" />
+              <Stack.Screen name="albedo" />
+              <Stack.Screen name="forget-password" />
+              <Stack.Screen name="qr" />
+              <Stack.Screen name="onboardprofile" />
             </Stack>
 
           </PaperProvider>

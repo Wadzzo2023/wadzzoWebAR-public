@@ -8,7 +8,6 @@ import {
   Alert,
   Animated,
   Easing,
-  findNodeHandle,
   Image,
   type LayoutChangeEvent,
   TouchableOpacity,
@@ -101,23 +100,13 @@ const HomeScreen = () => {
 
   const onButtonLayout = useCallback(
     (event: LayoutChangeEvent, index: number) => {
-      if (scrollViewRef.current) {
-        const scrollViewHandle = findNodeHandle(scrollViewRef.current);
-        if (scrollViewHandle) {
-          event.target.measureLayout(
-            scrollViewHandle,
-            (x, y, width, height) => {
-              setButtonLayouts((prevLayouts) => {
-                const newLayouts = [...prevLayouts];
-                newLayouts[index] = { x, y, width, height };
-                // console.log(newLayouts);
-                return newLayouts;
-              });
-            },
-            () => console.error("Failed to measure layout")
-          );
-        }
-      }
+      event.target.measureInWindow((x, y, width, height) => {
+        setButtonLayouts((prevLayouts) => {
+          const newLayouts = [...prevLayouts];
+          newLayouts[index] = { x, y, width, height };
+          return newLayouts;
+        });
+      });
     },
     []
   );
@@ -445,10 +434,9 @@ const HomeScreen = () => {
             style={{
               height: 20,
               width: 20,
+              resizeMode: "contain",
             }}
             source={require("../../assets/images/wadzzo.png")}
-            height={100}
-            width={100}
           />
           <Balance />
         </BlurView>

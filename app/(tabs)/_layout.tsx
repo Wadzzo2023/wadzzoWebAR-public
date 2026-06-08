@@ -493,13 +493,11 @@ export default function TabLayout() {
           tabBarIcon: ({ focused, color }) => (
             <Image
               source={require("../../assets/images/icon.png")}
-              height={40}
-              width={40}
-              resizeMode="contain"
               style={{
                 width: 45,
                 height: 45,
                 marginTop: 20,
+                resizeMode: "contain",
               }}
             />
           )

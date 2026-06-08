@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Image, StyleSheet, Dimensions, Pressable } from "react-native";
+import { View, StyleSheet, Dimensions, Pressable } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 import Animated, {
     useSharedValue,
@@ -14,20 +14,19 @@ import Animated, {
 const { width, height } = Dimensions.get("window");
 
 export default function LoadingScreen() {
-    const rotation = useSharedValue(0);
+    const flip = useSharedValue(1);
     const textScale = useSharedValue(1);
     const dotOpacity1 = useSharedValue(0);
     const dotOpacity2 = useSharedValue(0);
     const dotOpacity3 = useSharedValue(0);
 
     useEffect(() => {
-        rotation.value = withRepeat(
-            withTiming(360, {
-                duration: 2000,
-                easing: Easing.linear,
-            }),
-            -1,
-            false
+        flip.value = withRepeat(
+            withSequence(
+                withTiming(-1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+                withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+            ),
+            -1
         );
 
         const animateDots = () => {
@@ -62,7 +61,7 @@ export default function LoadingScreen() {
 
     const animatedStyle = useAnimatedStyle(() => {
         return {
-            transform: [{ rotateY: `${rotation.value}deg` }],
+            transform: [{ scaleX: flip.value }],
         };
     });
 
@@ -99,13 +98,10 @@ export default function LoadingScreen() {
 
     return (
         <View style={styles.container}>
-            <Animated.View style={[styles.logoContainer, animatedStyle]}>
-                <Image
-                    source={require("../assets/images/wadzzo.png")}
-                    style={styles.logo}
-                    resizeMode="contain"
-                />
-            </Animated.View>
+            <Animated.Image
+                source={require("../assets/images/wadzzo.png")}
+                style={[styles.logo, animatedStyle]}
+            />
             <ActivityIndicator size="small" color="#4CAF50" style={styles.spinner} />
             <Pressable onPress={handlePress}>
                 <Animated.View style={[styles.textContainer, textAnimatedStyle]}>
@@ -132,16 +128,11 @@ const styles = StyleSheet.create({
         width: width,
         height: height,
     },
-    logoContainer: {
+    logo: {
         width: 150,
         height: 150,
-        justifyContent: "center",
-        alignItems: "center",
+        resizeMode: "contain",
         marginBottom: 30,
-    },
-    logo: {
-        width: "100%",
-        height: "100%",
     },
     spinner: {
         marginTop: 20,

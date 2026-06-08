@@ -1,45 +1,42 @@
 import React, { useEffect } from "react";
-import { View, Image, StyleSheet, Dimensions } from "react-native";
+import { View, StyleSheet, Dimensions } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withRepeat,
   withTiming,
+  withSequence,
   Easing,
 } from "react-native-reanimated";
 
 const { width, height } = Dimensions.get("window");
 
 export default function LoadingScreen() {
-  const rotation = useSharedValue(0);
+  const flip = useSharedValue(1);
 
   useEffect(() => {
-    rotation.value = withRepeat(
-      withTiming(360, {
-        duration: 2000,
-        easing: Easing.linear,
-      }),
-      -1, // Repeat indefinitely
-      false // Don't reverse the animation
+    flip.value = withRepeat(
+      withSequence(
+        withTiming(-1, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1
     );
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ rotateY: `${rotation.value}deg` }],
+      transform: [{ scaleX: flip.value }],
     };
   });
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.logoContainer, animatedStyle]}>
-        <Image
-          source={require("../assets/images/wadzzo.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </Animated.View>
+      <Animated.Image
+        source={require("../assets/images/wadzzo.png")}
+        style={[styles.logo, animatedStyle]}
+      />
       <ActivityIndicator size="small" color="#4CAF50" style={styles.spinner} />
     </View>
   );
@@ -54,16 +51,11 @@ const styles = StyleSheet.create({
     width: width,
     height: height,
   },
-  logoContainer: {
+  logo: {
     width: 150,
     height: 150,
-    justifyContent: "center",
-    alignItems: "center",
+    resizeMode: "contain",
     marginBottom: 30,
-  },
-  logo: {
-    width: "100%",
-    height: "100%",
   },
   spinner: {
     marginTop: 20,

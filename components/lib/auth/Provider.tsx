@@ -45,7 +45,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: FC<AuthProviderProps> = ({
   children,
-}: AuthProviderProps): JSX.Element => {
+}: AuthProviderProps): React.JSX.Element => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false); // Loading state

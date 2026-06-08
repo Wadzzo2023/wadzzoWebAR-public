@@ -9,8 +9,8 @@ import {
   TouchableOpacity,
   View,
   Text,
-  Clipboard,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
 import { Appbar, Avatar } from "react-native-paper";
 import Mapbox, { Camera, MapView, MarkerView } from "@rnmapbox/maps";
 import { useRouter } from "expo-router";
@@ -43,7 +43,7 @@ const RedeemCodeBadge = ({
   }, []);
 
   const handleCopy = () => {
-    Clipboard.setString(code);
+    Clipboard.setStringAsync(code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -211,7 +211,7 @@ const SingleCollectionItem = () => {
     <View style={styles.container}>
       {/* Appbar */}
       <Appbar.Header style={styles.appbar}>
-        <Appbar.BackAction color="white" onPress={() => router.back()} />
+        <Appbar.Action icon="arrow-left" iconColor="white" onPress={() => router.back()} />
         <Appbar.Content
           title={col.title}
           titleStyle={styles.appbarTitle}

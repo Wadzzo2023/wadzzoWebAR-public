@@ -1,4 +1,3 @@
-"use client"
 import { ViroARSceneNavigator } from "@reactvision/react-viro"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { useEffect, useState, useCallback, useMemo } from "react"
@@ -150,7 +149,7 @@ const ARViewScreen = () => {
 
     const handleBackPress = () => {
         setArReady(false)
-        router.navigate("/(tabs)/")
+        router.navigate("/(tabs)")
     }
 
     if (!id) {
@@ -193,7 +192,7 @@ const ARViewScreen = () => {
             <View style={styles.container}>
                 <StatusBar barStyle="light-content" backgroundColor={Color.wadzzo} />
                 <Appbar.Header style={styles.appbar}>
-                    <Appbar.BackAction disabled={loading} color="white" onPress={handleBackPress} />
+                    <Appbar.Action icon="arrow-left" disabled={loading} iconColor="white" onPress={handleBackPress} />
                     <Appbar.Content title="AR Scanner" titleStyle={styles.appbarTitle} />
                 </Appbar.Header>
                 <LinearGradient colors={["#000000", "#1a1a2e", "#16213e"]} style={styles.loadingGradient}>
@@ -228,7 +227,7 @@ const ARViewScreen = () => {
             <View style={styles.container}>
                 <StatusBar barStyle="light-content" backgroundColor={Color.wadzzo} />
                 <Appbar.Header style={styles.appbar}>
-                    <Appbar.BackAction disabled={loading} color="white" onPress={handleBackPress} />
+                    <Appbar.Action icon="arrow-left" disabled={loading} iconColor="white" onPress={handleBackPress} />
                     <Appbar.Content title="AR Scanner" titleStyle={styles.appbarTitle} />
                 </Appbar.Header>
                 <LinearGradient colors={["#000000", "#1a1a2e", "#16213e"]} style={styles.errorGradient}>
@@ -259,7 +258,7 @@ const ARViewScreen = () => {
             <StatusBar barStyle="light-content" backgroundColor={Color.wadzzo} />
             {/* Modern Header */}
             <Appbar.Header style={styles.appbar}>
-                <Appbar.BackAction disabled={loading} color="white" onPress={handleBackPress} />
+                <Appbar.Action icon="arrow-left" disabled={loading} iconColor="white" onPress={handleBackPress} />
                 <Appbar.Content title="QR Scanner" titleStyle={styles.appbarTitle} />
             </Appbar.Header>
 

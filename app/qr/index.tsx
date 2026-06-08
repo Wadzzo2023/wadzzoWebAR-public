@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from "react-native"
-import { Camera, CameraType } from "expo-camera"
+import { CameraView, useCameraPermissions } from "expo-camera"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { Color } from "@/components/utils/all-colors"
 import { useARSelection } from "@/components/hooks/use-ARSelection"
@@ -9,7 +9,7 @@ import { useRouter } from "expo-router"
 import { toast, ToastPosition } from "@backpackapp-io/react-native-toast"
 
 const QRScanner = () => {
-    const [hasPermission, setHasPermission] = useState<boolean | null>(null)
+    const [permission, requestPermission] = useCameraPermissions()
     const [scanned, setScanned] = useState(false)
     const [isProcessing, setIsProcessing] = useState(false)
     const [cameraActive, setCameraActive] = useState(true)
@@ -17,11 +17,7 @@ const QRScanner = () => {
     const router = useRouter()
 
     useEffect(() => {
-        const getCameraPermissions = async () => {
-            const { status } = await Camera.requestCameraPermissionsAsync()
-            setHasPermission(status === "granted")
-        }
-        getCameraPermissions()
+        requestPermission()
         setScanned(false)
         setCameraActive(true)
     }, [])
@@ -101,7 +97,7 @@ const QRScanner = () => {
         }
     }
 
-    if (hasPermission === null) {
+    if (!permission) {
         return (
             <View style={styles.containerMaximized}>
                 <View style={styles.header}>
@@ -119,7 +115,7 @@ const QRScanner = () => {
         )
     }
 
-    if (hasPermission === false) {
+    if (!permission.granted) {
         return (
             <View style={styles.containerMaximized}>
                 <View style={styles.header}>
@@ -143,10 +139,10 @@ const QRScanner = () => {
     return (
         <View style={styles.containerMaximized}>
             {cameraActive && (
-                <Camera
-                    type={CameraType.back}
+                <CameraView
+                    facing="back"
                     style={StyleSheet.absoluteFillObject}
-                    onBarCodeScanned={cameraActive ? handleQRCodeScanned : undefined}
+                    onBarcodeScanned={cameraActive ? handleQRCodeScanned : undefined}
                 >
                     <View style={styles.header}>
                         <TouchableOpacity style={styles.closeButtonCamera} onPress={handleQRClose}>
@@ -182,7 +178,7 @@ const QRScanner = () => {
                             </View>
                         )}
                     </View>
-                </Camera>
+                </CameraView>
             )}
         </View>
     )

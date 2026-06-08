@@ -197,7 +197,7 @@ const SingleBountyItem = () => {
   return (
     <View style={styles.container}>
       <Appbar.Header style={styles.appbar}>
-        <Appbar.BackAction iconColor="white" onPress={() => router.back()} />
+        <Appbar.Action icon="arrow-left" iconColor="white" onPress={() => router.back()} />
         <Appbar.Content
           titleStyle={{
             color: "white",

@@ -2,21 +2,16 @@
   "expo": {
     "name": "Wadzzo",
     "slug": "Wadzzo",
-    "version": "4.8.2",
+    "version": "4.8.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "com.thebillboardapp.wadzzo",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
-      "buildNumber": "2",
       "usesAppleSignIn": true,
       "supportsTablet": true,
       "bundleIdentifier": "com.thebillboardapp.wadzzo",
+      "appleTeamId": "L5747V2LKA",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photo library to allow you to select photo or content to view in Augmented Reality(AR)",
         "NSPhotoLibraryAddUsageDescription": "Allow $(PRODUCT_NAME) to save photos to your photo library.",
@@ -25,57 +20,56 @@
         "NSLocationAlwaysUsageDescription": "Allow $(PRODUCT_NAME) to access your location to show you items nearby",
         "NSLocationWhenInUseUsageDescription": "Allow $(PRODUCT_NAME) to access your location to show you items nearby",
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "privacyManifests": {
+        "NSPrivacyTracking": false,
+        "NSPrivacyCollectedDataTypes": [
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePhotoLibrary",
+            "NSPrivacyCollectedDataTypeLinked": false,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeLocation",
+            "NSPrivacyCollectedDataTypeLinked": false,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
+          }
+        ],
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryPhotoLibrary",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "NSPrivacyAccessedAPIReasonAppFunctionality"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryLocation",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "NSPrivacyAccessedAPIReasonAppFunctionality"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "NSPrivacyAccessedAPIReasonAppFunctionality"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "NSPrivacyAccessedAPIReasonAppFunctionality"
+            ]
+          }
+        ]
       }
     },
-    "privacyManifest": {
-      "NSPrivacyTracking": false,
-      "NSPrivacyCollectedDataTypes": [
-        {
-          "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePhotoLibrary",
-          "NSPrivacyCollectedDataTypeLinked": false,
-          "NSPrivacyCollectedDataTypeTracking": false,
-          "NSPrivacyCollectedDataTypePurposes": [
-            "NSPrivacyCollectedDataTypePurposeAppFunctionality"
-          ]
-        },
-        {
-          "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeLocation",
-          "NSPrivacyCollectedDataTypeLinked": false,
-          "NSPrivacyCollectedDataTypeTracking": false,
-          "NSPrivacyCollectedDataTypePurposes": [
-            "NSPrivacyCollectedDataTypePurposeAppFunctionality"
-          ]
-        }
-      ],
-      "NSPrivacyAccessedAPITypes": [
-        {
-          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryPhotoLibrary",
-          "NSPrivacyAccessedAPITypeReasons": [
-            "NSPrivacyAccessedAPIReasonAppFunctionality"
-          ]
-        },
-        {
-          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryLocation",
-          "NSPrivacyAccessedAPITypeReasons": [
-            "NSPrivacyAccessedAPIReasonAppFunctionality"
-          ]
-        },
-        {
-          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-          "NSPrivacyAccessedAPITypeReasons": [
-            "NSPrivacyAccessedAPIReasonAppFunctionality"
-          ]
-        },
-        {
-          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
-          "NSPrivacyAccessedAPITypeReasons": [
-            "NSPrivacyAccessedAPIReasonAppFunctionality"
-          ]
-        }
-      ]
-    },
     "android": {
-      "versionCode": "2",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -85,10 +79,10 @@
         "android.permission.CAMERA",
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
-      ]
+      ],
+      "predictiveBackGestureEnabled": false
     },
     "web": {
-      "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
@@ -116,18 +110,18 @@
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location to show you items nearby."
         }
       ],
+      "expo-font",
+      "expo-apple-authentication",
       [
         "@rnmapbox/maps",
         {
-          "RNMapboxMapsDownloadToken": "sk.eyJ1Ijoid2FkenpvIiwiYSI6ImNtMXdnMG9rdzBsdTUycXM5eGUyZ3duNmEifQ.m6L76S3I7p0Sl3ik2kA65A",
-          "RNMapboxMapsVersion": "11.8.0"
+          "RNMapboxMapsVersion": "11.18.2"
         }
       ],
-      "expo-font",
-      "expo-apple-authentication"
     ],
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "reactCompiler": true
     },
     "extra": {
       "router": {

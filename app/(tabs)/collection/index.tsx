@@ -8,7 +8,6 @@ import React, {
 } from "react";
 import {
   ActivityIndicator,
-  findNodeHandle,
   FlatList,
   Image,
   LayoutChangeEvent,
@@ -109,22 +108,13 @@ export default function MyCollectionScreen() {
   ];
   const onButtonLayout = useCallback(
     (event: LayoutChangeEvent, index: number) => {
-      if (scrollViewRef.current) {
-        const scrollViewHandle = findNodeHandle(scrollViewRef.current);
-        if (scrollViewHandle) {
-          event.target.measureLayout(
-            scrollViewHandle,
-            (x, y, width, height) => {
-              setButtonLayouts((prevLayouts) => {
-                const newLayouts = [...prevLayouts];
-                newLayouts[index] = { x, y, width, height };
-                return newLayouts;
-              });
-            },
-            () => console.error("Failed to measure layout")
-          );
-        }
-      }
+      event.target.measureInWindow((x, y, width, height) => {
+        setButtonLayouts((prevLayouts) => {
+          const newLayouts = [...prevLayouts];
+          newLayouts[index] = { x, y, width, height };
+          return newLayouts;
+        });
+      });
     },
     []
   );
