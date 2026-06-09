@@ -1,0 +1,8 @@
+# Coin Material
+newmtl CoinMaterial
+Ka 1.000 1.000 1.000
+Kd 1.000 1.000 1.000
+Ks 0.800 0.800 0.800
+Ns 96.000
+d 1.0
+illum 2

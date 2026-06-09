@@ -48,7 +48,7 @@ type ButtonLayout = {
   height: number;
 };
 export default function MyCollectionScreen() {
-  const [sortBy, setSortBy] = useState("title");
+  const [sortBy, setSortBy] = useState("claimedAt");
   const [sortMenuVisible, setSortMenuVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
@@ -99,6 +99,7 @@ export default function MyCollectionScreen() {
       auto_collect: false,
       brand_id: "1",
       brand_image_url: "https://app.wadzzo.com/images/loading.png",
+      circular_image_url: "https://app.wadzzo.com/images/circular-default.png",
       brand_name: "Dummy Brand",
       modal_url: "https://www.google.com",
       viewed: true,
@@ -130,7 +131,7 @@ export default function MyCollectionScreen() {
           credentials: "include",
         }
       );
-
+      console.log("Fetch collections response:", response);
       if (!response.ok) {
         // console.log("Failed to fetch collections");
       }
@@ -178,11 +179,17 @@ export default function MyCollectionScreen() {
     setRefreshing(false);
   };
   const sortLocations = (locations: ConsumedLocation[]) => {
+    console.log("Sorting locations by:", sortBy);
+
     return [...locations].sort((a, b) => {
       if (sortBy === "title") {
         return a.title.localeCompare(b.title);
       } else if (sortBy === "remaining") {
         return b.collection_limit_remaining - a.collection_limit_remaining;
+      } else if (sortBy === "claimedAt") {
+        const aDate = a.claimedAt ? new Date(a.claimedAt).getTime() : 0;
+        const bDate = b.claimedAt ? new Date(b.claimedAt).getTime() : 0;
+        return bDate - aDate;
       }
       return 0;
     });

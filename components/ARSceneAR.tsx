@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   StyleSheet,
   Image,
-  Linking,
 } from "react-native";
 import {
   ViroARScene,
@@ -183,18 +182,21 @@ function NoItemsWarning({ nearbyPinDistance }: NoItemsWarningProps) {
 interface ARPinProps {
   item: ConsumedLocation;
   position: [number, number, number];
+  pinScale: number;
   singleAR: boolean;
   imageSource: { uri: string };
   onFocus: (item: ConsumedLocation) => void;
   onBlur: () => void;
 }
 
-function ARPin({ item, position, singleAR, imageSource, onFocus, onBlur }: ARPinProps) {
+function ARPin({ item, position, pinScale, singleAR, imageSource, onFocus, onBlur }: ARPinProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const resolvedPosition: [number, number, number] = singleAR
     ? [0, 0, -5]
     : position;
+
+  const s = singleAR ? 1 : pinScale;
 
   const handleHover = useCallback(
     (hovering: boolean) => {
@@ -207,14 +209,6 @@ function ARPin({ item, position, singleAR, imageSource, onFocus, onBlur }: ARPin
     },
     [item, onFocus, onBlur]
   );
-
-  const handleLinkPress = useCallback(() => {
-    if (item.url) {
-      Linking.openURL(item.url).catch((err) =>
-        console.error("Failed to open URL:", err)
-      );
-    }
-  }, [item.url]);
 
   const truncatedTitle = item.title && item.title.length > 28
     ? item.title.slice(0, 28) + "..."
@@ -230,13 +224,14 @@ function ARPin({ item, position, singleAR, imageSource, onFocus, onBlur }: ARPin
     <ViroNode
       animation={{ name: "rotate", run: true, loop: true }}
       position={resolvedPosition}
+      scale={[s, s, s]}
       onHover={handleHover}
     >
       {/* ── Coin base ── */}
       <Viro3DObject
-        rotation={[0, 0, 0]}
-        source={require("../assets/circle/10438_Circular_Grass_Patch_v1_iterations-2.obj")}
-        scale={[0.002, 0.002, 0.002]}
+        rotation={[90, 0, 0]}
+        source={require("../assets/circle/coin.obj")}
+        scale={[0.4, 0.4, 0.4]}
         position={[0, 0.5, 0]}
         type="OBJ"
       />
@@ -247,7 +242,7 @@ function ARPin({ item, position, singleAR, imageSource, onFocus, onBlur }: ARPin
         height={1}
         width={1}
         rotation={[0, 180, 0]}
-        scale={[0.4, 0.4, 0.01]}
+        scale={[0.8, 0.8, 0.01]}
         position={[0, 0.5, -0.022]}
       />
       <ViroImage
@@ -255,121 +250,95 @@ function ARPin({ item, position, singleAR, imageSource, onFocus, onBlur }: ARPin
         height={1}
         width={1}
         rotation={[0, 0, 0]}
-        scale={[0.4, 0.4, 0.01]}
+        scale={[0.8, 0.8, 0.01]}
         position={[0, 0.5, 0.022]}
       />
 
       {/* ── Coin label ── */}
       <ViroText
         text={item.title}
-        scale={[0.7, 0.7, 0.7]}
-        position={[0, 1.1, 0]}
         style={styles.itemTitle}
+        width={2}
+        height={0.3}
+        scale={[0.7, 0.7, 0.7]}
+        position={[0, -0.1, 0]}
+        transformBehaviors={["billboardY"]}
       />
 
       {/* ── Detail billboard ── */}
       <ViroNode
         visible={isHovered}
-        position={[0, 2.6, 0]}
+        position={[0, 1.8, 0]}
         transformBehaviors={["billboardY"]}
-        animation={{ name: "billboardFadeIn", run: isHovered, loop: false }}
-        scale={[0.8, 0.8, 0.8]}
-        opacity={0}
+        scale={[0.55, 0.55, 0.55]}
       >
         {/* Card background */}
         <ViroQuad
-          position={[0, 0, -0.02]}
-          scale={[3.4, 2.8, 1]}
+          position={[0, 0.05, -0.02]}
+          scale={[4.6, 2.6, 1]}
           materials={["billboardBg"]}
         />
         {/* Left accent strip */}
         <ViroQuad
-          position={[-1.68, 0, -0.01]}
-          scale={[0.06, 2.8, 1]}
+          position={[-2.28, 0.05, -0.01]}
+          scale={[0.06, 2.6, 1]}
           materials={["billboardAccent"]}
         />
 
-        {/* ── Header row ── */}
+        {/* ── Header section: image, title, brand · remaining ── */}
         <ViroImage
           source={imageSource}
-          height={0.6}
-          width={0.6}
-          position={[-1.1, 0.85, 0]}
+          height={0.55}
+          width={0.55}
+          position={[-1.5, 0.85, 0]}
         />
         <ViroText
           text={truncatedTitle}
           style={styles.billboardTitle}
-          width={2.0}
-          height={0.35}
-          position={[0.15, 0.95, 0]}
+          width={2.8}
+          height={0.55}
+          position={[0.3, 0.9, 0]}
         />
         <ViroText
-          text={item.brand_name}
+          text={`${item.brand_name}  ·  ${item.collection_limit_remaining} remaining`}
           style={styles.billboardBrand}
-          width={2.0}
+          width={2.8}
           height={0.2}
-          position={[0.15, 0.7, 0]}
+          position={[0.3, 0.5, 0]}
         />
 
         {/* Divider */}
         <ViroQuad
-          position={[0, 0.48, -0.01]}
-          scale={[2.9, 0.012, 1]}
+          position={[0, 0.32, -0.01]}
+          scale={[4.0, 0.012, 1]}
           materials={["billboardDivider"]}
         />
 
-        {/* ── Description ── */}
+        {/* ── Description (5 lines) ── */}
         <ViroText
           text={truncatedDesc}
           style={styles.billboardDesc}
-          width={2.9}
-          height={0.7}
-          position={[0, 0.02, 0]}
+          width={4.0}
+          height={0.85}
+          position={[0, -0.15, 0]}
         />
 
         {/* Divider */}
         <ViroQuad
-          position={[0, -0.4, -0.01]}
-          scale={[2.9, 0.012, 1]}
+          position={[0, -0.65, -0.01]}
+          scale={[4.0, 0.012, 1]}
           materials={["billboardDivider"]}
         />
 
-        {/* ── Footer ── */}
-        <ViroNode position={[-0.7, -0.6, 0]}>
-          <ViroSphere
-            radius={0.06}
-            materials={["footerDot"]}
-            position={[-0.35, 0, 0]}
-            animation={{ name: "dotPulse", run: true, loop: true }}
-          />
-          <ViroText
-            text={`${item.collection_limit_remaining} remaining`}
-            style={styles.billboardFooterLeft}
-            width={1.2}
-            height={0.2}
-            position={[0.15, 0, 0]}
-          />
-        </ViroNode>
-
-        {/* Link button — ViroQuad as tap target for reliable iOS clicks */}
+        {/* ── Link URL ── */}
         {item.url ? (
-          <ViroNode
-            position={[0.75, -0.6, 0]}
-            onClick={handleLinkPress}
-          >
-            <ViroQuad
-              position={[0, 0, -0.005]}
-              scale={[1.2, 0.3, 1]}
-              materials={["linkButtonBg"]}
-            />
-            <ViroText
-              text="Open Link  >"
-              style={styles.billboardLink}
-              width={1.1}
-              height={0.2}
-              position={[0, 0, 0]}
-            />
-          </ViroNode>
+          <ViroText
+            text={item.url.length > 45 ? item.url.slice(0, 45) + "..." : item.url}
+            style={styles.billboardLink}
+            width={4.0}
+            height={0.22}
+            position={[0, -0.85, 0]}
+          />
         ) : null}
       </ViroNode>
     </ViroNode>
@@ -404,20 +373,49 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
 
   // ── Stable image source objects — same reference = no unnecessary re-renders ──
   const imageSources = useMemo(
-    () => items.slice(0, 20).map((item) => ({ uri: item.image_url })),
+    () => items.slice(0, 20).map((item) => ({ uri: item.circular_image_url ?? item.image_url })),
     [items]
   );
 
-  // ── Pin world positions — computed once per items change ──
-  const itemPositions = useMemo<[number, number, number][]>(() => {
-    return items.slice(0, 20).map(() => {
-      const angleY = Math.random() * Math.PI * 2;
-      const angleX = Math.random() * Math.PI - Math.PI / 2;
-      const radius = 8;
-      const x = radius * Math.cos(angleX) * Math.cos(angleY);
-      const z = radius * Math.cos(angleX) * Math.sin(angleY);
-      return [x, 0, z];
-    });
+  // ── Pin world positions — random placement around user within 3–20m radius ──
+  const { itemPositions, pinScales } = useMemo(() => {
+    const count = Math.min(items.length, 20);
+    if (count === 0) return { itemPositions: [] as [number, number, number][], pinScales: [] as number[] };
+
+    const minDist = 3;
+    const maxDist = 20;
+    const minAngularSep = 0.35;
+    const positions: [number, number, number][] = [];
+    const scales: number[] = [];
+    const angles: number[] = [];
+
+    for (let i = 0; i < count; i++) {
+      let attempts = 0;
+      let angle: number, dist: number, y: number;
+      do {
+        angle = Math.random() * Math.PI * 2;
+        dist = minDist + Math.random() * (maxDist - minDist);
+        y = -1.5 + Math.random() * 4;
+        attempts++;
+      } while (
+        attempts < 80 &&
+        angles.some((a) => {
+          let diff = Math.abs(a - angle);
+          if (diff > Math.PI) diff = Math.PI * 2 - diff;
+          return diff < minAngularSep;
+        })
+      );
+      angles.push(angle);
+      positions.push([
+        dist * Math.cos(angle),
+        y,
+        dist * Math.sin(angle),
+      ]);
+      const t = (dist - minDist) / (maxDist - minDist);
+      scales.push(2.0 - t * 1.0);
+    }
+
+    return { itemPositions: positions, pinScales: scales };
   }, [items]);
 
   // ── Stable callbacks — ARPin memo comparator won't see new references ──
@@ -461,6 +459,7 @@ const ARSceneAR: React.FC<ARSceneARProps> = ({
                 key={`pin-${item.id}`}
                 item={item}
                 position={itemPositions[index]}
+                pinScale={pinScales[index]}
                 singleAR={singleAR}
                 imageSource={imageSources[index]}
                 onFocus={handleFocus}
@@ -511,7 +510,6 @@ const styles = StyleSheet.create({
   itemTitle: {
     fontFamily: "Arial",
     fontSize: 12,
-    color: Color.wadzzo,
     textAlignVertical: "center",
     textAlign: "center",
   },
@@ -548,11 +546,10 @@ const styles = StyleSheet.create({
   },
   billboardLink: {
     fontFamily: "Arial",
-    fontSize: 13,
-    color: "#FFFFFF",
+    fontSize: 11,
+    color: "#93c5fd",
     textAlignVertical: "center",
-    textAlign: "center",
-    fontWeight: "bold",
+    textAlign: "left",
   },
   warningText: {
     fontFamily: "Arial",

@@ -51,7 +51,20 @@ const ARViewScreen = () => {
     const [modelLoading, setModelLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [scale, setScale] = useState(1)
-    const [sceneKey, setSceneKey] = useState(0) // Add scene key for forcing re-render
+    const [modelRotation, setModelRotation] = useState<number[]>([0, 0, 0])
+    const [modelPosition, setModelPosition] = useState<number[]>([0, 0, 0])
+
+    const handleScaleChange = useCallback((newScale: number) => {
+        setScale(newScale)
+    }, [])
+
+    const handleRotationChange = useCallback((newRotation: number[]) => {
+        setModelRotation(newRotation)
+    }, [])
+
+    const handlePositionChange = useCallback((newPosition: number[]) => {
+        setModelPosition(newPosition)
+    }, [])
 
     // Zoom constants
     const MIN_SCALE = 0.5
@@ -79,30 +92,9 @@ const ARViewScreen = () => {
         })
     }, [scale])
 
-    // Force scene re-render when scale changes
-    useEffect(() => {
-        console.log("📏 Scale state changed in ARViewScreen:", scale)
-        setSceneKey((prev) => prev + 1) // Force ViroARSceneNavigator to re-render
-    }, [scale])
-
-    // Memoize the scene configuration to ensure it updates with scale changes
-    const sceneConfig = useMemo(() => {
-        console.log("🎬 Creating AR Scene config with scale:", scale)
-        return {
-            scene: () => {
-                console.log("🎭 Scene function called with scale:", scale)
-                return (
-                    <QRscreenAR
-                        qrId={id}
-                        qrItemData={qrItemData!}
-                        onModelLoadStart={() => setModelLoading(true)}
-                        onModelLoadEnd={() => setModelLoading(false)}
-                        modelScale={scale}
-                    />
-                )
-            },
-        }
-    }, [id, qrItemData, scale]) // Dependencies include scale
+    const sceneConfig = useMemo(() => ({
+        scene: QRscreenAR as any,
+    }), [])
 
     // Add delay before initializing AR to ensure camera is released
     useEffect(() => {
@@ -251,7 +243,7 @@ const ARViewScreen = () => {
         )
     }
 
-    console.log("🎯 Rendering AR with scale:", scale, "sceneKey:", sceneKey)
+    console.log("🎯 Rendering AR with scale:", scale)
 
     return (
         <View style={styles.container}>
@@ -262,11 +254,21 @@ const ARViewScreen = () => {
                 <Appbar.Content title="QR Scanner" titleStyle={styles.appbarTitle} />
             </Appbar.Header>
 
-            {/* AR View with key to force re-render */}
             <ViroARSceneNavigator
-                key={sceneKey} // Force re-render when scale changes
                 autofocus={true}
                 initialScene={sceneConfig}
+                viroAppProps={{
+                    qrId: id,
+                    qrItemData: qrItemData,
+                    onModelLoadStart: () => setModelLoading(true),
+                    onModelLoadEnd: () => setModelLoading(false),
+                    modelScale: scale,
+                    modelRotation: modelRotation,
+                    modelPosition: modelPosition,
+                    onScaleChange: handleScaleChange,
+                    onRotationChange: handleRotationChange,
+                    onPositionChange: handlePositionChange,
+                }}
                 style={styles.arNavigator}
                 worldAlignment="Gravity"
                 videoQuality="High"

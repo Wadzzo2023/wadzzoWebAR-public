@@ -7,6 +7,7 @@ export type ConsumedLocation = {
     brand_name: string;
     url: string;
     image_url: string;
+    circular_image_url: string
     collected: boolean;
     collection_limit_remaining: number;
     auto_collect: boolean;
@@ -16,4 +17,5 @@ export type ConsumedLocation = {
     viewed: boolean;
     redeemCode: string | null
     isRedeemed: boolean | null
+    claimedAt?: Date | null;
 };

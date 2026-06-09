@@ -8,6 +8,7 @@ import {
   Animated,
   Dimensions,
   Image,
+  Linking,
   StyleSheet,
   TouchableOpacity,
   Vibration,
@@ -256,7 +257,7 @@ const ARScene = () => {
       setTimeout(() => {
         setShowCaptureButton(true);
         setIsFirstTime(false);
-      }, 6000);
+      }, 4000);
     } else {
       setShowCaptureButton(true);
     }
@@ -314,6 +315,14 @@ const ARScene = () => {
               style={styles.captureIcon}
             />
           </TouchableOpacity>
+          {capturedItem.url ? (
+            <TouchableOpacity
+              style={styles.openLinkButton}
+              onPress={() => Linking.openURL(capturedItem.url)}
+            >
+              <Text style={styles.openLinkText}>Open Link</Text>
+            </TouchableOpacity>
+          ) : null}
         </>
       )}
 
@@ -402,6 +411,20 @@ const styles = StyleSheet.create({
   captureIcon: {
     width: 80,
     height: 100,
+  },
+  openLinkButton: {
+    position: "absolute",
+    bottom: 50,
+    right: 20,
+    backgroundColor: Color.wadzzo,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  openLinkText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
   },
   itemTitle: {
     fontFamily: "Arial",
