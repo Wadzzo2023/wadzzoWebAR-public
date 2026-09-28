@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { Bike, Bus, Car, Footprints, Navigation, Package, ScanLine, Timer, type LucideIcon } from "lucide-react-native";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 
 import { BrandAvatar } from "~/components/brand/BrandAvatar";
@@ -27,14 +27,19 @@ const MODES: { id: TravelMode; icon: LucideIcon; label: string }[] = [
  * walking to?". The primary action flips with proximity — inside 75 m it's
  * Capture, outside it's Directions.
  */
-export function PinSheet({ pin, fix, onClose, onCapture, onDirections }: { pin: ArPin | null; fix: GeoFix | null; onClose: () => void; onCapture: (pin: ArPin) => void; onDirections: (pin: ArPin, mode: TravelMode) => void }) {
+export const PinSheet = memo(function PinSheet({ pin, fix, onClose, onCapture, onDirections }: { pin: ArPin | null; fix: GeoFix | null; onClose: () => void; onCapture: (pin: ArPin) => void; onDirections: (pin: ArPin, mode: TravelMode) => void }) {
   const [mode, setMode] = useState<TravelMode>("walk");
+  // Keep showing the last pin while the sheet slides away: `pin` goes null the
+  // moment it starts closing, and dropping the body then collapsed the sheet
+  // to an empty strip mid-animation (the jumpy close).
+  const [shown, setShown] = useState<ArPin | null>(pin);
+  if (pin && pin !== shown) setShown(pin);
   return (
-    <BottomSheet open={Boolean(pin)} onClose={onClose}>
-      {pin && <Body pin={pin} fix={fix} mode={mode} setMode={setMode} onCapture={onCapture} onDirections={onDirections} onClose={onClose} />}
+    <BottomSheet open={Boolean(pin)} onClose={onClose} onClosed={() => setShown(null)}>
+      {shown && <Body pin={shown} fix={fix} mode={mode} setMode={setMode} onCapture={onCapture} onDirections={onDirections} onClose={onClose} />}
     </BottomSheet>
   );
-}
+});
 
 function Body({ pin, fix, mode, setMode, onCapture, onDirections, onClose }: { pin: ArPin; fix: GeoFix | null; mode: TravelMode; setMode: (m: TravelMode) => void; onCapture: (p: ArPin) => void; onDirections: (p: ArPin, m: TravelMode) => void; onClose: () => void }) {
   const { c } = useColors();

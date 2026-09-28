@@ -18,6 +18,11 @@ export function arTextureUrl(url: string) {
   return `${SERVER_URL}/_next/image?url=${encodeURIComponent(url)}&w=${SIZE}&q=${QUALITY}`;
 }
 
+/** A 96 px thumbnail (a default Next size) for small map tiles like cluster billboards. */
+export function thumbUrl(url: string) {
+  return `${SERVER_URL}/_next/image?url=${encodeURIComponent(url)}&w=96&q=${QUALITY}`;
+}
+
 /** The coin face: the brand's image, else the pin's own. */
 export function coinImage(pin: ArPin) {
   return pin.brandImageUrl?.trim() || pin.imageUrl;

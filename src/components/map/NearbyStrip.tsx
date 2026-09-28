@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { Zap } from "lucide-react-native";
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { FlatList, Pressable, View } from "react-native";
 
 import { Glass } from "~/components/ui/surfaces";
@@ -24,7 +24,9 @@ const GAP = 10;
  * screen's real navigation. Keeps the selected card in view when selection
  * comes from the map.
  */
-export function NearbyStrip({ items, selectedId, onSelect, loading = false }: { items: NearbyPin[]; selectedId: string | null; onSelect: (id: string) => void; loading?: boolean }) {
+// Memoized: the map screen re-renders on every GPS/compass update, and each
+// re-render handed the FlatList a new renderItem, re-rendering every card.
+export const NearbyStrip = memo(function NearbyStrip({ items, selectedId, onSelect, loading = false }: { items: NearbyPin[]; selectedId: string | null; onSelect: (id: string) => void; loading?: boolean }) {
   const { c, rarity: rc } = useColors();
   const list = useRef<FlatList<NearbyPin>>(null);
 
@@ -101,4 +103,4 @@ export function NearbyStrip({ items, selectedId, onSelect, loading = false }: { 
       }}
     />
   );
-}
+});

@@ -52,7 +52,7 @@ export function MapControls({
           <Crosshair size={19} strokeWidth={2.1} color={following ? c("ar-green-hot") : c("ar-text-dim")} />
         </Pressable>
         <View className="mx-2.5 h-px bg-ar-line" />
-        <Pressable onPress={onRefetch} disabled={refetching} accessibilityRole="button" accessibilityLabel="Refresh pins" className="h-11 w-11 items-center justify-center">
+        <Pressable onPress={onRefetch} disabled={refetching} accessibilityRole="button" accessibilityLabel={refetching ? "Loading pins" : "Refresh pins"} accessibilityState={{ busy: refetching, disabled: refetching }} className="h-11 w-11 items-center justify-center">
           <Animated.View style={spinStyle}>
             <RotateCw size={18} strokeWidth={2.1} color={c("ar-text-dim")} />
           </Animated.View>

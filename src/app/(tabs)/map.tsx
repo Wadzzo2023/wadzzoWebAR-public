@@ -1,15 +1,17 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { CalendarDays } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { View } from "react-native";
+import { useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { MapCanvas, type MapCanvasHandle } from "~/components/map/MapCanvas";
 import { FilterMenu } from "~/components/map/FilterMenu";
 import { MapControls } from "~/components/map/MapControls";
+import { MapSearch, MapSearchButton } from "~/components/map/MapSearch";
 import { GpsPill, MapToast } from "~/components/map/MapHud";
 import { NearbyStrip } from "~/components/map/NearbyStrip";
 import { PinSheet } from "~/components/map/PinSheet";
+import { metersPerPixel } from "~/components/map/UserPuck";
 import { LocationGate } from "~/components/shell/LocationGate";
 import { ProfileButton } from "~/components/shell/ProfileButton";
 import { useTabBarHeight } from "~/components/shell/BottomTabBar";
@@ -20,9 +22,9 @@ import { useFeedback, useSettings } from "~/lib/ar/feedback";
 import { AR_CAPTURE_RADIUS, distanceMeters } from "~/lib/ar/geo";
 import { warmArTextures } from "~/lib/ar/arTexture";
 import { FALLBACK_CENTER, useGeolocation, useHeading } from "~/lib/ar/location";
-import { filterPins, PIN_FILTERS, sortByDistance, useDiscoveryPins, type PinFilterId } from "~/lib/ar/pins";
+import { filterPins, NEAR_RADIUS_KM, PIN_FILTERS, pinArea, sortByDistance, useDiscoveryPins, type PinFilterId } from "~/lib/ar/pins";
 import { pinStatus } from "~/lib/ar/rarity";
-import type { ArPin, TravelMode } from "~/lib/ar/types";
+import type { ArPin, Coords, TravelMode } from "~/lib/ar/types";
 import { useSession } from "~/lib/auth/session";
 
 /**
@@ -34,11 +36,38 @@ import { useSession } from "~/lib/auth/session";
  * app is open (foreground only, decided); a blip + haptic marks each pin
  * coming into range.
  */
+/** How long the map must stay still before a new area of pins is loaded. */
+const VIEWPORT_SETTLE_MS = 400;
+
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useTabBarHeight();
   const { fix, status, reason, retry } = useGeolocation();
-  const { pins, isLoading, refetch } = useDiscoveryPins();
+
+  // ── Which pins to load ──
+  // Nearby first: until the camera has settled, load the small circle
+  // around you (fast, and what you'll look at first). After that, load
+  // around wherever the map is looking, wide enough to cover the screen at
+  // that zoom — pan to another country and its pins load; zoom out far
+  // enough and it switches to every pin in the world (clustered).
+  const { width: winW, height: winH } = useWindowDimensions();
+  const [viewport, setViewport] = useState<{ center: Coords; zoom: number } | null>(null);
+  // Settle first: zooming out pinch after pinch reports "idle" after each
+  // one. Waiting VIEWPORT_SETTLE_MS for the camera to stay put turns a burst
+  // of zooms into one request (and any request already running for an
+  // older area is cancelled — see usePinsQuery).
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onViewportIdle = useCallback((center: Coords, zoom: number) => {
+    if (settleTimer.current) clearTimeout(settleTimer.current);
+    settleTimer.current = setTimeout(() => setViewport({ center, zoom }), VIEWPORT_SETTLE_MS);
+  }, []);
+  useEffect(() => () => {
+    if (settleTimer.current) clearTimeout(settleTimer.current);
+  }, []);
+  const areaCenter = viewport?.center ?? fix;
+  const areaKm = viewport ? ((Math.hypot(winW, winH) / 2) * metersPerPixel(viewport.center.lat, viewport.zoom) * 1.2) / 1000 : NEAR_RADIUS_KM;
+  const area = pinArea(areaCenter, Math.max(NEAR_RADIUS_KM, areaKm));
+  const { pins, isLoading, isFetching, refetch } = useDiscoveryPins(area);
   // Get AR's small coin/card images resized + cached server-side now, so
   // opening AR doesn't wait on (or stall decoding) full-size originals.
   useEffect(() => {
@@ -65,6 +94,7 @@ export default function MapScreen() {
   const [refetching, setRefetching] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [hudHeight, setHudHeight] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const filters = useMemo(() => (settings.followingOnly ? PIN_FILTERS.filter((f) => f.id !== "all") : PIN_FILTERS), [settings.followingOnly]);
   useEffect(() => {
@@ -137,18 +167,22 @@ export default function MapScreen() {
       .finally(() => setRefetching(false));
   }, [refetch]);
 
-  const handleSelect = useCallback(
-    (id: string | null) => {
-      setSelectedId(id);
-      if (!id) return;
-      const pin = pins.find((p) => p.id === id);
-      if (pin) {
-        setFollowing(false);
-        mapRef.current?.flyToPin(pin);
-      }
-    },
-    [pins],
-  );
+  // Stable across pin refetches (reads the latest list from a ref): every
+  // memoized marker takes this as a prop, so a new function each refetch
+  // re-rendered all of them.
+  const pinsRef = useRef(pins);
+  useEffect(() => {
+    pinsRef.current = pins;
+  }, [pins]);
+  const handleSelect = useCallback((id: string | null) => {
+    setSelectedId(id);
+    if (!id) return;
+    const pin = pinsRef.current.find((p) => p.id === id);
+    if (pin) {
+      setFollowing(false);
+      mapRef.current?.flyToPin(pin);
+    }
+  }, []);
 
   const handleCapture = useCallback(
     (pin: ArPin) => {
@@ -159,6 +193,9 @@ export default function MapScreen() {
     },
     [requireAuth],
   );
+
+  // Stable, so the memoized PinSheet doesn't re-render on every heading tick.
+  const closeSheet = useCallback(() => setSelectedId(null), []);
 
   const handleDirections = useCallback((pin: ArPin, mode: TravelMode) => {
     setSelectedId(null);
@@ -177,6 +214,7 @@ export default function MapScreen() {
         following={following}
         onUserPan={() => setFollowing(false)}
         headingUp={headingUp}
+        onViewportIdle={onViewportIdle}
         heading={heading}
       />
 
@@ -187,7 +225,10 @@ export default function MapScreen() {
         onLayout={(e) => setHudHeight(e.nativeEvent.layout.height)}
         style={{ position: "absolute", left: 0, right: 0, top: 0, paddingTop: insets.top + 14, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, zIndex: 30 }}
       >
-        <FilterMenu filters={filters} value={filter} onChange={setFilter} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          <FilterMenu filters={filters} value={filter} onChange={setFilter} />
+          <MapSearchButton onPress={() => setSearchOpen(true)} />
+        </View>
         {/* Live status and profile share one capsule, top-right. */}
         <Glass style={{ borderRadius: 999, flexDirection: "row", alignItems: "center", gap: 2, paddingLeft: 6, paddingRight: 3, paddingVertical: 3 }}>
           <GpsPill bare status={status} reason={reason} onExplain={setToast} />
@@ -213,7 +254,9 @@ export default function MapScreen() {
             if (!turningOn) mapRef.current?.resetBearing();
             setToast(turningOn ? "Compass map on — turn to look around" : "Compass map off — facing north");
           }}
-          refetching={refetching}
+          // Spins for ANY pin request, not only a tap: first load, a new area
+          // after panning/zooming, and background refreshes.
+          refetching={refetching || isFetching}
           following={following}
           autoCollect={settings.autoCollect}
           onToggleAutoCollect={() => {
@@ -236,7 +279,24 @@ export default function MapScreen() {
 
       <MapToast text={toast} onDone={() => setToast(null)} top={insets.top + 64} />
 
-      <PinSheet pin={selected} fix={fix} onClose={() => setSelectedId(null)} onCapture={handleCapture} onDirections={handleDirections} />
+      <MapSearch
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        pins={pins}
+        fix={fix}
+        onPickPin={(id) => {
+          // A match the current filter hides would open a sheet with no marker.
+          if (!visible.some((p) => p.id === id) && !settings.followingOnly) setFilter("all");
+          handleSelect(id);
+        }}
+        onPickPlace={(coords) => {
+          setSelectedId(null);
+          setFollowing(false);
+          mapRef.current?.recenter(coords, { zoom: 15.5 });
+        }}
+      />
+
+      <PinSheet pin={selected} fix={fix} onClose={closeSheet} onCapture={handleCapture} onDirections={handleDirections} />
     </View>
   );
 }

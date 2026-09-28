@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -40,7 +41,8 @@ export const useUid = () => useSession((s) => s.user?.id ?? null);
 const useSignedIn = () => useSession((s) => Boolean(s.user));
 
 export const qk = {
-  pins: (uid: string | null) => ["pins", uid] as const,
+  // Prefix ["pins"] still matches every area for invalidation.
+  pins: (uid: string | null, area: PinArea | null) => ["pins", uid, area] as const,
   pin: (id: string, uid: string | null) => ["pin", id, uid] as const,
   brands: (uid: string | null) => ["brands", uid] as const,
   brand: (id: string, uid: string | null) => ["brand", id, uid] as const,
@@ -59,12 +61,27 @@ export const qk = {
 
 // ── Pins ─────────────────────────────────────────────────────────────────
 
-export function usePinsQuery() {
+/**
+ * Where to load pins for: a circle, or "world" (every live pin, for a map
+ * zoomed out past what a circle can sensibly cover). `null` = not known yet
+ * (no location and no map view) — nothing is fetched.
+ */
+export type PinArea = { lat: number; lng: number; radiusKm: number } | "world";
+
+export function usePinsQuery(area: PinArea | null) {
   const uid = useUid();
   const q = useQuery({
-    queryKey: qk.pins(uid),
-    queryFn: () => api<ArPin[]>("/pins"),
+    queryKey: qk.pins(uid, area),
+    // Passing React Query's signal is what makes it cancel: when the area
+    // changes (you zoom/pan again) the old key loses its last observer and
+    // its in-flight request is aborted, so only the newest area downloads.
+    queryFn: ({ signal }) =>
+      api<ArPin[]>(area && area !== "world" ? `/pins?lat=${area.lat}&lng=${area.lng}&radiusKm=${area.radiusKm}` : "/pins", { signal }),
+    enabled: area != null,
     staleTime: 30_000,
+    // Moving to a new area keeps the current pins up until the new ones land
+    // (no empty-map flash between areas).
+    placeholderData: keepPreviousData,
   });
   return { ...q, pins: q.data ?? EMPTY_PINS };
 }

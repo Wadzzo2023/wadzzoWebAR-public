@@ -1,31 +1,24 @@
 import { router } from "expo-router";
-import { Camera, Check, Compass, MapPin, Minus, Settings, X } from "lucide-react-native";
+import { Camera, X } from "lucide-react-native";
 import { useEffect } from "react";
-import { Linking, Pressable, ScrollView, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import Animated, { cancelAnimation, Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Defs, Path, RadialGradient as SvgRadialGradient, Rect, Stop } from "react-native-svg";
 
+import { PermissionRow } from "~/components/camera/PermissionRow";
 import { ArButton } from "~/components/ui/ArButton";
 import { Grid } from "~/components/ui/surfaces";
 import { Text } from "~/components/ui/Text";
+import type { PermKey, PermState } from "~/lib/camera/permissions";
 import { useDecorativeMotion } from "~/lib/motion";
 import { useColors } from "~/theme/theme";
 
 import { CameraModeSwitchBar } from "./CameraModeSwitch";
 
-export type PermState = "pending" | "granted" | "denied" | "unsupported";
+export type { PermState };
 
-const FALLBACK: Partial<Record<PermState, string>> = {
-  denied: "Turned off for Wadzzo. Open Settings to allow it.",
-  unsupported: "Not available on this device.",
-};
-
-const ITEMS = [
-  { key: "camera" as const, icon: Camera, title: "Camera", why: "The live view the pins are drawn over. Nothing is recorded or uploaded." },
-  { key: "location" as const, icon: MapPin, title: "Location", why: "Works out which drops are within 75 m of you, and where to place them." },
-  { key: "motion" as const, icon: Compass, title: "Motion & compass", why: "Tells us which way you're facing so a pin stays put when you turn." },
-];
+const PERMS: PermKey[] = ["camera", "location", "motion"];
 
 /**
  * Port of the web's ArPermissionGate: every permission says what it's for,
@@ -86,29 +79,9 @@ export function ArPermissionGate({ states, requesting, onRequest, error }: { sta
         <Text className="mx-auto mt-2 max-w-[19rem] text-center text-[13px] leading-5 text-ar-dim">Point your phone at the world and the drops around you appear where they actually are.</Text>
 
         <View className="mt-7 gap-2">
-          {ITEMS.map(({ key, icon: Icon, title, why }) => {
-            const state = states[key];
-            const bad = state === "denied";
-            const tone = state === "granted" ? { b: c("ar-green", 0.5), bg: c("ar-green", 0.15), fg: c("ar-green-hot") } : bad ? { b: c("ar-danger", 0.5), bg: c("ar-danger", 0.15), fg: c("ar-danger") } : { b: c("ar-line"), bg: c("ar-text", 0.04), fg: c("ar-text-faint") };
-            const StateIcon = state === "granted" ? Check : bad ? X : state === "unsupported" ? Minus : Icon;
-            return (
-              <View key={key} className="flex-row items-start gap-3 rounded-ar border bg-ar-surface p-3.5" style={{ borderColor: state === "granted" ? c("ar-green", 0.45) : bad ? c("ar-danger", 0.45) : c("ar-line") }}>
-                <View className="mt-px h-8 w-8 items-center justify-center rounded-[10px] border" style={{ borderColor: tone.b, backgroundColor: tone.bg }}>
-                  <StateIcon size={15} strokeWidth={state === "pending" ? 2.2 : 3} color={tone.fg} />
-                </View>
-                <View className="min-w-0 flex-1">
-                  <Text className="font-hud text-[12.5px] font-bold uppercase tracking-[1.2px] text-ar-text">{title}</Text>
-                  <Text className="mt-1 text-[11.5px] leading-5 text-ar-faint">{FALLBACK[state] ?? why}</Text>
-                  {bad && (
-                    <Pressable onPress={() => void Linking.openSettings()} className="mt-2 flex-row items-center gap-1.5 self-start">
-                      <Settings size={12} strokeWidth={2.4} color={c("ar-green-hot")} />
-                      <Text className="font-hud text-[10.5px] font-semibold uppercase tracking-[1.2px] text-ar-green-hot">Open Settings</Text>
-                    </Pressable>
-                  )}
-                </View>
-              </View>
-            );
-          })}
+          {PERMS.map((key) => (
+            <PermissionRow key={key} perm={key} state={states[key]} />
+          ))}
         </View>
 
         {error && <Text className="mt-4 text-center text-[12px] leading-5 text-ar-danger">{error}</Text>}

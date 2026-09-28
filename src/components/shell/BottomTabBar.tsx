@@ -1,6 +1,6 @@
 import { Canvas, Circle, SweepGradient, vec } from "@shopify/react-native-skia";
 import { LinearGradient } from "expo-linear-gradient";
-import { router, usePathname } from "expo-router";
+import { usePathname } from "expo-router";
 import { TabTrigger } from "expo-router/ui";
 import { LayoutGrid, Map as MapIcon, Store, Trophy, type LucideIcon } from "lucide-react-native";
 import { forwardRef, useEffect, useState } from "react";
@@ -18,6 +18,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
+import { CameraLauncher } from "~/components/camera/CameraLauncher";
 import { PulseRing } from "~/components/ui/PulseDot";
 import { Text } from "~/components/ui/Text";
 import { useBountyAttention } from "~/lib/api/queries";
@@ -232,36 +233,37 @@ function ArLauncher() {
     spin.value = withRepeat(withTiming(spin.value + 1, { duration: 2400, easing: Easing.linear }), -1);
   }, [live, spin]);
 
-  const R = LAUNCHER / 2 + 3;
-  const center = vec(R, R);
+  // The spinning arc lives INSIDE the button, just within its border (it used
+  // to be a halo around the outside). Sized to the box inside the border.
+  const border = arActive ? 2 : 1;
+  const INNER = LAUNCHER - border * 2;
+  const RING_W = 3;
+  const center = vec(INNER / 2, INNER / 2);
   const transform = useDerivedValue(() => [{ rotate: spin.value * Math.PI * 2 }]);
   const pressed = useSharedValue(0);
   const body = useAnimatedStyle(() => ({ transform: [{ scale: 1 - pressed.value * 0.05 }] }));
+  // The launcher opens the camera picker (AR / QR / Murals), not AR directly.
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const { tap } = useFeedback();
 
   return (
     <View
       pointerEvents="box-none"
       style={{ position: "absolute", top: -26, left: 0, right: 0, alignItems: "center", zIndex: 10 }}
     >
+      <CameraLauncher open={pickerOpen} onClose={() => setPickerOpen(false)} />
       <Pressable
-        onPress={() => router.push("/ar")}
+        onPress={() => {
+          tap();
+          setPickerOpen(true);
+        }}
         onPressIn={() => (pressed.value = withTiming(1, { duration: 90 }))}
         onPressOut={() => (pressed.value = withTiming(0, { duration: 140 }))}
         accessibilityRole="button"
-        accessibilityLabel="Open AR view"
+        accessibilityLabel="Open camera"
+        accessibilityHint="Choose Augmented Reality, QR scan, or Murals"
         style={{ width: LAUNCHER, height: LAUNCHER, alignItems: "center", justifyContent: "center" }}
       >
-        <Canvas style={{ position: "absolute", width: R * 2, height: R * 2, opacity: arActive ? 1 : 0.7 }}>
-          <Circle cx={R} cy={R} r={R}>
-            <SweepGradient
-              c={center}
-              transform={transform}
-              origin={center}
-              colors={[c("ar-green", 0), c("ar-green", 0.95), c("ar-green-hot"), c("ar-green-hot", 0), c("ar-green-hot", 0)]}
-              positions={[0, 60 / 360, 110 / 360, 190 / 360, 1]}
-            />
-          </Circle>
-        </Canvas>
         {arActive && <PulseRing color={c("ar-green-hot")} size={LAUNCHER} />}
         <Animated.View
           style={[
@@ -271,7 +273,7 @@ function ArLauncher() {
               inset: 0,
               borderRadius: LAUNCHER / 2,
               overflow: "hidden",
-              borderWidth: arActive ? 2 : 1,
+              borderWidth: border,
               borderColor: c("ar-green", arActive ? 0.75 : 0.6),
               alignItems: "center",
               justifyContent: "center",
@@ -279,6 +281,17 @@ function ArLauncher() {
           ]}
         >
           <LinearGradient colors={[c("ar-surface-3"), c("ar-void")]} style={StyleSheet.absoluteFill} />
+          <Canvas style={{ position: "absolute", width: INNER, height: INNER, opacity: arActive ? 1 : 0.85 }}>
+            <Circle cx={INNER / 2} cy={INNER / 2} r={INNER / 2 - RING_W / 2 - 1.5} style="stroke" strokeWidth={RING_W} strokeCap="round">
+              <SweepGradient
+                c={center}
+                transform={transform}
+                origin={center}
+                colors={[c("ar-green", 0), c("ar-green", 0.95), c("ar-green-hot"), c("ar-green-hot", 0), c("ar-green-hot", 0)]}
+                positions={[0, 60 / 360, 110 / 360, 190 / 360, 1]}
+              />
+            </Circle>
+          </Canvas>
           <ArGlyph />
         </Animated.View>
       </Pressable>

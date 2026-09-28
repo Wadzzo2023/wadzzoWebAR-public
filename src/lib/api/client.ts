@@ -76,7 +76,10 @@ export async function api<T>(
       body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
       signal: opts.signal,
     });
-  } catch {
+  } catch (err) {
+    // A cancelled request (React Query dropped it for a newer one) is not a
+    // network failure — rethrow it untouched so it's never shown as one.
+    if (opts.signal?.aborted) throw err;
     throw new ApiError(0, "NETWORK", "Can't reach Wadzzo — check your connection.");
   }
 

@@ -1,7 +1,5 @@
 import { ViroARSceneNavigator, type ViroCameraTransform } from "@reactvision/react-viro";
-import { Camera as ExpoCamera } from "expo-camera";
-import * as Location from "expo-location";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useIsFocused, useLocalSearchParams } from "expo-router";
 import { ChevronLeft, Crosshair } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
@@ -20,8 +18,9 @@ import { useCollectPin, usePinQuery } from "~/lib/api/queries";
 import { useFeedback } from "~/lib/ar/feedback";
 import { AR_CAPTURE_RADIUS, distanceMeters, formatDistance } from "~/lib/ar/geo";
 import { useGeolocation, useHeading } from "~/lib/ar/location";
-import { useDiscoveryPins } from "~/lib/ar/pins";
+import { pinArea, useDiscoveryPins } from "~/lib/ar/pins";
 import { isCapturable } from "~/lib/ar/rarity";
+import { checkPermissions, requestPermissions, type PermKey, type PermStates } from "~/lib/camera/permissions";
 import type { ArPin } from "~/lib/ar/types";
 import { useSession } from "~/lib/auth/session";
 import { aimAngle, calibrate, legibilityScale, placeInScene, relativeYaw, viewOnlyTarget, yawFromForward, type Calibration } from "~/lib/viro/placement";
@@ -60,27 +59,30 @@ export default function ArScreen() {
   const focusPinId = params.pin;
   const preferPinId = params.target;
 
+  const focused = useIsFocused();
   const [perm, setPerm] = useState<Record<"camera" | "location" | "motion", PermState>>({ camera: "pending", location: "pending", motion: "pending" });
   const [entered, setEntered] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [gateError, setGateError] = useState<string | null>(null);
 
-  // Skip the gate when everything's already allowed.
+  // Skip the gate once the camera is allowed and location has been answered.
+  // The camera launcher explains these before routing here, so a user who
+  // already said no to location isn't stopped a second time — the AR HUD
+  // shows "Finding your location…" instead. Deep links (/ar?target=…) that
+  // skip the launcher still meet the gate if nothing's been asked yet.
   useEffect(() => {
     void (async () => {
-      const [cam, loc] = await Promise.all([ExpoCamera.getCameraPermissionsAsync(), Location.getForegroundPermissionsAsync()]);
-      const next = { camera: toState(cam), location: toState(loc), motion: toState(loc) };
+      const { states } = await checkPermissions(AR_PERMS);
+      const next = asGateStates(states);
       setPerm(next);
-      if (next.camera === "granted" && next.location === "granted") setEntered(true);
+      if (next.camera === "granted" && next.location !== "pending") setEntered(true);
     })();
   }, []);
 
   const request = useCallback(async () => {
     setRequesting(true);
     setGateError(null);
-    const cam = await ExpoCamera.requestCameraPermissionsAsync();
-    const loc = await Location.requestForegroundPermissionsAsync();
-    const next = { camera: toState(cam), location: toState(loc), motion: toState(loc) };
+    const next = asGateStates((await requestPermissions(AR_PERMS)).states);
     setPerm(next);
     setRequesting(false);
     if (next.camera !== "granted") {
@@ -93,13 +95,19 @@ export default function ArScreen() {
 
   if (!entered) return <ArPermissionGate states={perm} requesting={requesting} onRequest={() => void request()} error={gateError} />;
 
+  // The AR session (ARKit + camera + per-frame pose callbacks into JS) only
+  // lives while this screen is in front. A device CPU report caught ARKit
+  // still running while the app sat on the map — 60% CPU and memory climbing
+  // ~3 MB/s until the whole app froze. Unmounting the navigator tears it down.
+  if (!focused) return <View style={{ flex: 1, backgroundColor: "#000" }} />;
+
   return <ArSession focusPinId={focusPinId} preferPinId={preferPinId} insetsTop={insets.top} insetsBottom={insets.bottom} c={c} rc={rc} />;
 }
 
-function toState(p: { granted: boolean; canAskAgain: boolean; status: string }): PermState {
-  if (p.granted) return "granted";
-  if (p.status === "denied" && !p.canAskAgain) return "denied";
-  return p.status === "denied" ? "denied" : "pending";
+const AR_PERMS: PermKey[] = ["camera", "location", "motion"];
+
+function asGateStates(s: PermStates): Record<"camera" | "location" | "motion", PermState> {
+  return { camera: s.camera ?? "pending", location: s.location ?? "pending", motion: s.motion ?? "pending" };
 }
 
 function ArSession({
@@ -120,7 +128,9 @@ function ArSession({
   const { fix } = useGeolocation();
   // Only once location is allowed (a fix implies it) — iOS rejects the heading watch before that.
   const { heading } = useHeading(fix != null);
-  const { pins: discovery } = useDiscoveryPins();
+  // AR only ever places pins within 200 m: the nearby circle is plenty (and
+  // it's the same area the map loads first, so it's usually already cached).
+  const { pins: discovery } = useDiscoveryPins(pinArea(fix));
   const { data: focusPin } = usePinQuery(focusPinId ?? null);
   const collect = useCollectPin();
   const feedback = useFeedback();

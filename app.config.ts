@@ -94,13 +94,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       "expo-splash-screen",
       {
-        image: "./assets/brand/wadzzo-mark.png",
-        imageWidth: 120,
+        // The W in an AR viewfinder on a radar: sonar rings, compass bezel,
+        // one drop per rarity. Generated from assets/icon.png — circular so
+        // Android 12+'s round splash-icon mask never clips it.
+        image: "./assets/brand/splash-light.png",
+        imageWidth: 280,
         resizeMode: "contain",
-        // First frame of the boot sequence's "ignite" beat, so the native
-        // splash hands over to it without a flash.
+        // Background = the boot sequence's first frame, so the hand-over has
+        // no colour flash.
         backgroundColor: "#F4F8F5",
-        dark: { backgroundColor: "#0A120E" },
+        dark: { image: "./assets/brand/splash-dark.png", backgroundColor: "#0A120E" },
       },
     ],
     // Foreground only (decided): "while using" permission, no background.

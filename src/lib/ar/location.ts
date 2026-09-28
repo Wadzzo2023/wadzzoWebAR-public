@@ -104,6 +104,16 @@ export function useGeolocation({ enabled = true }: { enabled?: boolean } = {}) {
  * heading watch until location is allowed, so callers pass `enabled` only
  * once permission is granted; any other failure just means no compass.
  */
+/**
+ * Throttled: iOS delivers heading many times a second even in a still hand,
+ * and every update re-rendered the whole screen using it (the map screen:
+ * canvas, markers' parent, nearby rail, pin sheet). That kept the JS thread
+ * saturated — a 10 s "VirtualizedList is slow to update" stall and the map
+ * freezing. Now: at most every HEADING_MS, and only for a real turn.
+ */
+const HEADING_MS = 100;
+const HEADING_MIN_DEG = 2;
+
 export function useHeading(enabled: boolean) {
   const [heading, setHeading] = useState<number | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
@@ -111,10 +121,17 @@ export function useHeading(enabled: boolean) {
     if (!enabled) return;
     let s: Location.LocationSubscription | null = null;
     let cancelled = false;
+    let lastDeg: number | null = null;
+    let lastAt = 0;
     Location.watchHeadingAsync((h) => {
       const deg = h.trueHeading >= 0 ? h.trueHeading : h.magHeading;
-      setHeading(deg);
-      setAccuracy(h.accuracy);
+      const now = Date.now();
+      const turned = lastDeg == null ? Infinity : Math.abs(((deg - lastDeg + 540) % 360) - 180);
+      if (turned < HEADING_MIN_DEG || now - lastAt < HEADING_MS) return;
+      lastDeg = deg;
+      lastAt = now;
+      setHeading(Math.round(deg));
+      setAccuracy((a) => (a === h.accuracy ? a : h.accuracy));
     })
       .then((sub) => {
         if (cancelled) sub.remove();
