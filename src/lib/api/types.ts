@@ -150,3 +150,81 @@ export interface SignedUpload {
   fileUrl: string;
   fileName: string;
 }
+
+// ── Events & announcements ─────────────────────────────────────────────────
+// Mirrors wadzzoAR/src/lib/ar/types.ts — `/events*` and `/announcements*`.
+
+/** The brand line shown on every event and announcement. */
+export interface ArEventBrand {
+  id: string;
+  name: string;
+  imageUrl: string;
+}
+
+export interface ArEventCard {
+  id: string;
+  title: string;
+  coverImage: string | null;
+  startDate: string;
+  /** Null for a single-moment event; treat it as ending when it starts. */
+  endDate: string | null;
+  venueName: string | null;
+  address: string | null;
+  /** True when a lat/lng was set — the detail page shows a mini map. */
+  hasVenue: boolean;
+  /** True when the brand added a ticket / livestream / registration link. */
+  hasLink: boolean;
+  brand: ArEventBrand;
+  goingCount: number;
+  /** Null = unlimited RSVPs. */
+  capacity: number | null;
+  viewer: { going: boolean };
+}
+
+export interface ArEventDetail extends ArEventCard {
+  description: string;
+  latitude: number | null;
+  longitude: number | null;
+  link: string | null;
+  linkLabel: string | null;
+  /** Linked drops — `id` is a `Location` id, the same one `pins.byId` takes. */
+  pins: { id: string; title: string; imageUrl: string }[];
+  bounties: { id: number; title: string; imageUrl: string | null }[];
+  commentCount: number;
+  isFull: boolean;
+  isPast: boolean;
+}
+
+export interface ArAnnouncement {
+  id: string;
+  title: string;
+  body: string;
+  images: string[];
+  pinned: boolean;
+  ctaLabel: string | null;
+  ctaUrl: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+  brand: ArEventBrand;
+  commentCount: number;
+}
+
+export type ArCommentTarget = { kind: "event" | "announcement"; id: string };
+
+export interface EventComment {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: { id: string; name: string | null; image: string | null };
+  mine: boolean;
+}
+
+export interface EventPage {
+  items: ArEventCard[];
+  nextCursor: string | null;
+}
+
+export interface AnnouncementPage {
+  items: ArAnnouncement[];
+  nextCursor: string | null;
+}

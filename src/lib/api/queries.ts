@@ -5,7 +5,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -14,7 +14,11 @@ import { persistStorage } from "~/lib/storage";
 
 import { api } from "./client";
 import type {
+  AnnouncementPage,
+  ArAnnouncement,
   ArBrand,
+  ArCommentTarget,
+  ArEventDetail,
   ArPin,
   AttentionItem,
   Balance,
@@ -24,6 +28,8 @@ import type {
   CollectionPage,
   Comment,
   Entry,
+  EventComment,
+  EventPage,
   PinPage,
   Profile,
   ThreadMessage,
@@ -57,6 +63,12 @@ export const qk = {
   comments: (id: number, uid: string | null) => ["comments", id, uid] as const,
   thread: (id: number, uid: string | null) => ["thread", id, uid] as const,
   attention: (uid: string | null) => ["attention", uid] as const,
+  pinSearch: (uid: string | null, q: string) => ["pinSearch", uid, q] as const,
+  events: (uid: string | null, when: string, following: boolean) => ["events", uid, when, following] as const,
+  event: (id: string, uid: string | null) => ["event", id, uid] as const,
+  announcements: (uid: string | null, following: boolean) => ["announcements", uid, following] as const,
+  announcement: (id: string) => ["announcement", id] as const,
+  eventComments: (kind: string, id: string, uid: string | null) => ["eventComments", kind, id, uid] as const,
 };
 
 // ── Pins ─────────────────────────────────────────────────────────────────
@@ -152,6 +164,33 @@ function invalidateAfterClaim(qc: ReturnType<typeof useQueryClient>) {
       qc.invalidateQueries({ queryKey: [k] }),
     ),
   );
+}
+
+/**
+ * Server-side drop search (`/pins/search`): every live drop, not only the
+ * ones loaded for the area on screen. Ranked by relevance on the server.
+ * `near` only picks which point of a multi-point drop comes back, so it's
+ * read at fetch time and left out of the key — a moving GPS fix shouldn't
+ * refire the search.
+ */
+export function usePinSearch(q: string, near: { lat: number; lng: number } | null, enabled = true) {
+  const uid = useUid();
+  const nearRef = useRef(near);
+  useEffect(() => {
+    nearRef.current = near;
+  }, [near]);
+  const term = q.trim();
+  return useQuery({
+    queryKey: qk.pinSearch(uid, term.toLowerCase()),
+    queryFn: ({ signal }) =>
+      api<ArPin[]>("/pins/search", {
+        query: { q: term, lat: nearRef.current?.lat, lng: nearRef.current?.lng, limit: 12 },
+        signal,
+      }),
+    enabled: enabled && term.length >= 2,
+    staleTime: 30_000,
+    placeholderData: (prev) => prev,
+  });
 }
 
 // ── Brands ───────────────────────────────────────────────────────────────
@@ -278,4 +317,108 @@ export function useBountyAttention() {
     [q.data, seen],
   );
   return { unseen, count: unseen.length, ready: !uid || q.isSuccess };
+}
+
+// ── Events & announcements ───────────────────────────────────────────────
+
+export function useEventsQuery(when: "upcoming" | "past", following: boolean, enabled = true) {
+  const uid = useUid();
+  const q = useInfiniteQuery({
+    queryKey: qk.events(uid, when, following),
+    queryFn: ({ pageParam }) =>
+      api<EventPage>("/events", { query: { when, following: following || undefined, limit: 12, cursor: pageParam } }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled,
+    placeholderData: (prev) => prev,
+  });
+  const items = useMemo(() => q.data?.pages.flatMap((p) => p.items) ?? [], [q.data]);
+  return { ...q, items };
+}
+
+export function useEventQuery(id: string) {
+  const uid = useUid();
+  return useQuery({
+    queryKey: qk.event(id, uid),
+    queryFn: () => api<ArEventDetail>(`/events/${encodeURIComponent(id)}`),
+    enabled: Boolean(id),
+    retry: (n, e) => (e as { status?: number }).status !== 404 && n < 2,
+  });
+}
+
+export function useAnnouncementsQuery(following: boolean, enabled = true) {
+  const uid = useUid();
+  const q = useInfiniteQuery({
+    queryKey: qk.announcements(uid, following),
+    queryFn: ({ pageParam }) =>
+      api<AnnouncementPage>("/announcements", { query: { following: following || undefined, limit: 12, cursor: pageParam } }),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    enabled,
+    placeholderData: (prev) => prev,
+  });
+  const items = useMemo(() => q.data?.pages.flatMap((p) => p.items) ?? [], [q.data]);
+  return { ...q, items };
+}
+
+export function useAnnouncementQuery(id: string) {
+  return useQuery({
+    queryKey: qk.announcement(id),
+    queryFn: () => api<ArAnnouncement>(`/announcements/${encodeURIComponent(id)}`),
+    enabled: Boolean(id),
+    retry: (n, e) => (e as { status?: number }).status !== 404 && n < 2,
+  });
+}
+
+const targetPath = (t: ArCommentTarget) =>
+  `/${t.kind === "event" ? "events" : "announcements"}/${encodeURIComponent(t.id)}`;
+
+export function useEventCommentsQuery(target: ArCommentTarget) {
+  const uid = useUid();
+  return useQuery({
+    queryKey: qk.eventComments(target.kind, target.id, uid),
+    queryFn: () => api<EventComment[]>(`${targetPath(target)}/comments`),
+  });
+}
+
+/** Refreshes the thread and the counts shown on the item after a change. */
+function invalidateTarget(qc: ReturnType<typeof useQueryClient>, target: ArCommentTarget) {
+  return Promise.all([
+    qc.invalidateQueries({ queryKey: ["eventComments", target.kind, target.id] }),
+    qc.invalidateQueries({ queryKey: target.kind === "event" ? ["event", target.id] : ["announcement", target.id] }),
+    qc.invalidateQueries({ queryKey: [target.kind === "event" ? "events" : "announcements"] }),
+  ]);
+}
+
+export function useAddEventComment(target: ArCommentTarget) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (content: string) => api(`${targetPath(target)}/comments`, { method: "POST", body: { content } }),
+    onSuccess: () => invalidateTarget(qc, target),
+  });
+}
+
+export function useDeleteEventComment(target: ArCommentTarget) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: string) =>
+      api(`/${target.kind}-comments/${encodeURIComponent(commentId)}`, { method: "DELETE" }),
+    onSuccess: () => invalidateTarget(qc, target),
+  });
+}
+
+export function useRsvp(eventId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (going: boolean) =>
+      api<{ going: boolean; goingCount: number }>(`/events/${encodeURIComponent(eventId)}/rsvp`, {
+        method: "POST",
+        body: { going },
+      }),
+    onSuccess: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: ["event", eventId] }),
+        qc.invalidateQueries({ queryKey: ["events"] }),
+      ]),
+  });
 }

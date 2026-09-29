@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Spinner } from "~/components/ui/Spinner";
 import { Glass } from "~/components/ui/surfaces";
 import { Text } from "~/components/ui/Text";
+import { usePinSearch } from "~/lib/api/queries";
 import { distanceMeters, formatDistance } from "~/lib/ar/geo";
 import type { ArPin, Coords, GeoFix } from "~/lib/ar/types";
 import { useColors } from "~/theme/theme";
@@ -34,24 +35,23 @@ export function MapSearchButton({ onPress }: { onPress: () => void }) {
  * ── MapSearch ──────────────────────────────────────────────────────────────
  *
  * Hidden until the search button opens it. One box, two kinds of answer:
- *  - Drops: this viewer's pins, matched on title / brand / description,
- *    nearest first (local — no request).
+ *  - Drops: every live drop on the server (not just the ones loaded for the
+ *    area on screen), matched on title / brand / description / tags and
+ *    ranked by relevance.
  *  - Places: Mapbox forward geocoding, biased to where you are.
  * Picking a drop selects it (fly-to + sheet); picking a place moves the map.
  */
 export function MapSearch({
   open,
   onClose,
-  pins,
   fix,
   onPickPin,
   onPickPlace,
 }: {
   open: boolean;
   onClose: () => void;
-  pins: ArPin[];
   fix: GeoFix | null;
-  onPickPin: (id: string) => void;
+  onPickPin: (pin: ArPin) => void;
   onPickPlace: (coords: Coords) => void;
 }) {
   const { c } = useColors();
@@ -61,14 +61,19 @@ export function MapSearch({
   const [placesBusy, setPlacesLoading] = useState(false);
   const q = query.trim().toLowerCase();
 
+  // Debounced so each keystroke isn't its own request.
+  const [pinQuery, setPinQuery] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setPinQuery(q), DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [q]);
+  const search = usePinSearch(pinQuery, fix, open);
+  const pinsOn = open && q.length >= 2;
+  const pinsLoading = pinsOn && (search.isFetching || pinQuery !== q);
   const pinHits = useMemo(() => {
-    if (q.length < 2) return [];
-    return pins
-      .filter((p) => p.title.toLowerCase().includes(q) || p.brandName.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q))
-      .map((p) => ({ pin: p, distance: fix ? distanceMeters(fix, p) : null }))
-      .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity))
-      .slice(0, MAX_PINS);
-  }, [pins, q, fix]);
+    if (!pinsOn || !search.data) return [];
+    return search.data.slice(0, MAX_PINS).map((p) => ({ pin: p, distance: fix ? distanceMeters(fix, p) : null }));
+  }, [pinsOn, search.data, fix]);
 
   // Places: debounced, and a newer query cancels the older request.
   const bias = useRef(fix);
@@ -107,7 +112,7 @@ export function MapSearch({
 
   if (!open) return null;
 
-  const nothing = q.length >= 2 && pinHits.length === 0 && places.length === 0 && !placesLoading;
+  const nothing = q.length >= 2 && pinHits.length === 0 && places.length === 0 && !placesLoading && !pinsLoading;
 
   return (
     <View style={{ position: "absolute", inset: 0, zIndex: 60 }}>
@@ -140,13 +145,13 @@ export function MapSearch({
           <Animated.View entering={FadeIn.duration(140)}>
             <Glass style={{ marginTop: 8, borderRadius: 20, maxHeight: 440 }}>
               <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingVertical: 6 }}>
-                {pinHits.length > 0 && <SectionLabel>Drops</SectionLabel>}
+                {(pinHits.length > 0 || pinsLoading) && <SectionLabel loading={pinsLoading}>Drops</SectionLabel>}
                 {pinHits.map(({ pin, distance }) => (
                   <Row
                     key={pin.id}
                     onPress={() => {
                       close();
-                      onPickPin(pin.id);
+                      onPickPin(pin);
                     }}
                     leading={<Image source={{ uri: pin.brandImageUrl }} style={{ width: 34, height: 34, borderRadius: 10 }} contentFit="cover" />}
                     title={pin.title}

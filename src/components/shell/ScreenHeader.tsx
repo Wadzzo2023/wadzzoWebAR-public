@@ -51,7 +51,7 @@ export function ScreenHeader({
 }
 
 /** Round glass back button; with no history (opened from a link) → the map. */
-export function BackButton({ className, fallback = "/map" }: { className?: string; fallback?: "/map" | "/bounty" | "/brands" | "/collection" }) {
+export function BackButton({ className, fallback = "/map" }: { className?: string; fallback?: "/map" | "/bounty" | "/brands" | "/collection" | "/events" }) {
   const { c } = useColors();
   return (
     <Pressable

@@ -104,7 +104,14 @@ export default function MapScreen() {
   const followedIds = useMemo(() => new Set(brands.filter((b) => b.followed).map((b) => b.id)), [brands]);
   const visible = useMemo(() => filterPins(pins, filter, followedIds), [pins, filter, followedIds]);
   const nearby = useMemo(() => sortByDistance(visible, fix).slice(0, 12), [visible, fix]);
-  const selected = useMemo(() => pins.find((p) => p.id === selectedId) ?? null, [pins, selectedId]);
+  // A drop picked from search may be outside the loaded area until the map
+  // settles there and fetches it — show its sheet from the search result
+  // meanwhile, then from the live list once it arrives.
+  const [searchPin, setSearchPin] = useState<ArPin | null>(null);
+  const selected = useMemo(
+    () => pins.find((p) => p.id === selectedId) ?? (searchPin?.id === selectedId ? searchPin : null),
+    [pins, selectedId, searchPin],
+  );
 
   // Blip + haptic the first time each collectible pin comes into range.
   const announced = useRef<Set<string>>(new Set());
@@ -239,7 +246,7 @@ export default function MapScreen() {
       {/* Events, centred under the avatar (capsule's 3pt inset + 36pt avatar). */}
       {hudHeight > 0 && (
         <View pointerEvents="box-none" style={{ position: "absolute", top: hudHeight + 8, right: 19, zIndex: 30 }}>
-          <ArIconButton icon={CalendarDays} label="Events" size={36} onPress={() => setToast("Events are coming soon")} />
+          <ArIconButton icon={CalendarDays} label="Events" size={36} onPress={() => router.push("/events")} />
         </View>
       )}
 
@@ -282,12 +289,14 @@ export default function MapScreen() {
       <MapSearch
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
-        pins={pins}
         fix={fix}
-        onPickPin={(id) => {
+        onPickPin={(pin) => {
           // A match the current filter hides would open a sheet with no marker.
-          if (!visible.some((p) => p.id === id) && !settings.followingOnly) setFilter("all");
-          handleSelect(id);
+          if (filterPins([pin], filter, followedIds).length === 0 && !settings.followingOnly) setFilter("all");
+          setSearchPin(pin);
+          setSelectedId(pin.id);
+          setFollowing(false);
+          mapRef.current?.flyToPin(pin);
         }}
         onPickPlace={(coords) => {
           setSelectedId(null);

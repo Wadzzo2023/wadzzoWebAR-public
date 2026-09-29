@@ -76,6 +76,7 @@ everyone out — the only kill switch.
 | Method | Path | Auth | → tRPC |
 |---|---|---|---|
 | GET | `/pins` | optional | `pins.list`. Signed-out gets public pins; signed-in adds tier/private + `collected`/`locked`. |
+| GET | `/pins/search?q=&lat=&lng=&limit=` | optional | `pins.search` — every live drop (not just the loaded area), matched on title / brand / description / tags, each word must match, best match first; one result per drop (nearest point to `lat`/`lng`). `q` ≥ 2 chars, `limit` ≤ 30. |
 | GET | `/pins/:id` | optional | new `pins.byId` (web currently finds it in the list) |
 | GET | `/brands/:id/pins?tab=live\|yours&cursor=` | optional | `pins.byBrand` |
 | GET | `/me/collection?cursor=&query=&sort=` | ✓ | `pins.collected` |
@@ -120,6 +121,28 @@ Mirrors `bounty.*` one-to-one.
 | DELETE | `/comments/:commentId` | ✓ |
 | GET · POST | `/bounties/:id/thread` | ✓ |
 | GET | `/me/bounty-attention` | ✓ |
+
+## Events & announcements
+
+Public — browsable signed out. Posted by brands from brand-wadzzo's Events
+page; live on save (no approval). Dates are ISO strings. Router:
+`server/api/routers/events.ts`.
+
+| Method | Path | Auth |
+|---|---|---|
+| GET | `/events?when=upcoming\|past&following=true&brandId=&limit=&cursor=` | optional (`following` needs ✓) |
+| GET | `/events/:id` | optional |
+| POST | `/events/:id/rsvp` `{ going: boolean }` → `{ going, goingCount }` | ✓ |
+| GET · POST | `/events/:id/comments` (`{ content }`) | GET optional / POST ✓ |
+| DELETE | `/event-comments/:commentId` | ✓ (author or owning brand) |
+| GET | `/announcements?following=true&brandId=&limit=&cursor=` | optional |
+| GET | `/announcements/:id` (404 once expired) | optional |
+| GET · POST | `/announcements/:id/comments` (`{ content }`) | GET optional / POST ✓ |
+| DELETE | `/announcement-comments/:commentId` | ✓ (author or owning brand) |
+
+"Upcoming" = not yet ended. RSVP respects `capacity` (409 "This event is
+full"). Add-to-calendar is plain HTTP outside `/api/mobile/v1`:
+`GET /api/events/:id/ics` → `text/calendar`.
 
 ## Uploads
 

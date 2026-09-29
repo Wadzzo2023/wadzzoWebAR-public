@@ -82,7 +82,11 @@ export const ArButton = forwardRef<View, Props>(function ArButton(
       }}
       onPressOut={() => (pressed.value = withTiming(0, { duration: 120 }))}
       onPress={onPress}
-      className={cn(block ? "self-stretch" : "self-start", className)}
+      // No alignSelf unless `block`: like the web's inline-flex key, the
+      // button follows its parent — centred in an `items-center` column,
+      // vertically centred in a row. Forcing "self-start" pinned every
+      // non-block button to the left edge of centred empty/error states.
+      className={cn(block && "self-stretch", className)}
       style={[{ opacity: disabled ? 0.4 : 1, paddingBottom: p ? PLINTH : 0 }, style]}
     >
       {p && (
