@@ -12,7 +12,7 @@ export type CameraModeId = "ar" | "qr" | "murals";
 
 export type CameraModeDef = {
   id: CameraModeId;
-  href: "/ar" | "/scan" | null;
+  href: "/ar" | "/scan" | "/murals" | null;
   /** Short name for the switch. */
   label: string;
   /** Full name for the launcher card. */
@@ -46,13 +46,13 @@ export const CAMERA_MODES: CameraModeDef[] = [
   },
   {
     id: "murals",
-    href: null,
+    href: "/murals",
     label: "Murals",
     title: "Murals",
-    blurb: "Point at street art and watch it come alive.",
+    blurb: "Scan murals and street art to earn Wadzzo Coins.",
     icon: Frame,
     accent: "rarity-epic",
-    needs: ["camera"],
+    needs: ["camera", "location", "motion"],
   },
 ];
 

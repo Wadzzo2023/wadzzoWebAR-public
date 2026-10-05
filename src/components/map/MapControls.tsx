@@ -1,4 +1,4 @@
-import { Compass, Crosshair, RotateCw, Zap } from "lucide-react-native";
+import { Compass, Crosshair, Frame, RotateCw, Zap } from "lucide-react-native";
 import { useEffect } from "react";
 import { Pressable, View } from "react-native";
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
@@ -21,6 +21,8 @@ export function MapControls({
   following,
   autoCollect,
   onToggleAutoCollect,
+  muralLayer,
+  onCycleMuralLayer,
 }: {
   onRecenter: () => void;
   onRefetch: () => void;
@@ -30,6 +32,9 @@ export function MapControls({
   following: boolean;
   autoCollect: boolean;
   onToggleAutoCollect: () => void;
+  /** Murals on the map: all, verified only, or hidden. */
+  muralLayer?: "all" | "verified" | "off";
+  onCycleMuralLayer?: () => void;
 }) {
   const { c } = useColors();
   const spin = useSharedValue(0);
@@ -64,6 +69,15 @@ export function MapControls({
       </ArIconButton>
 
       <ArIconButton icon={Compass} label={compassMode ? "Compass map on — switch to north up" : "Turn the map to your heading"} active={compassMode} onPress={onToggleCompass} />
+
+      {onCycleMuralLayer && (
+        <ArIconButton
+          icon={Frame}
+          label={muralLayer === "off" ? "Murals hidden — show them" : muralLayer === "verified" ? "Showing verified murals — hide murals" : "Showing all murals — verified only"}
+          active={muralLayer !== "off"}
+          onPress={onCycleMuralLayer}
+        />
+      )}
     </View>
   );
 }

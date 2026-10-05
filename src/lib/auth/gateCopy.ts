@@ -8,7 +8,8 @@ export type GateIntent =
   | "redeem"
   | "ar"
   | "bounty"
-  | "events";
+  | "events"
+  | "murals";
 
 export const GATE_COPY: Record<GateIntent, { title: string; body: string }> = {
   collect: {
@@ -30,6 +31,10 @@ export const GATE_COPY: Record<GateIntent, { title: string; body: string }> = {
   redeem: {
     title: "Sign in to redeem",
     body: "Redeem codes are tied to the wallet that collected the pin.",
+  },
+  murals: {
+    title: "Sign in to collect this mural",
+    body: "Finding street art is free for everyone — collecting it and earning Wadzzo Coins needs an account.",
   },
   bounty: {
     title: "Sign in to take part",

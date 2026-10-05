@@ -137,6 +137,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // Download token comes from the RNMAPBOX_MAPS_DOWNLOAD_TOKEN env var
     // (.env locally, EAS env for cloud builds) — never in this file.
     ["@rnmapbox/maps", { RNMapboxMapsImpl: "mapbox" }],
+    // Murals detector (MobileCLIP S0 TFLite, run in a VisionCamera frame
+    // processor). CoreML is tried first on iOS, falling back to CPU.
+    ["react-native-fast-tflite", { enableCoreMLDelegate: true }],
     [
       "@react-native-google-signin/google-signin",
       { iosUrlScheme: reversedClientId(process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID) },

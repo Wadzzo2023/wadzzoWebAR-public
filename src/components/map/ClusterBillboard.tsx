@@ -19,14 +19,18 @@ const GAP = 3;
  * post with a bento of the brands inside (1 → full panel, 2 → split, 3 → one
  * tall + two stacked, 4 → 2×2), and the drop count on a badge. Tap to zoom in
  * until it opens up into its pins. Anchored at the foot of the post.
+ * `tone="mural"`: the same billboard for a group of murals — epic purple,
+ * showing their covers.
  */
 export const ClusterBillboard = memo(function ClusterBillboard({
   id,
   count,
   images,
   onPress,
+  tone = "drop",
 }: {
   id: number;
+  tone?: "drop" | "mural";
   count: number;
   /** Up to 4 distinct brand images from inside the cluster. */
   images: string[];
@@ -34,18 +38,20 @@ export const ClusterBillboard = memo(function ClusterBillboard({
 }) {
   const { c } = useColors();
   const imgs = images.slice(0, 4);
+  const mural = tone === "mural";
+  const accent = (a?: number) => (mural ? c("rarity-epic", a) : c("ar-green", a));
 
   return (
     <Pressable
       onPress={() => onPress(id)}
       hitSlop={6}
       accessibilityRole="button"
-      accessibilityLabel={`${count} drops here. Zoom in`}
+      accessibilityLabel={`${count} ${mural ? "murals" : "drops"} here. Zoom in`}
       style={{ width: W + 16, height: H + 26, alignItems: "center" }}
     >
       {/* Ground shadow + post. */}
       <View style={{ position: "absolute", bottom: 0, width: 26, height: 5, borderRadius: 3, backgroundColor: "rgba(0,0,0,0.45)" }} />
-      <LinearGradient colors={[c("ar-green", 0.9), c("ar-green", 0.25)]} style={{ position: "absolute", bottom: 2, width: 3, height: 18, borderRadius: 2 }} />
+      <LinearGradient colors={[accent(0.9), accent(0.25)]} style={{ position: "absolute", bottom: 2, width: 3, height: 18, borderRadius: 2 }} />
 
       {/* The board. */}
       <View
@@ -54,7 +60,7 @@ export const ClusterBillboard = memo(function ClusterBillboard({
           height: H,
           borderRadius: 12,
           borderWidth: 2,
-          borderColor: c("ar-green", 0.75),
+          borderColor: accent(0.75),
           backgroundColor: c("ar-surface"),
           padding: PAD,
           overflow: "hidden",
@@ -75,12 +81,12 @@ export const ClusterBillboard = memo(function ClusterBillboard({
           borderRadius: 10,
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: c("ar-green-hot"),
+          backgroundColor: mural ? c("rarity-epic") : c("ar-green-hot"),
           borderWidth: 2,
           borderColor: c("ar-void"),
         }}
       >
-        <Text className="font-hud text-[10.5px] font-bold" style={{ color: c("ar-void"), fontVariant: ["tabular-nums"] }}>
+        <Text className="font-hud text-[10.5px] font-bold" style={{ color: mural ? "#fff" : c("ar-void"), fontVariant: ["tabular-nums"] }}>
           {count > 999 ? `${Math.floor(count / 1000)}k` : count}
         </Text>
       </View>

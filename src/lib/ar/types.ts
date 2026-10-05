@@ -171,4 +171,6 @@ export interface GeoFix extends Coords {
   heading: number | null;
   speed: number | null;
   timestamp: number;
+  /** The OS flagged this fix as simulated (Android mock provider). */
+  mocked?: boolean;
 }

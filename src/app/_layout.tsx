@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthGate } from "~/components/auth/AuthGate";
+import { MuralPackHud } from "~/components/murals/MuralPackHud";
 import { OnboardingSheet } from "~/components/auth/OnboardingSheet";
 import { BootSequence } from "~/components/boot/BootSequence";
 import { OfflineBanner } from "~/components/shell/OfflineBanner";
@@ -74,10 +75,12 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="ar" options={{ animation: "fade", gestureEnabled: false }} />
               <Stack.Screen name="scan" options={{ animation: "fade", gestureEnabled: false }} />
+              <Stack.Screen name="murals/index" options={{ animation: "fade", gestureEnabled: false }} />
               <Stack.Screen name="auth" options={{ presentation: "modal", animation: "slide_from_bottom" }} />
             </Stack>
             <OfflineBanner />
             <AuthGate />
+            <MuralPackHud />
             <OnboardingSheet />
             {booting && (
               <BootSequence

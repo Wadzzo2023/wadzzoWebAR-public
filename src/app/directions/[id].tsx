@@ -14,6 +14,7 @@ import { Skeleton } from "~/components/ui/Skeleton";
 import { Bevel } from "~/components/ui/surfaces";
 import { Text } from "~/components/ui/Text";
 import { usePinQuery } from "~/lib/api/queries";
+import { useMural } from "~/lib/murals/api";
 import { AR_CAPTURE_RADIUS, distanceMeters, formatDistance } from "~/lib/ar/geo";
 import { useGeolocation } from "~/lib/ar/location";
 import type { TravelMode } from "~/lib/ar/types";
@@ -41,25 +42,42 @@ function stepIcon(step: RouteStep): LucideIcon {
   return ArrowUp;
 }
 
-/** Port of wadzzoAR's /directions/[id]: route map on top, steps below. */
+/** Murals are scannable from this far (matches MuralSheet). */
+const MURAL_SCAN_FROM_M = 100;
+
+/**
+ * Port of wadzzoAR's /directions/[id]: route map on top, steps below.
+ * `?kind=mural` routes to a mural instead of a drop (same screen, purple).
+ */
 export default function DirectionsScreen() {
   const { c, rarity: rc } = useColors();
   const theme = useResolvedTheme();
   const insets = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ id: string; mode?: string }>();
+  const params = useLocalSearchParams<{ id: string; mode?: string; kind?: string }>();
+  const isMural = params.kind === "mural";
   const [mode, setMode] = useState<TravelMode>(isMode(params.mode) ? params.mode : "walk");
   const { fix, status, reason, retry } = useGeolocation();
-  const { data: pin, isLoading: pinLoading } = usePinQuery(params.id ?? null);
+  const { data: pin, isLoading: pinLoading } = usePinQuery(isMural ? null : (params.id ?? null));
+  const muralQuery = useMural(isMural ? (params.id ?? "") : "");
+  const mural = muralQuery.data?.mural;
+  const target = isMural
+    ? mural
+      ? { lat: mural.latitude, lng: mural.longitude, title: mural.title, subtitle: mural.artist ? `by ${mural.artist}` : "Mural", imageUrl: mural.coverUrl }
+      : null
+    : pin
+      ? { lat: pin.lat, lng: pin.lng, title: pin.title, subtitle: pin.brandName, imageUrl: pin.imageUrl }
+      : null;
+  const targetLoading = isMural ? muralQuery.isLoading : pinLoading;
 
   const origin = useMemo(() => (fix ? { lat: Math.round(fix.lat * 1e4) / 1e4, lng: Math.round(fix.lng * 1e4) / 1e4 } : null), [fix]);
   const { route, isLoading: routeLoading, error: routeError } = useDirections({
     from: origin,
-    to: pin ? { lat: pin.lat, lng: pin.lng } : null,
+    to: target ? { lat: target.lat, lng: target.lng } : null,
     mode,
     token: process.env.EXPO_PUBLIC_MAPBOX_TOKEN,
   });
 
-  const crowFlies = pin && fix ? distanceMeters(fix, pin) : 0;
+  const crowFlies = target && fix ? distanceMeters(fix, target) : 0;
   const distance = route?.distance ?? crowFlies;
   const minutes = route ? Math.max(1, Math.round(route.duration / 60)) : null;
   const line = useMemo(
@@ -68,21 +86,21 @@ export default function DirectionsScreen() {
   );
 
   const openInMaps = () => {
-    if (!pin) return;
-    const q = `${pin.lat},${pin.lng}`;
+    if (!target) return;
+    const q = `${target.lat},${target.lng}`;
     const flag = mode === "drive" ? "d" : mode === "transit" ? "r" : mode === "cycle" ? "b" : "w";
     void Linking.openURL(Platform.OS === "ios" ? `http://maps.apple.com/?daddr=${q}&dirflg=${flag}` : `google.navigation:q=${q}&mode=${flag === "b" ? "b" : flag === "d" ? "d" : "w"}`);
   };
 
   if (!fix) return <LocationGate status={status} reason={reason} onRetry={() => void retry()} />;
-  if (!pin) {
+  if (!target) {
     return (
       <View className="flex-1 items-center justify-center gap-4 bg-ar-bg px-8">
-        {pinLoading ? (
+        {targetLoading ? (
           <Skeleton className="h-6 w-40 rounded-full" />
         ) : (
           <>
-            <Text className="font-hud text-[15px] font-bold uppercase tracking-[1.8px] text-ar-dim">Pin not found</Text>
+            <Text className="font-hud text-[15px] font-bold uppercase tracking-[1.8px] text-ar-dim">{isMural ? "Mural not found" : "Pin not found"}</Text>
             <ArLinkButton href="/map" variant="primary">
               Back to the map
             </ArLinkButton>
@@ -92,15 +110,16 @@ export default function DirectionsScreen() {
     );
   }
 
-  const ring = rc(pin.rarity);
+  const ring = isMural ? c("rarity-epic") : rc(pin!.rarity);
+  const ringSoft = isMural ? c("rarity-epic", 0.55) : rc(pin!.rarity, 0.55);
 
   return (
     <View className="flex-1 bg-ar-bg">
       <View style={{ height: "46%" }}>
         <MapView style={StyleSheet.absoluteFill} styleURL={MAP_STYLE[theme]} logoEnabled={false} scaleBarEnabled={false} compassEnabled={false} attributionPosition={{ bottom: 30, left: 8 }}>
           <Camera
-            defaultSettings={{ centerCoordinate: [(fix.lng + pin.lng) / 2, (fix.lat + pin.lat) / 2], zoomLevel: 14.6, pitch: 40 }}
-            bounds={{ ne: [Math.max(fix.lng, pin.lng), Math.max(fix.lat, pin.lat)], sw: [Math.min(fix.lng, pin.lng), Math.min(fix.lat, pin.lat)] }}
+            defaultSettings={{ centerCoordinate: [(fix.lng + target.lng) / 2, (fix.lat + target.lat) / 2], zoomLevel: 14.6, pitch: 40 }}
+            bounds={{ ne: [Math.max(fix.lng, target.lng), Math.max(fix.lat, target.lat)], sw: [Math.min(fix.lng, target.lng), Math.min(fix.lat, target.lat)] }}
             padding={{ paddingTop: insets.top + 70, paddingBottom: 60, paddingLeft: 50, paddingRight: 50 }}
             animationDuration={600}
           />
@@ -113,7 +132,7 @@ export default function DirectionsScreen() {
           <MarkerView coordinate={[fix.lng, fix.lat]} anchor={{ x: 0.5, y: 0.5 }} allowOverlap>
             <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: c("ar-green-hot"), borderWidth: 3, borderColor: "rgba(255,255,255,0.9)" }} />
           </MarkerView>
-          <MarkerView coordinate={[pin.lng, pin.lat]} anchor={{ x: 0.5, y: 0.5 }} allowOverlap>
+          <MarkerView coordinate={[target.lng, target.lat]} anchor={{ x: 0.5, y: 0.5 }} allowOverlap>
             <View style={{ width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: ring, backgroundColor: c("ar-void", 0.85), alignItems: "center", justifyContent: "center" }}>
               <Flag size={13} strokeWidth={2.6} color={ring} />
             </View>
@@ -127,12 +146,12 @@ export default function DirectionsScreen() {
 
       <ScrollView className="-mt-6 flex-1 rounded-t-ar-xl border-t border-ar-line bg-ar-bg" contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 20 }}>
         <View className="mb-3 flex-row items-start gap-3">
-          <View className="h-[52px] w-[38px] overflow-hidden rounded-[9px] border" style={{ borderColor: rc(pin.rarity, 0.55) }}>
-            <Image source={{ uri: pin.imageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+          <View className="h-[52px] w-[38px] overflow-hidden rounded-[9px] border" style={{ borderColor: ringSoft, borderStyle: isMural && mural?.status !== "APPROVED" ? "dashed" : "solid" }}>
+            <Image source={{ uri: target.imageUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
           </View>
           <View className="min-w-0 flex-1">
-            <Text numberOfLines={1} className="font-hud text-[16px] font-bold text-ar-text">{pin.title}</Text>
-            <Text numberOfLines={1} className="mt-0.5 text-[11.5px] text-ar-faint">{pin.brandName}</Text>
+            <Text numberOfLines={1} className="font-hud text-[16px] font-bold text-ar-text">{target.title}</Text>
+            <Text numberOfLines={1} className="mt-0.5 text-[11.5px] text-ar-faint">{target.subtitle}</Text>
           </View>
         </View>
 
@@ -217,11 +236,15 @@ export default function DirectionsScreen() {
               );
             })
           ) : (
-            <Text className="px-3.5 py-4 text-center text-[12px] text-ar-faint">No turn-by-turn for this route — head {formatDistance(distance)} toward the pin.</Text>
+            <Text className="px-3.5 py-4 text-center text-[12px] text-ar-faint">No turn-by-turn for this route — head {formatDistance(distance)} toward the {isMural ? "mural" : "pin"}.</Text>
           )}
         </Bevel>
 
-        <Text className="mt-3 px-1 text-[11px] leading-5 text-ar-faint">Get within {AR_CAPTURE_RADIUS} m and this pin becomes capturable in AR.</Text>
+        <Text className="mt-3 px-1 text-[11px] leading-5 text-ar-faint">
+          {isMural
+            ? `Get within ${MURAL_SCAN_FROM_M} m and scan it with the Murals camera to earn Wadzzo Coins.`
+            : `Get within ${AR_CAPTURE_RADIUS} m and this pin becomes capturable in AR.`}
+        </Text>
 
         <View className="gap-2 py-5">
           <ArButton variant="primary" size="lg" block icon={Navigation} onPress={openInMaps}>

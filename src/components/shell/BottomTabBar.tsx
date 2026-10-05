@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
 import { CameraLauncher } from "~/components/camera/CameraLauncher";
+import { PackRing } from "~/components/murals/PackRing";
 import { PulseRing } from "~/components/ui/PulseDot";
 import { Text } from "~/components/ui/Text";
 import { useBountyAttention } from "~/lib/api/queries";
@@ -294,6 +295,8 @@ function ArLauncher() {
           </Canvas>
           <ArGlyph />
         </Animated.View>
+        {/* Mural pack "charging" the camera while it downloads. */}
+        <PackRing size={LAUNCHER} />
       </Pressable>
     </View>
   );

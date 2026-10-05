@@ -13,6 +13,7 @@ import { useFeedback } from "~/lib/ar/feedback";
 import { checkPermissions, PERMISSION_INFO, requestPermissions, type PermCheck, type PermKey } from "~/lib/camera/permissions";
 import { useColors } from "~/theme/theme";
 import type { TokenName } from "~/theme/tokens";
+import { packProgress, useMuralPack } from "~/lib/murals/pack";
 
 import { CAMERA_MODES, cameraMode, type CameraModeDef, type CameraModeId } from "./modes";
 import { PermissionRow } from "./PermissionRow";
@@ -235,6 +236,7 @@ function BentoCard({ mode, check, size, index, onPress }: { mode: CameraModeDef;
               {mode.blurb}
             </Text>
             {!soon && <Readiness mode={mode} check={check} />}
+            {mode.id === "murals" && <PackChip />}
           </View>
         </Animated.View>
       </Pressable>
@@ -243,6 +245,38 @@ function BentoCard({ mode, check, size, index, onPress }: { mode: CameraModeDef;
 }
 
 /** Which permissions this mode uses, each ticked once allowed, plus a one-word verdict. */
+/** Murals tile: the pack's install state, with a mini bar while it downloads. */
+function PackChip() {
+  const { c } = useColors();
+  const s = useMuralPack();
+  if (s.status === "idle") return null;
+  if (s.status === "ready") {
+    return (
+      <Text className="font-hud mt-2 text-[9.5px] font-bold uppercase tracking-[1.4px]" style={{ color: c("ar-green-hot") }}>
+        ✓ Mural pack ready
+      </Text>
+    );
+  }
+  const pct = Math.floor(packProgress(s) * 100);
+  return (
+    <View style={{ marginTop: 8 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <Text className="font-hud text-[9.5px] font-bold uppercase tracking-[1.4px]" style={{ color: c("rarity-epic") }}>
+          {s.status === "error" ? "Pack paused" : s.status === "verifying" ? "Verifying pack" : "Downloading pack"}
+        </Text>
+        {s.status !== "error" && (
+          <Text className="font-hud text-[9.5px] font-bold" style={{ color: c("rarity-epic") }}>
+            {pct}%
+          </Text>
+        )}
+      </View>
+      <View style={{ marginTop: 4, height: 6, borderRadius: 3, overflow: "hidden", backgroundColor: c("ar-void", 0.6) }}>
+        <View style={{ height: 6, width: `${Math.max(3, pct)}%`, borderRadius: 3, backgroundColor: c("rarity-epic") }} />
+      </View>
+    </View>
+  );
+}
+
 function Readiness({ mode, check }: { mode: CameraModeDef; check?: PermCheck }) {
   const { c } = useColors();
   // Motion rides on location, so it isn't its own chip here.

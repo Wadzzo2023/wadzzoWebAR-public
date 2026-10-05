@@ -65,6 +65,7 @@ export function useGeolocation({ enabled = true }: { enabled?: boolean } = {}) {
             heading: p.coords.heading != null && p.coords.heading >= 0 ? p.coords.heading : null,
             speed: p.coords.speed,
             timestamp: p.timestamp,
+            mocked: p.mocked === true,
           };
           lastFix = next;
           setFix(next);

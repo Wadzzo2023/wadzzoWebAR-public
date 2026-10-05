@@ -12,11 +12,13 @@
     },
     "preview": {
       "distribution": "internal",
-      "environment": "preview"
+      "environment": "preview",
+      "env": { "EXPO_PUBLIC_API_URL": "https://web.wadzzo.com" }
     },
     "production": {
       "autoIncrement": true,
-      "environment": "production"
+      "environment": "production",
+      "env": { "EXPO_PUBLIC_API_URL": "https://web.wadzzo.com" }
     }
   },
   "submit": {

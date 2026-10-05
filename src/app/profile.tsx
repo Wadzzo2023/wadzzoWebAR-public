@@ -16,6 +16,7 @@ import { Field, FormError } from "~/components/ui/Field";
 import { Skeleton } from "~/components/ui/Skeleton";
 import { Bevel, Grid } from "~/components/ui/surfaces";
 import { Text } from "~/components/ui/Text";
+import { MuralPackSettings } from "~/components/murals/MuralPackSettings";
 import { api } from "~/lib/api/client";
 import { useBalanceQuery, useCollectedQuery, useProfileQuery } from "~/lib/api/queries";
 import { uploadProfileImage } from "~/lib/api/upload";
@@ -210,6 +211,10 @@ function SignedIn() {
               );
             })}
           </Bevel>
+        </Section>
+
+        <Section title="Downloads">
+          <MuralPackSettings />
         </Section>
 
         <View className="mt-6 gap-2 px-5">

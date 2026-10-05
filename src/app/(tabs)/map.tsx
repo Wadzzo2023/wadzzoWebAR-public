@@ -10,6 +10,7 @@ import { MapControls } from "~/components/map/MapControls";
 import { MapSearch, MapSearchButton } from "~/components/map/MapSearch";
 import { GpsPill, MapToast } from "~/components/map/MapHud";
 import { NearbyStrip } from "~/components/map/NearbyStrip";
+import { MuralSheet } from "~/components/map/MuralSheet";
 import { PinSheet } from "~/components/map/PinSheet";
 import { metersPerPixel } from "~/components/map/UserPuck";
 import { LocationGate } from "~/components/shell/LocationGate";
@@ -26,6 +27,7 @@ import { filterPins, NEAR_RADIUS_KM, PIN_FILTERS, pinArea, sortByDistance, useDi
 import { pinStatus } from "~/lib/ar/rarity";
 import type { ArPin, Coords, TravelMode } from "~/lib/ar/types";
 import { useSession } from "~/lib/auth/session";
+import { useMuralsInArea } from "~/lib/murals/api";
 
 /**
  * ── /map ───────────────────────────────────────────────────────────────────
@@ -108,6 +110,25 @@ export default function MapScreen() {
   // settles there and fetches it — show its sheet from the search result
   // meanwhile, then from the live list once it arrives.
   const [searchPin, setSearchPin] = useState<ArPin | null>(null);
+
+  // ── Murals layer (wadzzoAR docs/murals/plan.md §7) ───────────────────────
+  const [muralLayer, setMuralLayer] = useState<"all" | "verified" | "off">("all");
+  const [selectedMuralId, setSelectedMuralId] = useState<string | null>(null);
+  const [muralBounds, setMuralBounds] = useState<{ n: number; s: number; e: number; w: number } | null>(null);
+  // ~1 km grid so small pans reuse the cached area.
+  const muralArea = useMemo(
+    () =>
+      muralBounds && {
+        n: Math.ceil(muralBounds.n * 100) / 100,
+        s: Math.floor(muralBounds.s * 100) / 100,
+        e: Math.ceil(muralBounds.e * 100) / 100,
+        w: Math.floor(muralBounds.w * 100) / 100,
+      },
+    [muralBounds],
+  );
+  const muralsQuery = useMuralsInArea(muralArea, muralLayer === "all", muralLayer !== "off");
+  const murals = useMemo(() => (muralLayer === "off" ? [] : (muralsQuery.data?.murals ?? [])), [muralLayer, muralsQuery.data]);
+  const selectedMural = murals.find((m) => m.id === selectedMuralId) ?? null;
   const selected = useMemo(
     () => pins.find((p) => p.id === selectedId) ?? (searchPin?.id === selectedId ? searchPin : null),
     [pins, selectedId, searchPin],
@@ -183,12 +204,26 @@ export default function MapScreen() {
   }, [pins]);
   const handleSelect = useCallback((id: string | null) => {
     setSelectedId(id);
+    setSelectedMuralId(null);
     if (!id) return;
     const pin = pinsRef.current.find((p) => p.id === id);
     if (pin) {
       setFollowing(false);
       mapRef.current?.flyToPin(pin);
     }
+  }, []);
+
+  // Same feel as a pin: select, stop following, ease the camera onto it.
+  const muralsRef = useRef(murals);
+  useEffect(() => {
+    muralsRef.current = murals;
+  }, [murals]);
+  const handleSelectMural = useCallback((id: string) => {
+    setSelectedId(null);
+    setSelectedMuralId(id);
+    setFollowing(false);
+    const m = muralsRef.current.find((x) => x.id === id);
+    if (m) mapRef.current?.flyToMural(m);
   }, []);
 
   const handleCapture = useCallback(
@@ -223,6 +258,11 @@ export default function MapScreen() {
         headingUp={headingUp}
         onViewportIdle={onViewportIdle}
         heading={heading}
+        murals={murals}
+        muralDailyLimit={muralsQuery.data?.dailyLimit}
+        selectedMuralId={selectedMuralId}
+        onSelectMural={handleSelectMural}
+        onBoundsIdle={setMuralBounds}
       />
 
       {!fix && <LocationGate status={status} reason={reason} onRetry={() => void retry()} />}
@@ -265,6 +305,13 @@ export default function MapScreen() {
           // after panning/zooming, and background refreshes.
           refetching={refetching || isFetching}
           following={following}
+          muralLayer={muralLayer}
+          onCycleMuralLayer={() => {
+            const next = muralLayer === "all" ? "verified" : muralLayer === "verified" ? "off" : "all";
+            setMuralLayer(next);
+            setSelectedMuralId(null);
+            setToast(next === "all" ? "Murals: all, incl. unverified" : next === "verified" ? "Murals: verified only" : "Murals hidden");
+          }}
           autoCollect={settings.autoCollect}
           onToggleAutoCollect={() => {
             const toggle = () => {
@@ -305,6 +352,7 @@ export default function MapScreen() {
         }}
       />
 
+      <MuralSheet mural={selectedMural} dailyLimit={muralsQuery.data?.dailyLimit ?? 3} fix={fix} onClose={() => setSelectedMuralId(null)} />
       <PinSheet pin={selected} fix={fix} onClose={closeSheet} onCapture={handleCapture} onDirections={handleDirections} />
     </View>
   );

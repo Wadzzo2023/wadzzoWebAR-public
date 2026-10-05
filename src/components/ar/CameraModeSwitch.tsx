@@ -21,7 +21,6 @@ const LAYOUT = LinearTransition.springify().stiffness(460).damping(34).mass(0.7)
  * radar. `router.replace` so switching isn't a place you went — Exit still
  * returns to wherever the camera was opened from. Each screen handles its own
  * permissions, so switching into AR without location still explains why.
- * Murals isn't built yet: tapping it just says "Soon".
  */
 export function CameraModeSwitch({ mode }: { mode: CameraMode }) {
   const { c } = useColors();

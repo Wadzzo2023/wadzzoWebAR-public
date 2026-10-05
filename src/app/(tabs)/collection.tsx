@@ -1,13 +1,15 @@
-import { router } from "expo-router";
-import { ArrowUpDown, Search, Sparkles, X } from "lucide-react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import { ArrowUpDown, Frame, Search, Sparkles, X } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, ScrollView, TextInput, View } from "react-native";
 
 import { HoloCard } from "~/components/cards/HoloCard";
+import { MuralCollection } from "~/components/murals/MuralCollection";
 import { useTabBarHeight } from "~/components/shell/BottomTabBar";
 import { ScreenHeader } from "~/components/shell/ScreenHeader";
 import { ArButton, ArLinkButton } from "~/components/ui/ArButton";
 import { Chip, StatBlock } from "~/components/ui/Badges";
+import { SegmentedTabs } from "~/components/ui/SegmentedTabs";
 import { CardSkeleton, StatRowSkeleton } from "~/components/ui/Skeleton";
 import { Bevel, Glass } from "~/components/ui/surfaces";
 import { Text } from "~/components/ui/Text";
@@ -37,6 +39,10 @@ export default function CollectionScreen() {
   const tabBarHeight = useTabBarHeight();
   const { c, rarity: rc } = useColors();
   const signedIn = useSession((s) => Boolean(s.user));
+  // Drops | Murals — `?tab=murals` so the camera's coin pill lands on the right one.
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const tab: "drops" | "murals" = params.tab === "murals" ? "murals" : "drops";
+  const setTab = (t: "drops" | "murals") => router.setParams({ tab: t });
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [rarity, setRarity] = useState<Rarity | "all">("all");
@@ -128,14 +134,28 @@ export default function CollectionScreen() {
         eyebrow="Your collection"
         title="Collection"
         trailing={
+          tab === "drops" && (
           <Pressable onPress={() => setSort((s) => SORTS[(SORTS.findIndex((x) => x.id === s) + 1) % SORTS.length]!.id)} accessibilityRole="button" accessibilityLabel={`Sort: ${SORTS.find((s) => s.id === sort)?.label}`}>
             <Glass className="h-9 flex-row items-center gap-1.5 rounded-full px-3" style={{ borderRadius: 18 }}>
               <ArrowUpDown size={13} strokeWidth={2.4} color={c("ar-text-dim")} />
               <Text className="font-hud text-[10px] font-semibold uppercase tracking-[1.2px] text-ar-dim">{SORTS.find((s) => s.id === sort)?.label}</Text>
             </Glass>
           </Pressable>
+          )
         }
       />
+      <SegmentedTabs
+        tabs={[
+          { id: "drops", label: "Drops", icon: Sparkles },
+          { id: "murals", label: "Murals", icon: Frame },
+        ]}
+        value={tab}
+        onChange={setTab}
+        className="mx-5 mb-3"
+      />
+      {tab === "murals" ? (
+        <MuralCollection header={<View />} />
+      ) : (
       <FlatList<ArPin | NextSlot>
         data={loading ? [] : collection.isFetchingNextPage ? [...shown, ...nextSlots(Math.min(remaining, PAGE_SIZE))] : shown}
         keyExtractor={(p) => p.id}
@@ -178,6 +198,7 @@ export default function CollectionScreen() {
           ) : null
         }
       />
+      )}
     </View>
   );
 }

@@ -14,15 +14,18 @@ import Supercluster, { type ClusterProperties } from "supercluster";
 import { useTabBarHeight } from "~/components/shell/BottomTabBar";
 import { AR_CAPTURE_RADIUS, distanceMeters } from "~/lib/ar/geo";
 import type { ArPin, Coords, GeoFix } from "~/lib/ar/types";
+import type { AreaMural } from "~/lib/murals/api";
 import { MAP_STYLE, useResolvedTheme } from "~/theme/theme";
 
 import { ClusterBillboard } from "./ClusterBillboard";
+import { MuralMarker } from "./MuralMarker";
 import { PinMarker } from "./PinMarker";
 import { metersPerPixel, UserAccuracy, UserPuck } from "./UserPuck";
 
 export type MapCanvasHandle = {
   recenter: (coords: Coords, opts?: { zoom?: number }) => void;
   flyToPin: (pin: ArPin) => void;
+  flyToMural: (mural: AreaMural) => void;
   resetBearing: () => void;
 };
 
@@ -41,6 +44,7 @@ export type MapCanvasHandle = {
  * thousands of drops is still a few dozen views.
  */
 const MAX_MARKERS = 80;
+const MAX_MURAL_MARKERS = 40;
 /** Screen area (× the visible size) whose pins get markers when zoomed in. */
 const VIEW_MARGIN = 1.5;
 /** Groups stop forming above this zoom: from street level in, every pin is its own marker. */
@@ -66,6 +70,12 @@ export const MapCanvas = forwardRef<
     heading: number | null;
     /** Where the camera settled (centre + zoom) — drives which pins get loaded. */
     onViewportIdle?: (center: Coords, zoom: number) => void;
+    /** Murals layer (wadzzoAR docs/murals/plan.md §7). */
+    murals?: AreaMural[];
+    muralDailyLimit?: number;
+    selectedMuralId?: string | null;
+    onSelectMural?: (id: string) => void;
+    onBoundsIdle?: (b: { n: number; s: number; e: number; w: number }) => void;
   }
 >(function MapCanvas(
   {
@@ -79,6 +89,11 @@ export const MapCanvas = forwardRef<
     headingUp,
     heading,
     onViewportIdle,
+    murals,
+    muralDailyLimit = 3,
+    selectedMuralId,
+    onSelectMural,
+    onBoundsIdle,
   },
   ref,
 ) {
@@ -97,9 +112,9 @@ export const MapCanvas = forwardRef<
       animationMode: "easeTo",
     });
   }, []);
-  const flyToPin = useCallback((pin: ArPin) => {
+  const flyTo = useCallback((lat: number, lng: number) => {
     camera.current?.setCamera({
-      centerCoordinate: [pin.lng, pin.lat],
+      centerCoordinate: [lng, lat],
       zoomLevel: 17.6,
       padding: {
         paddingBottom: 220,
@@ -111,6 +126,8 @@ export const MapCanvas = forwardRef<
       animationMode: "easeTo",
     });
   }, []);
+  const flyToPin = useCallback((pin: ArPin) => flyTo(pin.lat, pin.lng), [flyTo]);
+  const flyToMural = useCallback((m: AreaMural) => flyTo(m.latitude, m.longitude), [flyTo]);
   const resetBearing = useCallback(() => {
     lastBearing.current = null;
     camera.current?.setCamera({
@@ -119,9 +136,10 @@ export const MapCanvas = forwardRef<
       animationMode: "easeTo",
     });
   }, []);
-  useImperativeHandle(ref, () => ({ recenter, flyToPin, resetBearing }), [
+  useImperativeHandle(ref, () => ({ recenter, flyToPin, flyToMural, resetBearing }), [
     recenter,
     flyToPin,
+    flyToMural,
     resetBearing,
   ]);
 
@@ -269,6 +287,70 @@ export const MapCanvas = forwardRef<
   );
 
   const mpp = metersPerPixel(fix?.lat ?? center.lat, zoom);
+  // Murals group the same way as drops (own index, so a billboard never mixes
+  // the two marker languages): zoomed out, nearby frames become a purple
+  // billboard of their covers; tap to zoom in until it opens up.
+  const muralIndex = useMemo(() => {
+    const sc = new Supercluster<{ i: number; imgs: string[] }, { imgs: string[] }>({
+      radius: CLUSTER_RADIUS,
+      maxZoom: CLUSTER_MAX_ZOOM,
+      minPoints: 2,
+      map: (p) => ({ imgs: [...p.imgs] }),
+      reduce: (acc, p) => {
+        for (const u of p.imgs) if (acc.imgs.length < 4 && !acc.imgs.includes(u)) acc.imgs.push(u);
+      },
+    });
+    sc.load(
+      (murals ?? []).map((m, i) => ({
+        type: "Feature" as const,
+        geometry: { type: "Point" as const, coordinates: [m.longitude, m.latitude] },
+        properties: { i, imgs: [m.coverUrl] },
+      })),
+    );
+    return sc;
+  }, [murals]);
+
+  const { muralSingles, muralGroups } = useMemo(() => {
+    if (!murals?.length) return { muralSingles: [] as AreaMural[], muralGroups: [] as { id: number; lng: number; lat: number; count: number; imgs: string[] }[] };
+    const anchor = { lat: anchorLat, lng: anchorLng };
+    const items = muralIndex.getClusters(
+      [Math.max(anchorLng - halfLngDeg, -180), Math.max(anchorLat - halfLatDeg, -85), Math.min(anchorLng + halfLngDeg, 180), Math.min(anchorLat + halfLatDeg, 85)],
+      clusterZoom,
+    );
+    const groupList: { id: number; lng: number; lat: number; count: number; imgs: string[] }[] = [];
+    const singleList: { m: AreaMural; d: number }[] = [];
+    for (const f of items) {
+      const [lng, lat] = f.geometry.coordinates as [number, number];
+      if ("cluster" in f.properties && f.properties.cluster) {
+        const cp = f.properties as ClusterProperties & { imgs: string[] };
+        groupList.push({ id: cp.cluster_id, lng, lat, count: cp.point_count, imgs: cp.imgs });
+      } else {
+        const m = murals[(f.properties as { i: number }).i];
+        if (m) singleList.push({ m, d: distanceMeters(anchor, { lat, lng }) });
+      }
+    }
+    // Same budget idea as pins: only the murals nearest the view are real views.
+    const shown = singleList.sort((a, b) => a.d - b.d).slice(0, MAX_MURAL_MARKERS).map((x) => x.m);
+    // The selected mural always has its own frame, even inside a group.
+    const picked = selectedMuralId ? murals.find((m) => m.id === selectedMuralId) : undefined;
+    if (picked && !shown.includes(picked)) shown.push(picked);
+    return { muralSingles: shown, muralGroups: groupList };
+  }, [murals, muralIndex, anchorLat, anchorLng, halfLatDeg, halfLngDeg, clusterZoom, selectedMuralId]);
+
+  const openMuralGroup = useCallback(
+    (id: number) => {
+      const g = muralGroups.find((x) => x.id === id);
+      if (!g) return;
+      camera.current?.setCamera({
+        centerCoordinate: [g.lng, g.lat],
+        zoomLevel: Math.min(muralIndex.getClusterExpansionZoom(id) + 0.3, 19),
+        animationDuration: 650,
+        animationMode: "easeTo",
+      });
+    },
+    [muralGroups, muralIndex],
+  );
+
   // The tab bar floats over the map; keep the Mapbox credit above it.
   const tabBarHeight = useTabBarHeight();
 
@@ -304,6 +386,8 @@ export const MapCanvas = forwardRef<
             : { lat, lng },
         );
         onViewportIdle?.({ lat, lng }, z);
+        const b = s.properties.bounds as { ne: [number, number]; sw: [number, number] } | undefined;
+        if (b) onBoundsIdle?.({ n: b.ne[1], e: b.ne[0], s: b.sw[1], w: b.sw[0] });
       }}
     >
       <Camera
@@ -342,6 +426,22 @@ export const MapCanvas = forwardRef<
             images={g.imgs}
             onPress={openGroup}
           />
+        </MarkerView>
+      ))}
+      {muralGroups.map((g) => (
+        <MarkerView key={`mg-${g.id}`} coordinate={[g.lng, g.lat]} anchor={{ x: 0.5, y: 1 }} allowOverlap>
+          <ClusterBillboard id={g.id} count={g.count} images={g.imgs} onPress={openMuralGroup} tone="mural" />
+        </MarkerView>
+      ))}
+      {muralSingles.map((m) => (
+        <MarkerView
+          key={`mural-${m.id}`}
+          coordinate={[m.longitude, m.latitude]}
+          anchor={{ x: 0.5, y: 1 }}
+          allowOverlap
+          isSelected={m.id === selectedMuralId}
+        >
+          <MuralMarker mural={m} dailyLimit={muralDailyLimit} selected={m.id === selectedMuralId} onSelect={(id) => onSelectMural?.(id)} />
         </MarkerView>
       ))}
       {singles.map((pin) => (
