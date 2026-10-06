@@ -1,6 +1,6 @@
 import { Canvas, Circle, SweepGradient, vec } from "@shopify/react-native-skia";
 import { LinearGradient } from "expo-linear-gradient";
-import { usePathname } from "expo-router";
+import { router, usePathname } from "expo-router";
 import { TabTrigger } from "expo-router/ui";
 import { LayoutGrid, Map as MapIcon, Store, Trophy, type LucideIcon } from "lucide-react-native";
 import { forwardRef, useEffect, useState } from "react";
@@ -18,7 +18,6 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
-import { CameraLauncher } from "~/components/camera/CameraLauncher";
 import { PackRing } from "~/components/murals/PackRing";
 import { PulseRing } from "~/components/ui/PulseDot";
 import { Text } from "~/components/ui/Text";
@@ -224,7 +223,7 @@ function ArLauncher() {
   const pathname = usePathname();
   // Keeps spinning (decided), but not while hidden, backgrounded or in Low Power Mode.
   const live = useDecorativeMotion();
-  const arActive = pathname === "/ar" || pathname === "/scan";
+  const arActive = pathname === "/camera" || pathname === "/ar" || pathname === "/scan";
   const spin = useSharedValue(0);
   useEffect(() => {
     if (!live) {
@@ -243,8 +242,6 @@ function ArLauncher() {
   const transform = useDerivedValue(() => [{ rotate: spin.value * Math.PI * 2 }]);
   const pressed = useSharedValue(0);
   const body = useAnimatedStyle(() => ({ transform: [{ scale: 1 - pressed.value * 0.05 }] }));
-  // The launcher opens the camera picker (AR / QR / Murals), not AR directly.
-  const [pickerOpen, setPickerOpen] = useState(false);
   const { tap } = useFeedback();
 
   return (
@@ -252,11 +249,11 @@ function ArLauncher() {
       pointerEvents="box-none"
       style={{ position: "absolute", top: -26, left: 0, right: 0, alignItems: "center", zIndex: 10 }}
     >
-      <CameraLauncher open={pickerOpen} onClose={() => setPickerOpen(false)} />
       <Pressable
         onPress={() => {
           tap();
-          setPickerOpen(true);
+          // The camera picker tab (AR / QR / Murals), not AR directly.
+          router.navigate("/camera");
         }}
         onPressIn={() => (pressed.value = withTiming(1, { duration: 90 }))}
         onPressOut={() => (pressed.value = withTiming(0, { duration: 140 }))}

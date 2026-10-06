@@ -10,21 +10,27 @@ import { create } from "zustand";
  *
  *  - starts by itself when the app opens, on any network, not cancellable,
  *    never blocks anything except Murals capture;
- *  - downloads 1 MB byte ranges and APPENDS them to `<pack>.part`, so after
- *    the app is closed or killed it resumes from the file's current size;
- *  - verifies SHA-256 (expo-crypto) against the manifest before it counts as
- *    ready, and again whenever the Murals camera opens;
+ *  - downloads 2 MB byte ranges NATIVELY (File.downloadFileAsync — the bytes
+ *    never cross into JS, so the UI thread stays free) and appends each
+ *    finished range to `<pack>.part`; after the app is closed or killed it
+ *    resumes from the file's current size;
+ *  - verifies the manifest's MD5 natively (file.info({ md5 })) before it
+ *    counts as ready, and again whenever the Murals camera opens — no 23 MB
+ *    read into JS (falls back to SHA-256 only for an old manifest);
+ *  - progress reaches the store at most every PROGRESS_MS (the tab-bar ring
+ *    and HUD re-render on it).
  *  - the verified file is what fast-tflite loads (`packModelPath()`).
  *
  * Source of truth: `murals/models/manifest.json` on S3 (the `mobile` entry).
  */
 
 const MANIFEST_URL = "https://wadzzo.s3.amazonaws.com/murals/models/manifest.json";
-const CHUNK = 1024 * 1024;
+const CHUNK = 2 * 1024 * 1024;
+const PROGRESS_MS = 500;
 const READY_KEY = "wadzzo.muralPack.ready";
 const RETRY_S = 8;
 
-type PackFile = { url: string; bytes: number; sha256: string };
+type PackFile = { url: string; bytes: number; sha256: string; md5?: string };
 type Manifest = { name: string; version: number; mobile: PackFile };
 
 export type PackStatus = "idle" | "checking" | "downloading" | "verifying" | "ready" | "error";
@@ -79,32 +85,31 @@ const readFlag = async (): Promise<Flag | null> => {
 };
 const writeFlag = (f: Flag | null) => (f ? AsyncStorage.setItem(READY_KEY, JSON.stringify(f)) : AsyncStorage.removeItem(READY_KEY)).catch(() => undefined);
 
+/** Old manifests only had SHA-256; that path reads the file into JS. */
 async function sha256Of(file: File) {
   const bytes = await file.bytes();
   const d = await digest(CryptoDigestAlgorithm.SHA256, bytes);
   return Array.from(new Uint8Array(d), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-/** One byte range via XHR, so progress events arrive while it downloads. */
-function fetchRange(url: string, from: number, to: number, onBytes: (n: number) => void): Promise<Uint8Array> {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", url);
-    xhr.responseType = "arraybuffer";
-    xhr.setRequestHeader("Range", `bytes=${from}-${to}`);
-    xhr.timeout = 60_000;
-    xhr.onprogress = (e) => onBytes(e.loaded);
-    xhr.onload = () => {
-      if (xhr.status !== 206 && xhr.status !== 200) return reject(new Error(`HTTP ${xhr.status}`));
-      let buf = new Uint8Array(xhr.response as ArrayBuffer);
-      if (xhr.status === 200) buf = buf.slice(from, to + 1);
-      if (buf.byteLength !== to - from + 1) return reject(new Error("short read"));
-      resolve(buf);
-    };
-    xhr.onerror = () => reject(new Error("network"));
-    xhr.ontimeout = () => reject(new Error("timeout"));
-    xhr.send();
+/** True when `file` matches the manifest entry — native MD5 when available. */
+async function matches(file: File, entry: Pick<PackFile, "md5" | "sha256">) {
+  if (entry.md5) return file.info({ md5: true }).md5?.toLowerCase() === entry.md5.toLowerCase();
+  return (await sha256Of(file)) === entry.sha256;
+}
+
+/**
+ * One byte range, downloaded by the OS into `dest` (no bytes through JS).
+ * `onBytes` gets the bytes received so far for this range.
+ */
+async function fetchRange(url: string, from: number, to: number, dest: File, onBytes: (n: number) => void) {
+  if (dest.exists) dest.delete();
+  await File.downloadFileAsync(url, dest, {
+    headers: { Range: `bytes=${from}-${to}` },
+    idempotent: true,
+    onProgress: ({ bytesWritten }) => onBytes(bytesWritten),
   });
+  if (dest.size !== to - from + 1) throw new Error("short read");
 }
 
 let running: Promise<void> | null = null;
@@ -167,47 +172,50 @@ async function run() {
   }
   const part = partFile(manifest.version);
   if (!part.exists) part.create();
-  // Resume from whole chunks only (a half-written chunk is dropped).
-  let have = Math.floor(part.size / CHUNK) * CHUNK;
-  if (have !== part.size) {
-    const keep = have ? (await part.bytes()).slice(0, have) : new Uint8Array();
-    part.write(keep);
-  }
+  const chunkFile = new File(dir(), `mural-pack-v${manifest.version}.chunk`);
+  // Only whole ranges are appended, so the part's size is exactly how far we
+  // got (an interrupted append still wrote the right bytes at the right
+  // offsets; the MD5 check catches anything else).
+  let have = Math.min(part.size, file.bytes);
   set({ status: "downloading", receivedBytes: have });
 
   let speed = 0;
+  let lastSet = 0;
   while (have < file.bytes) {
     const to = Math.min(file.bytes, have + CHUNK) - 1;
     let lastT = Date.now();
     let lastN = 0;
-    let chunk: Uint8Array;
     try {
-      chunk = await fetchRange(file.url, have, to, (n) => {
+      await fetchRange(file.url, have, to, chunkFile, (n) => {
         const now = Date.now();
-        if (now - lastT < 200) return;
-        const inst = ((n - lastN) * 1000) / (now - lastT);
-        speed = speed ? speed * 0.8 + inst * 0.2 : inst;
-        lastT = now;
-        lastN = n;
+        if (now - lastT >= 250) {
+          const inst = ((n - lastN) * 1000) / (now - lastT);
+          speed = speed ? speed * 0.7 + inst * 0.3 : inst;
+          lastT = now;
+          lastN = n;
+        }
+        if (now - lastSet < PROGRESS_MS) return;
+        lastSet = now;
         set({ receivedBytes: have + n, speed });
       });
     } catch {
+      if (chunkFile.exists) chunkFile.delete();
       fail("network", "The connection dropped. Retrying…");
       return;
     }
     try {
-      part.write(chunk, { append: true });
+      part.write(await chunkFile.bytes(), { append: true });
+      chunkFile.delete();
     } catch {
       fail("storage", "Not enough storage space for the mural pack (≈23 MB).", false);
       return;
     }
-    have += chunk.byteLength;
-    set({ receivedBytes: have });
+    have = part.size;
   }
+  set({ receivedBytes: file.bytes });
 
   set({ status: "verifying", speed: 0 });
-  const hash = await sha256Of(part);
-  if (hash !== file.sha256) {
+  if (!(await matches(part, file))) {
     part.delete();
     set({ receivedBytes: 0 });
     fail("damaged", "The download was damaged. Starting it again…");
@@ -240,9 +248,8 @@ export async function verifyMuralPack(): Promise<"ok" | "missing" | "damaged"> {
     return "missing";
   }
   set({ status: "verifying" });
-  const expected = manifestCache?.mobile.sha256 ?? flag?.sha256;
-  const hash = await sha256Of(finalFile(version));
-  if (expected && hash !== expected) {
+  const entry = manifestCache?.mobile ?? (flag ? { sha256: flag.sha256 } : null);
+  if (entry && !(await matches(finalFile(version), entry))) {
     finalFile(version).delete();
     await writeFlag(null);
     set({ receivedBytes: 0 });

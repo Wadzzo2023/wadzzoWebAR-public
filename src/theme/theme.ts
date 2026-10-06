@@ -41,8 +41,10 @@ export function useResolvedTheme(): ResolvedTheme {
 
 /** Same values as the web's `MAP_STYLE`. */
 export const MAP_STYLE: Record<ResolvedTheme, string> = {
-  dark: "mapbox://styles/mapbox/dark-v11",
-  light: "mapbox://styles/mapbox/light-v11",
+  // "Wadzzo 3D Dark/Light" (Mapbox Standard + Wadzzo colour theme) — see
+  // wadzzoAR/docs/map-style.md.
+  dark: "mapbox://styles/wadzzo/cmuwbonsf00rv01sdcun4fhdu",
+  light: "mapbox://styles/wadzzo/cmuwc16ut00gz01sd6359b3sw",
 };
 
 /**

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 import Animated, { FadeIn, ZoomOut } from "react-native-reanimated";
 import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
+import { useShallow } from "zustand/react/shallow";
 
 import { Text } from "~/components/ui/Text";
 import { packProgress, useMuralPack, usePackSheet } from "~/lib/murals/pack";
@@ -18,7 +19,8 @@ import { useColors } from "~/theme/theme";
  */
 export function PackRing({ size }: { size: number }) {
   const { c } = useColors();
-  const s = useMuralPack();
+  // Always on screen (tab bar): only what the ring draws, not speed/retry ticks.
+  const s = useMuralPack(useShallow((x) => ({ status: x.status, receivedBytes: x.receivedBytes, totalBytes: x.totalBytes })));
   const open = usePackSheet((x) => x.setOpen);
   const [flash, setFlash] = useState(false);
 

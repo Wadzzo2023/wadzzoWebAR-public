@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { Frame, X } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
-import { AppState, Pressable, View } from "react-native";
+import { AppState, InteractionManager, Pressable, View } from "react-native";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -18,11 +18,16 @@ import { PackPanel } from "./PackPanel";
 /**
  * ── MuralPackHud (mobile) ──────────────────────────────────────────────────
  *
- * Mounted once in the root layout. Starts the mural pack install on launch,
- * resumes it whenever the app comes back to the foreground, hosts the
+ * Mounted once in the root layout. Starts the mural pack install shortly
+ * after launch (LAUNCH_DELAY_MS, once the first screen has settled, so the
+ * first location fix and map load get the network and CPU first — opening
+ * the Murals camera still starts it at once), resumes it whenever the app
+ * comes back to the foreground, hosts the
  * game-style panel (opened from the AR-button ring's % badge), and when the
  * pack finishes shows a "Mural pack ready" toast with a shortcut + fanfare.
  */
+const LAUNCH_DELAY_MS = 3000;
+
 export function MuralPackHud() {
   const { c } = useColors();
   const insets = useSafeAreaInsets();
@@ -32,11 +37,18 @@ export function MuralPackHud() {
   const [toast, setToast] = useState(false);
 
   useEffect(() => {
-    void startMuralPack();
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const task = InteractionManager.runAfterInteractions(() => {
+      timer = setTimeout(() => void startMuralPack(), LAUNCH_DELAY_MS);
+    });
     const sub = AppState.addEventListener("change", (st) => {
       if (st === "active") void startMuralPack();
     });
-    return () => sub.remove();
+    return () => {
+      task.cancel();
+      if (timer) clearTimeout(timer);
+      sub.remove();
+    };
   }, []);
 
   const seen = useRef(0);

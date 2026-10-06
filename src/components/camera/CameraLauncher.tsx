@@ -1,13 +1,14 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import { ArrowUpRight, Camera, Check, ChevronLeft, Compass, MapPin, Settings, X, type LucideIcon } from "lucide-react-native";
-import { useEffect, useRef, useState } from "react";
-import { AppState, Linking, Pressable, StyleSheet, View } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { ArrowUpRight, Camera, Check, Compass, MapPin, Settings, type LucideIcon } from "lucide-react-native";
+import { useCallback, useState } from "react";
+import { AppState, Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, FadeInRight, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 
+import { useTabBarHeight } from "~/components/shell/BottomTabBar";
+import { ScreenHeader } from "~/components/shell/ScreenHeader";
 import { ArButton } from "~/components/ui/ArButton";
 import { Grid } from "~/components/ui/surfaces";
-import { Dialog } from "~/components/ui/Dialog";
 import { Text } from "~/components/ui/Text";
 import { useFeedback } from "~/lib/ar/feedback";
 import { checkPermissions, PERMISSION_INFO, requestPermissions, type PermCheck, type PermKey } from "~/lib/camera/permissions";
@@ -30,42 +31,43 @@ type Checks = Partial<Record<CameraModeId, PermCheck>>;
 /**
  * ── CameraLauncher ─────────────────────────────────────────────────────────
  *
- * What the AR button opens: a centred dialog with a bento of the camera's
- * three ways in (AR, QR, Murals). Each card shows up front whether its
- * permissions are already allowed. Picking one that's ready goes straight
- * in; otherwise the dialog steps to what it needs and why, asks, and then
- * goes in. Coming back from Settings re-reads the permissions, so it's never
- * stale.
+ * The /camera page the AR button opens: a bento of the camera's three ways
+ * in (AR, QR, Murals). Each card shows up front whether its permissions are
+ * already allowed. Picking one that's ready goes straight in; otherwise the page
+ * steps to what it needs and why, asks, and then goes in. It's a (hidden)
+ * tab, so the bottom bar stays usable. Coming back from
+ * Settings re-reads the permissions, so it's never stale.
  */
-export function CameraLauncher({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function CameraLauncher() {
   const [step, setStep] = useState<Step>({ kind: "pick" });
   const [checks, setChecks] = useState<Checks>({});
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Where to go once the dialog has finished closing (navigating under a
-  // closing Modal drops the push on iOS).
-  const pending = useRef<NonNullable<CameraModeDef["href"]> | null>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    let live = true;
-    const refresh = () =>
-      readChecks().then((next) => {
-        if (live) setChecks(next);
+  // A tab stays mounted: each visit starts on the modes with fresh
+  // permission states (and re-reads them on return from Settings).
+  useFocusEffect(
+    useCallback(() => {
+      let live = true;
+      const refresh = () =>
+        readChecks().then((next) => {
+          if (live) setChecks(next);
+        });
+      void refresh();
+      const sub = AppState.addEventListener("change", (s) => {
+        if (s === "active") void refresh();
       });
-    void refresh();
-    const sub = AppState.addEventListener("change", (s) => {
-      if (s === "active") void refresh();
-    });
-    return () => {
-      live = false;
-      sub.remove();
-    };
-  }, [open]);
+      return () => {
+        live = false;
+        sub.remove();
+        setStep({ kind: "pick" });
+        setError(null);
+      };
+    }, []),
+  );
 
   const go = (mode: CameraModeDef) => {
-    pending.current = mode.href;
-    onClose();
+    if (mode.href) router.push(mode.href);
   };
 
   const pick = async (mode: CameraModeDef) => {
@@ -91,35 +93,32 @@ export function CameraLauncher({ open, onClose }: { open: boolean; onClose: () =
     else setError("Without location, drops can't be placed around you. You can still look around.");
   };
 
+  const tabBarHeight = useTabBarHeight();
+  const perms = step.kind === "perms" ? cameraMode(step.mode) : null;
+  const permsCheck = step.kind === "perms" ? checks[step.mode] : undefined;
+  const back = () => {
+    setError(null);
+    setStep({ kind: "pick" });
+  };
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      onClosed={() => {
-        const href = pending.current;
-        pending.current = null;
-        setStep({ kind: "pick" });
-        setError(null);
-        if (href) router.push(href);
-      }}
-    >
-      {step.kind === "pick" ? (
-        <PickStep checks={checks} onPick={(m) => void pick(m)} onClose={onClose} />
-      ) : (
-        <PermsStep
-          mode={cameraMode(step.mode)}
-          check={checks[step.mode]}
-          requesting={requesting}
-          error={error}
-          onBack={() => {
-            setError(null);
-            setStep({ kind: "pick" });
-          }}
-          onAllow={(m) => void allow(m)}
-          onContinue={go}
-        />
-      )}
-    </Dialog>
+    <View className="flex-1 bg-ar-bg">
+      <ScreenHeader
+        // A tab page like the others (profile avatar); the permissions step
+        // gets a back button that returns to the modes.
+        back={perms != null}
+        onBack={back}
+        eyebrow={perms ? perms.title : "Camera"}
+        title={perms ? (permsCheck?.blocked ? "Turn on access" : "Allow access") : "Collect"}
+      />
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: tabBarHeight + 48 }}>
+        {perms ? (
+          <PermsStep key={perms.id} mode={perms} check={permsCheck} requesting={requesting} error={error} onAllow={(m) => void allow(m)} onContinue={go} />
+        ) : (
+          <PickStep checks={checks} onPick={(m) => void pick(m)} />
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -131,20 +130,11 @@ async function readChecks(): Promise<Checks> {
 
 /* ── Step 1: the bento ──────────────────────────────────────────────────── */
 
-function PickStep({ checks, onPick, onClose }: { checks: Checks; onPick: (m: CameraModeDef) => void; onClose: () => void }) {
-  const { c } = useColors();
+function PickStep({ checks, onPick }: { checks: Checks; onPick: (m: CameraModeDef) => void }) {
   const [ar, qr, murals] = CAMERA_MODES as [CameraModeDef, CameraModeDef, CameraModeDef];
   return (
-    <Animated.View entering={FadeIn.duration(180)} className="px-4">
-      <View className="flex-row items-start gap-3 px-1 pb-4">
-        <View className="flex-1">
-          <Text className="font-hud text-[9.5px] font-semibold uppercase tracking-[2.4px] text-ar-faint">Camera</Text>
-          <Text className="font-hud mt-1 text-[21px] font-bold leading-7 text-ar-text">How do you want to collect?</Text>
-        </View>
-        <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close" hitSlop={8} className="h-9 w-9 items-center justify-center rounded-full border border-ar-line bg-ar-surface-2">
-          <X size={16} strokeWidth={2.4} color={c("ar-text-dim")} />
-        </Pressable>
-      </View>
+    <Animated.View entering={FadeIn.duration(180)}>
+      <Text className="mb-4 text-[13px] leading-5 text-ar-dim">How do you want to collect? Pick a way in — each shows whether it&apos;s ready to go.</Text>
       <View style={{ gap: 12 }}>
         <BentoCard mode={ar} check={checks.ar} size="hero" index={0} onPress={onPick} />
         <View style={{ flexDirection: "row", gap: 12 }}>
@@ -327,7 +317,6 @@ function PermsStep({
   check,
   requesting,
   error,
-  onBack,
   onAllow,
   onContinue,
 }: {
@@ -335,32 +324,17 @@ function PermsStep({
   check?: PermCheck;
   requesting: boolean;
   error: string | null;
-  onBack: () => void;
   onAllow: (m: CameraModeDef) => void;
   onContinue: (m: CameraModeDef) => void;
 }) {
-  const { c } = useColors();
   const Icon = mode.icon;
   const cameraOk = check?.states.camera === "granted";
   // Location said no but the camera is fine: AR still opens (empty scene), so offer it.
   const canContinue = cameraOk && !check?.ready && mode.id === "ar";
 
   return (
-    <Animated.View entering={FadeInRight.springify().stiffness(380).damping(32)} className="px-5">
-      <View className="flex-row items-center gap-3 pb-4 pt-1">
-        <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back to camera modes" hitSlop={8} className="h-9 w-9 items-center justify-center rounded-full border border-ar-line bg-ar-surface-2">
-          <ChevronLeft size={18} strokeWidth={2.4} color={c("ar-text-dim")} />
-        </Pressable>
-        <View className="flex-1 flex-row items-center gap-2">
-          <View style={{ width: 26, height: 26, borderRadius: 8, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: c(mode.accent, 0.5), backgroundColor: c(mode.accent, 0.18) }}>
-            <Icon size={13} strokeWidth={2.4} color={c(hot(mode.accent))} />
-          </View>
-          <Text className="font-hud text-[10px] font-semibold uppercase tracking-[2px] text-ar-faint">{mode.title}</Text>
-        </View>
-      </View>
-
-      <Text className="font-hud text-[22px] font-bold text-ar-text">{check?.blocked ? "Turn on access" : "Allow access"}</Text>
-      <Text className="mt-1.5 text-[13px] leading-5 text-ar-dim">
+    <Animated.View entering={FadeInRight.springify().stiffness(380).damping(32)}>
+      <Text className="text-[13px] leading-5 text-ar-dim">
         {check?.blocked
           ? "Wadzzo was told no earlier, so your phone won't ask again. Switch it on in Settings, then come back — this updates on its own."
           : `${mode.title} needs these to work. You'll only be asked once.`}

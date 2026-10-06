@@ -26,6 +26,9 @@ import { useColors } from "~/theme/theme";
  * in range + claimable (full colour, sonar, floating), out of range (dimmed,
  * grounded), collected (desaturated, gold tick), locked/dead (flattened).
  *
+ * Shape says how it's collected (same as the web): round = tap to collect,
+ * square = auto-collect.
+ *
  * GPU budget: up to 80 of these sit on the map at once, so only the selected
  * pin gets a blurred glow. Everything else is a crisp ring or flat fill —
  * each blurred boxShadow, and each group `opacity`, costs an offscreen pass
@@ -45,6 +48,9 @@ export const PinMarker = memo(function PinMarker({ pin, selected, inRange, onSel
   const scale = useAnimatedStyle(() => ({ transform: [{ scale: withSpring(selected ? 1.22 : 1, { stiffness: 480, damping: 24 }) }] }));
   // Leaf-level dimming (see the GPU note above).
   const dim = dead ? 0.45 : live ? 1 : 0.75;
+  // Square = auto-collect, round = tap (web: rounded-[10px] / rounded-full).
+  const square = pin.autoCollect;
+  const r = square ? { outer: 10, halo: 14, fill: 8, img: 6 } : { outer: 21, halo: 26, fill: 19, img: 15 };
 
   return (
     <Pressable onPress={() => onSelect(pin.id)} accessibilityRole="button" accessibilityLabel={`${pin.title} — ${pin.brandName}`} hitSlop={6} style={{ width: 52, height: 58, alignItems: "center" }}>
@@ -71,7 +77,7 @@ export const PinMarker = memo(function PinMarker({ pin, selected, inRange, onSel
             {
               width: 42,
               height: 42,
-              borderRadius: 14,
+              borderRadius: r.outer,
               borderWidth: 2,
               borderColor: ringA(dim),
               alignItems: "center",
@@ -84,9 +90,9 @@ export const PinMarker = memo(function PinMarker({ pin, selected, inRange, onSel
         >
           {/* Live pins: a crisp halo ring instead of a blurred glow. */}
           {live && !selected && (
-            <View pointerEvents="none" style={{ position: "absolute", inset: -5, borderRadius: 18, borderWidth: 2, borderColor: ringA(0.3) }} />
+            <View pointerEvents="none" style={{ position: "absolute", inset: -5, borderRadius: r.halo, borderWidth: 2, borderColor: ringA(0.3) }} />
           )}
-          <LinearGradient colors={[c("ar-surface-3"), c("ar-void")]} style={{ position: "absolute", inset: 0, borderRadius: 12, opacity: dim }} />
+          <LinearGradient colors={[c("ar-surface-3"), c("ar-void")]} style={{ position: "absolute", inset: 0, borderRadius: r.fill, opacity: dim }} />
           {failed ? (
             <Text className="font-hud text-[15px] font-bold" style={{ color: ringA(dim) }}>
               {pin.brandName.charAt(0)}
@@ -95,7 +101,7 @@ export const PinMarker = memo(function PinMarker({ pin, selected, inRange, onSel
             <Image
               source={{ uri: pin.brandImageUrl }}
               onError={() => setFailed(true)}
-              style={{ width: 30, height: 30, borderRadius: 9, opacity: status === "collected" ? 0.45 : dim }}
+              style={{ width: 30, height: 30, borderRadius: r.img, opacity: status === "collected" ? 0.45 : dim }}
               contentFit="cover"
             />
           )}

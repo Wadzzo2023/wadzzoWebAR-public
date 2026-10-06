@@ -1,7 +1,7 @@
-import { router, useLocalSearchParams } from "expo-router";
-import { CalendarDays } from "lucide-react-native";
+import { router, useIsFocused, useLocalSearchParams } from "expo-router";
+import { CalendarDays, MapPinOff } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useWindowDimensions, View } from "react-native";
+import { Linking, Pressable, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { MapCanvas, type MapCanvasHandle } from "~/components/map/MapCanvas";
@@ -17,6 +17,7 @@ import { LocationGate } from "~/components/shell/LocationGate";
 import { ProfileButton } from "~/components/shell/ProfileButton";
 import { useTabBarHeight } from "~/components/shell/BottomTabBar";
 import { Glass } from "~/components/ui/surfaces";
+import { Text } from "~/components/ui/Text";
 import { ArIconButton } from "~/components/ui/ArButton";
 import { useBrandsQuery, useCollectPin } from "~/lib/api/queries";
 import { useFeedback, useSettings } from "~/lib/ar/feedback";
@@ -28,6 +29,7 @@ import { pinStatus } from "~/lib/ar/rarity";
 import type { ArPin, Coords, TravelMode } from "~/lib/ar/types";
 import { useSession } from "~/lib/auth/session";
 import { useMuralsInArea } from "~/lib/murals/api";
+import { useColors } from "~/theme/theme";
 
 /**
  * ── /map ───────────────────────────────────────────────────────────────────
@@ -38,13 +40,27 @@ import { useMuralsInArea } from "~/lib/murals/api";
  * app is open (foreground only, decided); a blip + haptic marks each pin
  * coming into range.
  */
+/** `value` while `live`; otherwise the last value seen while it was. */
+function useHeldWhileBlurred<T>(value: T, live: boolean): T {
+  const [held, setHeld] = useState(value);
+  if (live && held !== value) setHeld(value);
+  return live ? value : held;
+}
+
 /** How long the map must stay still before a new area of pins is loaded. */
 const VIEWPORT_SETTLE_MS = 400;
 
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
+  const { c } = useColors();
   const tabBarHeight = useTabBarHeight();
-  const { fix, status, reason, retry } = useGeolocation();
+  // While another tab is showing, hold the last fix: this screen stays
+  // mounted, and re-rendering every pin on each GPS tick nobody sees is
+  // what used to make the tabs lag (they aren't frozen any more).
+  const isFocused = useIsFocused();
+  const geo = useGeolocation();
+  const fix = useHeldWhileBlurred(geo.fix, isFocused);
+  const { status, reason, precise, retry } = geo;
 
   // ── Which pins to load ──
   // Nearby first: until the camera has settled, load the small circle
@@ -82,8 +98,9 @@ export default function MapScreen() {
   const collectPin = useCollectPin();
   const settings = useSettings();
   const feedback = useFeedback();
-  // Only once location is allowed — iOS rejects the heading watch before that.
-  const { heading } = useHeading(status === "tracking");
+  // Only once location is allowed — iOS rejects the heading watch before
+  // that — and only while this tab is showing (the sensor stops otherwise).
+  const { heading } = useHeading(status === "tracking" && isFocused);
   const headingUp = settings.compassMode ? heading : null;
   const requireAuth = useSession((s) => s.requireAuth);
   const signedIn = useSession((s) => Boolean(s.user));
@@ -255,6 +272,13 @@ export default function MapScreen() {
         onSelect={handleSelect}
         following={following}
         onUserPan={() => setFollowing(false)}
+        onRefollow={() => setFollowing(true)}
+        onCompassGesture={() => {
+          // Touching the map hands rotation back to you: compass mode off (map stays where you left it).
+          if (!settings.compassMode) return;
+          settings.toggle("compassMode");
+          setToast("Compass off — you moved the map");
+        }}
         headingUp={headingUp}
         onViewportIdle={onViewportIdle}
         heading={heading}
@@ -266,6 +290,23 @@ export default function MapScreen() {
       />
 
       {!fix && <LocationGate status={status} reason={reason} onRetry={() => void retry()} />}
+
+      {/* Android "Approximate" location: the map works, collecting doesn't. */}
+      {fix && !precise && (
+        <Pressable
+          onPress={() => void Linking.openSettings()}
+          accessibilityRole="button"
+          accessibilityLabel="Approximate location is on. Open Settings to turn on precise location."
+          style={{ position: "absolute", top: insets.top + hudHeight + 10, alignSelf: "center", zIndex: 30 }}
+        >
+          <Glass style={{ borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, flexDirection: "row", alignItems: "center", gap: 8, borderColor: c("rarity-legendary", 0.5) }}>
+            <MapPinOff size={14} strokeWidth={2.4} color={c("rarity-legendary")} />
+            <Text className="text-[12px] text-ar-text">
+              Approximate location — <Text className="font-bold" style={{ color: c("rarity-legendary") }}>turn on Precise</Text> to collect
+            </Text>
+          </Glass>
+        </Pressable>
+      )}
 
       <View
         pointerEvents="box-none"
@@ -297,6 +338,9 @@ export default function MapScreen() {
           compassMode={settings.compassMode}
           onToggleCompass={() => {
             const turningOn = !settings.compassMode;
+            // Turning on: follow you again — the native compass-follow camera
+            // re-centres in one move (an extra recenter() made it jump twice).
+            if (turningOn) setFollowing(true);
             settings.toggle("compassMode");
             if (!turningOn) mapRef.current?.resetBearing();
             setToast(turningOn ? "Compass map on — turn to look around" : "Compass map off — facing north");

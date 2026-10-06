@@ -1,4 +1,4 @@
-import { Camera, MapView, MarkerView } from "@rnmapbox/maps";
+import { Camera, MapView, MarkerView, LocationPuck, UserTrackingMode } from "@rnmapbox/maps";
 import {
   forwardRef,
   useCallback,
@@ -9,9 +9,9 @@ import {
   useState,
 } from "react";
 import { StyleSheet, useWindowDimensions } from "react-native";
+import { useIsFocused } from "expo-router";
 import Supercluster, { type ClusterProperties } from "supercluster";
 
-import { useTabBarHeight } from "~/components/shell/BottomTabBar";
 import { AR_CAPTURE_RADIUS, distanceMeters } from "~/lib/ar/geo";
 import type { ArPin, Coords, GeoFix } from "~/lib/ar/types";
 import type { AreaMural } from "~/lib/murals/api";
@@ -45,6 +45,8 @@ export type MapCanvasHandle = {
  */
 const MAX_MARKERS = 80;
 const MAX_MURAL_MARKERS = 40;
+/** Re-centre on the user only after they move this far (GPS jitter is ~2–5 m). */
+const FOLLOW_MIN_M = 6;
 /** Screen area (× the visible size) whose pins get markers when zoomed in. */
 const VIEW_MARGIN = 1.5;
 /** Groups stop forming above this zoom: from street level in, every pin is its own marker. */
@@ -66,6 +68,10 @@ export const MapCanvas = forwardRef<
     onSelect: (id: string | null) => void;
     following: boolean;
     onUserPan: () => void;
+    /** A gesture that turned out to be only a zoom: resume following (keeps the new zoom). */
+    onRefollow?: () => void;
+    /** The user touched the map while compass mode was on — the parent turns compass mode off. */
+    onCompassGesture?: () => void;
     headingUp: number | null;
     heading: number | null;
     /** Where the camera settled (centre + zoom) — drives which pins get loaded. */
@@ -86,6 +92,8 @@ export const MapCanvas = forwardRef<
     onSelect,
     following,
     onUserPan,
+    onRefollow,
+    onCompassGesture,
     headingUp,
     heading,
     onViewportIdle,
@@ -143,19 +151,45 @@ export const MapCanvas = forwardRef<
     resetBearing,
   ]);
 
-  // Follow the fix while the viewer hasn't taken the wheel.
+  // Follow the fix while the viewer hasn't taken the wheel — but only for
+  // real movement: easing the camera on every GPS tick read as the whole
+  // map "reloading" every second on Android.
+  const followedAt = useRef<Coords | null>(null);
   useEffect(() => {
-    if (!following || !fix) return;
+    if (!following) followedAt.current = null;
+    // Compass mode follows natively (see below) — don't fight it.
+    if (!following || !fix || headingUp != null) return;
+    if (followedAt.current && distanceMeters(followedAt.current, fix) < FOLLOW_MIN_M) return;
+    followedAt.current = { lat: fix.lat, lng: fix.lng };
     camera.current?.setCamera({
       centerCoordinate: [fix.lng, fix.lat],
       animationDuration: 850,
       animationMode: "easeTo",
     });
-  }, [following, fix]);
+  }, [following, fix, headingUp]);
 
-  // Compass mode: turn the map under a fixed "up", ignoring < 2° jitter.
+  // Compass mode while following you: the native camera follows with the
+  // compass itself (smooth, UI-thread interpolation — like Directions).
+  // Per-reading `setCamera` calls interrupted each other and lagged.
+  // Re-apply native follow whenever the map tab regains focus: another
+  // screen's map (Directions, AR) can leave this hidden map's follow stale,
+  // and an unchanged `followUserLocation` prop would never re-send it.
+  const isFocused = useIsFocused();
+  /** When a gesture last dropped follow — a pinch is re-followed in onMapIdle. */
+  const lostFollowAt = useRef(0);
+  const [refollow, setRefollow] = useState(false);
   useEffect(() => {
-    if (headingUp == null) return;
+    if (!isFocused) return;
+    setRefollow(true);
+    const t = setTimeout(() => setRefollow(false), 60);
+    return () => clearTimeout(t);
+  }, [isFocused]);
+  const nativeCompass = headingUp != null && following && fix != null && isFocused && !refollow;
+
+  // Compass mode after you've panned away: turn the map under a fixed "up"
+  // from JS (rare; ignores < 2° jitter).
+  useEffect(() => {
+    if (headingUp == null || nativeCompass) return;
     const prev = lastBearing.current;
     if (prev != null && Math.abs(((headingUp - prev + 540) % 360) - 180) < 2)
       return;
@@ -165,7 +199,7 @@ export const MapCanvas = forwardRef<
       animationDuration: 260,
       animationMode: "easeTo",
     });
-  }, [headingUp]);
+  }, [headingUp, nativeCompass]);
 
   // ── What to draw ──
   // Only what's on screen (plus a margin, so panning doesn't pop things in
@@ -351,15 +385,15 @@ export const MapCanvas = forwardRef<
     [muralGroups, muralIndex],
   );
 
-  // The tab bar floats over the map; keep the Mapbox credit above it.
-  const tabBarHeight = useTabBarHeight();
 
   return (
     <MapView
       style={StyleSheet.absoluteFill}
       styleURL={MAP_STYLE[theme]}
       logoEnabled={false}
-      attributionPosition={{ bottom: tabBarHeight + 8, left: 8 }}
+      // Hidden by product decision (2026-10-06), knowing Mapbox's terms ask
+      // for visible attribution — revisit if Mapbox flags the account.
+      attributionEnabled={false}
       scaleBarEnabled={false}
       compassEnabled={false}
       pitchEnabled
@@ -367,9 +401,24 @@ export const MapCanvas = forwardRef<
       onCameraChanged={(s) => {
         // Fires every frame while the camera moves, so no state here: markers
         // and groups are recomputed once the camera settles (onMapIdle).
-        if (s.gestures.isGestureActive && following) onUserPan();
+        // Any touch while compass mode is on turns it off (product rule).
+        if (s.gestures.isGestureActive && headingUp != null) onCompassGesture?.();
+        if (s.gestures.isGestureActive && following) {
+          lostFollowAt.current = Date.now();
+          onUserPan();
+        }
       }}
       onMapIdle={(s) => {
+        // Pinch-zoom also counts as a gesture and drops follow; if the camera
+        // is still on you, it was only a zoom — keep following (and, in
+        // compass mode, the smooth native compass camera) at the new zoom.
+        if (!following && fix && Date.now() - lostFollowAt.current < 4000) {
+          const [clng, clat] = s.properties.center as [number, number];
+          if (distanceMeters({ lng: clng, lat: clat }, fix) < 40) {
+            lostFollowAt.current = 0;
+            onRefollow?.();
+          }
+        }
         const z = s.properties.zoom;
         // Always take a zoom that changes the grouping level, however small the change.
         setZoom((prev) =>
@@ -402,7 +451,19 @@ export const MapCanvas = forwardRef<
         // billboards, so a world view stays a few dozen views.
         minZoomLevel={1}
         maxZoomLevel={19.5}
+        followUserLocation={nativeCompass}
+        followUserMode={UserTrackingMode.FollowWithHeading}
+        onUserTrackingModeChange={(e) => {
+          // A gesture dropped native follow → same as panning away.
+          // A gesture dropped native follow → same as panning away (not our own refollow toggle).
+          if (nativeCompass && !refollow && !e.nativeEvent.payload.followUserLocation) {
+            lostFollowAt.current = Date.now();
+            onUserPan();
+          }
+        }}
       />
+      {/* Invisible: gives the native follow camera its location; we draw our own puck. */}
+      {nativeCompass && <LocationPuck visible={false} puckBearingEnabled puckBearing="heading" />}
       {fix && (
         <MarkerView
           coordinate={[fix.lng, fix.lat]}
@@ -472,7 +533,8 @@ export const MapCanvas = forwardRef<
           allowOverlapWithPuck
           isSelected
         >
-          <UserPuck fix={fix} heading={heading} />
+          {/* Heading-up: the map already faces your heading, so the cone points straight up. */}
+          <UserPuck fix={fix} heading={headingUp != null && following ? 0 : heading} />
         </MarkerView>
       )}
     </MapView>
