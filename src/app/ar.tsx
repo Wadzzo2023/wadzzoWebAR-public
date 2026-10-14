@@ -17,7 +17,8 @@ import { Text } from "~/components/ui/Text";
 import { useCollectPin, usePinQuery } from "~/lib/api/queries";
 import { useFeedback } from "~/lib/ar/feedback";
 import { AR_CAPTURE_RADIUS, distanceMeters, formatDistance } from "~/lib/ar/geo";
-import { useGeolocation, useHeading } from "~/lib/ar/location";
+import { useCameraHeading } from "~/lib/ar/cameraHeading";
+import { useGeolocation } from "~/lib/ar/location";
 import { pinArea, useDiscoveryPins } from "~/lib/ar/pins";
 import { isCapturable } from "~/lib/ar/rarity";
 import { checkPermissions, requestPermissions, type PermKey, type PermStates } from "~/lib/camera/permissions";
@@ -127,7 +128,8 @@ function ArSession({
 }) {
   const { fix } = useGeolocation();
   // Only once location is allowed (a fix implies it) — iOS rejects the heading watch before that.
-  const { heading } = useHeading(fix != null);
+  // The back camera's direction, not the top edge's (they differ on Android; see cameraHeading.ts).
+  const { heading } = useCameraHeading(fix != null);
   // AR only ever places pins within 200 m: the nearby circle is plenty (and
   // it's the same area the map loads first, so it's usually already cached).
   const { pins: discovery } = useDiscoveryPins(pinArea(fix));
@@ -196,6 +198,11 @@ function ArSession({
   useEffect(() => {
     if (!cal && tracking) doCalibrate();
   }, [cal, tracking, doCalibrate]);
+  // Calibrated before the pins had loaded (or before the `?pin=` one had):
+  // take them once they arrive, instead of "Nothing within 200 m" until a
+  // manual recalibrate. (Set while rendering, React's pattern for state
+  // derived from props; it runs once, since the set is then non-empty.)
+  if (cal && scenePinIds?.length === 0 && pins.length > 0) setScenePinIds(pins.map((pin) => pin.id));
 
   // Each pin's position AND size are fixed when it's placed. Size used to
   // follow your live distance, so it (and the card above it) changed in steps

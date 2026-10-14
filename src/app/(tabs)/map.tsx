@@ -29,7 +29,7 @@ import { pinStatus } from "~/lib/ar/rarity";
 import type { ArPin, Coords, TravelMode } from "~/lib/ar/types";
 import { useSession } from "~/lib/auth/session";
 import { useMuralsInArea } from "~/lib/murals/api";
-import { useColors } from "~/theme/theme";
+import { useColors, useMapMode } from "~/theme/theme";
 
 /**
  * ── /map ───────────────────────────────────────────────────────────────────
@@ -106,6 +106,7 @@ export default function MapScreen() {
   const signedIn = useSession((s) => Boolean(s.user));
 
   const mapRef = useRef<MapCanvasHandle>(null);
+  const { mode: mapMode, is3d, toggle: toggleMapMode } = useMapMode();
   const { focus } = useLocalSearchParams<{ focus?: string }>();
   const [filter, setFilter] = useState<PinFilterId>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -333,6 +334,11 @@ export default function MapScreen() {
 
       {fix && (
         <MapControls
+          mapMode={mapMode}
+          onToggleMapMode={() => {
+            toggleMapMode();
+            setToast(is3d ? "2D map" : "3D map");
+          }}
           onRecenter={handleRecenter}
           onRefetch={handleRefetch}
           compassMode={settings.compassMode}
