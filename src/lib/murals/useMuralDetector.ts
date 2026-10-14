@@ -36,6 +36,15 @@ const ignoreDrops = () => undefined;
 const CROPS = cropGrid(Platform.OS === "ios");
 const SAMPLE_W = 120;
 
+/**
+ * Mural test mode (dev builds only, EXPO_PUBLIC_MURAL_TEST_MODE=true): treat
+ * whatever is in view as art, so the scan flow can be tried without a mural
+ * (e.g. on a laptop). The server must run with MURAL_TEST_MODE=true too, or
+ * it rejects the scan as "not art".
+ */
+export const MURAL_TEST_MODE = __DEV__ && process.env.EXPO_PUBLIC_MURAL_TEST_MODE === "true";
+const TEST_SCORE = 0.9;
+
 export type DetectorState = "idle" | "loading" | "ready" | "error";
 export type FrameQuality = "ok" | "dark" | "blurry";
 export type ArtKind = "Mural" | "Graffiti" | "Street art";
@@ -154,7 +163,8 @@ export function useMuralDetector({ enabled, onLockChange }: { enabled: boolean; 
   }, [enabled, model]);
 
   const onResult = useCallback(
-    (sc: number, q: FrameQuality, vec: number[]) => {
+    (raw: number, q: FrameQuality, vec: number[]) => {
+      const sc = MURAL_TEST_MODE ? Math.max(raw, TEST_SCORE) : raw;
       lastVector.current = vec;
       setScore(sc);
       setQuality(q);
@@ -176,7 +186,8 @@ export function useMuralDetector({ enabled, onLockChange }: { enabled: boolean; 
 
   const onLabel = useCallback((label: string) => setKind(kindOf(label)), []);
 
-  const onLocate = useCallback((scores: number[], rgb: number[], sw: number, sh: number, aspect: number) => {
+  const onLocate = useCallback((raw: number[], rgb: number[], sw: number, sh: number, aspect: number) => {
+    const scores = MURAL_TEST_MODE ? raw.map((x) => Math.max(x, TEST_SCORE)) : raw;
     setFrameAspect(aspect);
     const box = boxFromScores(CROPS, scores);
     if (!box) {

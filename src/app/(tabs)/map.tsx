@@ -107,7 +107,7 @@ export default function MapScreen() {
 
   const mapRef = useRef<MapCanvasHandle>(null);
   const { mode: mapMode, is3d, toggle: toggleMapMode } = useMapMode();
-  const { focus } = useLocalSearchParams<{ focus?: string }>();
+  const { focus, mural: focusMural } = useLocalSearchParams<{ focus?: string; mural?: string }>();
   const [filter, setFilter] = useState<PinFilterId>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [following, setFollowing] = useState(true);
@@ -243,6 +243,19 @@ export default function MapScreen() {
     const m = muralsRef.current.find((x) => x.id === id);
     if (m) mapRef.current?.flyToMural(m);
   }, []);
+
+  // `/map?mural=<id>` (after a mural scan): open that mural once it's loaded.
+  const focusedMural = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusMural || focusedMural.current === focusMural) return;
+    if (!murals.some((m) => m.id === focusMural)) return;
+    // Next tick, once the map has the mural's marker.
+    const t = setTimeout(() => {
+      focusedMural.current = focusMural;
+      handleSelectMural(focusMural);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [focusMural, murals, handleSelectMural]);
 
   const handleCapture = useCallback(
     (pin: ArPin) => {
