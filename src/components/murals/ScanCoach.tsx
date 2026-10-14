@@ -62,19 +62,31 @@ export function SweepDemo({ width = W }: { width?: number }) {
   const angle = useSharedValue(0);
   const stage = STAGES[live ? i : 0]!;
 
+  /** The phone has arrived for this stage (its photo spot lights then). */
+  const [landed, setLanded] = useState(false);
   useEffect(() => {
     if (!live) return;
-    const t = setTimeout(() => setI((n) => (n + 1) % STAGES.length), STAGES[i]!.ms);
-    return () => clearTimeout(t);
+    const ms = STAGES[i]!.ms;
+    const land = setTimeout(() => setLanded(true), ms * 0.6);
+    const next = setTimeout(() => {
+      setLanded(false);
+      setI((n) => (n + 1) % STAGES.length);
+    }, ms);
+    return () => {
+      clearTimeout(land);
+      clearTimeout(next);
+    };
   }, [i, live]);
   useEffect(() => {
     angle.set(withTiming(stage.angle, { duration: Math.round(stage.ms * 0.55), easing: Easing.inOut(Easing.cubic) }));
   }, [stage, angle]);
   const turn = useAnimatedStyle(() => ({ transform: [{ rotate: `${angle.get()}deg` }] }));
 
-  // Spots taken so far in this loop, in scan order: middle, left, right
-  // (all three when motion is off).
-  const taken = { centre: !live || i >= 1, left: !live || i >= 2, right: !live || i >= 3 };
+  // Spots taken so far in this loop, in scan order: middle (stage 1), left
+  // (2), right (3) — each once the phone has got there (all three when
+  // motion is off).
+  const shot = (k: number) => !live || i > k || (i === k && landed);
+  const taken = { centre: shot(1), left: shot(2), right: shot(3) };
   const purple = c("rarity-epic");
   const scale = width / W;
 

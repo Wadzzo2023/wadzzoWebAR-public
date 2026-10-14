@@ -28,7 +28,7 @@ import { MAX_GPS_ACCURACY_M, SWEEP_SIDE_DEG, type ScanResult as Result } from "~
 import type { Outline } from "~/lib/murals/localize";
 import { startMuralPack, useMuralPack, verifyMuralPack, type PackState } from "~/lib/murals/pack";
 import { sfx } from "~/lib/murals/sfx";
-import { MURAL_TEST_MODE, useMuralDetector } from "~/lib/murals/useMuralDetector";
+import { useMuralDetector } from "~/lib/murals/useMuralDetector";
 import { useMuralSweep, type SweepSlot } from "~/lib/murals/useMuralSweep";
 import { useColors } from "~/theme/theme";
 
@@ -370,14 +370,6 @@ export default function MuralsScreen() {
           </Glass>
         </Pressable>
       </View>
-
-      {MURAL_TEST_MODE && (
-        <View pointerEvents="none" style={{ position: "absolute", top: insets.top + 92, alignSelf: "center", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, backgroundColor: c("rarity-legendary") }}>
-          <Text className="font-hud text-[10px] font-bold uppercase tracking-[1.4px]" style={{ color: c("ar-void") }}>
-            Test mode · anything counts as a mural
-          </Text>
-        </View>
-      )}
 
       {/* How to scan. */}
       <Pressable onPress={() => setCoachOpen(true)} accessibilityRole="button" accessibilityLabel="How to scan a mural" hitSlop={8} style={{ position: "absolute", top: insets.top + 56, right: 16 }}>
