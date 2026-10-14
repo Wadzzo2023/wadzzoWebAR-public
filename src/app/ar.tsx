@@ -17,6 +17,7 @@ import { Text } from "~/components/ui/Text";
 import { useCollectPin, usePinQuery } from "~/lib/api/queries";
 import { useFeedback } from "~/lib/ar/feedback";
 import { AR_CAPTURE_RADIUS, distanceMeters, formatDistance } from "~/lib/ar/geo";
+import { arTextureUrl, coinImage, useArTextures } from "~/lib/ar/arTexture";
 import { useCameraHeading } from "~/lib/ar/cameraHeading";
 import { useGeolocation } from "~/lib/ar/location";
 import { pinArea, useDiscoveryPins } from "~/lib/ar/pins";
@@ -204,6 +205,18 @@ function ArSession({
   // derived from props; it runs once, since the set is then non-empty.)
   if (cal && scenePinIds?.length === 0 && pins.length > 0) setScenePinIds(pins.map((pin) => pin.id));
 
+  // Every coin face and card art is checked to download as a real image
+  // before Viro gets it (a failed texture download crashes the app — see
+  // arTexture.ts). A pin is placed once its checks are back.
+  const textureUrls = useMemo(() => {
+    const byId = new Map(pool.map((pin) => [pin.id, pin]));
+    return (scenePinIds ?? []).flatMap((id) => {
+      const pin = byId.get(id);
+      return pin ? [arTextureUrl(coinImage(pin)), arTextureUrl(pin.imageUrl)] : [];
+    });
+  }, [pool, scenePinIds]);
+  const textures = useArTextures(textureUrls);
+
   // Each pin's position AND size are fixed when it's placed. Size used to
   // follow your live distance, so it (and the card above it) changed in steps
   // as you moved — the pins looked like they were jumping.
@@ -214,6 +227,9 @@ function ArSession({
     return scenePinIds.flatMap((id) => {
       const pin = byId.get(id);
       if (!pin) return [];
+      const faceOk = textures.get(arTextureUrl(coinImage(pin)));
+      const artOk = textures.get(arTextureUrl(pin.imageUrl));
+      if (faceOk == null || artOk == null) return []; // still checking
       const real = distanceMeters(fix, pin);
       const target = focusPinId ? viewOnlyTarget(cal.fix, pin) : pin;
       const position = placeInScene(cal, target);
@@ -226,9 +242,11 @@ function ArSession({
         distance: real,
         capturable,
         reason: capturable ? null : pin.lockReason,
+        faceOk,
+        artOk,
       };
     });
-  }, [cal, fix, pool, focusPinId, scenePinIds]);
+  }, [cal, fix, pool, focusPinId, scenePinIds, textures]);
 
   // Aim → focus, with the web's dwell timings.
   const aimed = useMemo(() => {

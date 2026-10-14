@@ -39,6 +39,9 @@ export type PlacedPin = {
   distance: number;
   capturable: boolean;
   reason: string | null;
+  /** The coin face / card art downloaded as real images (see arTexture.ts). */
+  faceOk: boolean;
+  artOk: boolean;
 };
 
 export type ArWorldProps = {
@@ -126,16 +129,20 @@ function registerStatic() {
  * swapping later), so the material exists before the coin names it.
  */
 const faceMaterials = new Set<string>();
-function faceMaterial(pin: ArPin, dim: boolean) {
-  const name = `arFace_${pin.id}_${dim ? "d" : "l"}`;
+function faceMaterial(pin: ArPin, dim: boolean, textured: boolean) {
+  const name = `arFace_${pin.id}_${dim ? "d" : "l"}_${textured ? "t" : "c"}`;
   if (!faceMaterials.has(name)) {
     faceMaterials.add(name);
     ViroMaterials.createMaterials({
-      [name]: {
-        diffuseTexture: { uri: arTextureUrl(coinImage(pin)) },
-        diffuseColor: dim ? "#6b6f6c" : "#ffffff",
-        lightingModel: "Constant",
-      },
+      [name]: textured
+        ? {
+            diffuseTexture: { uri: arTextureUrl(coinImage(pin)) },
+            diffuseColor: dim ? "#6b6f6c" : "#ffffff",
+            lightingModel: "Constant",
+          }
+        : // The image didn't load: a plain coin in its rarity colour, never
+          // a texture Viro can't decode (that crashes the app).
+          { diffuseColor: dim ? "#6b6f6c" : RARITY_HEX[pin.rarity], lightingModel: "Constant" },
     });
   }
   return name;
@@ -196,6 +203,8 @@ const samePlaced = (
   a.focused === b.focused &&
   a.placed.pin === b.placed.pin &&
   a.placed.capturable === b.placed.capturable &&
+  a.placed.faceOk === b.placed.faceOk &&
+  a.placed.artOk === b.placed.artOk &&
   a.placed.reason === b.placed.reason &&
   a.placed.scale === b.placed.scale &&
   Math.round(a.placed.distance) === Math.round(b.placed.distance) &&
@@ -214,8 +223,8 @@ const PinNode = memo(function PinNode({
 }) {
   const { pin, position, scale, capturable } = placed;
   const face = useMemo(
-    () => faceMaterial(pin, !capturable && !pin.collected),
-    [pin, capturable],
+    () => faceMaterial(pin, !capturable && !pin.collected, placed.faceOk),
+    [pin, capturable, placed.faceOk],
   );
   const rim = capturable || pin.collected ? `arRim_${pin.rarity}` : "arRimDead";
   const s = scale * PIN_SIZE;
@@ -405,6 +414,8 @@ function Billboard({ placed }: { placed: PlacedPin }) {
         height={CARD_H}
         {...({ renderingOrder: ORDER.card } as object)}
       />
+      {/* Only an image that's known to load: a failed download here can crash Viro. */}
+      {placed.artOk && (
       <ViroImage
         source={art}
         position={[left + THUMB_W / 2, top - THUMB_H / 2, Z.art]}
@@ -414,6 +425,7 @@ function Billboard({ placed }: { placed: PlacedPin }) {
         imageClipMode="ClipToBounds"
         {...({ renderingOrder: ORDER.art } as object)}
       />
+      )}
       {/* Rarity (its colour) · state */}
       <Label
         x={colX + colW * 0.25}
