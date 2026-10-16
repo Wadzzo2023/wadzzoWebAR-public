@@ -11,7 +11,7 @@ import {
   ViroTrackingStateConstants,
   type ViroCameraTransform,
 } from "@reactvision/react-viro";
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 
 import { arTextureUrl, coinImage } from "~/lib/ar/arTexture";
 import { AR_CAPTURE_RADIUS, formatDistance } from "~/lib/ar/geo";
@@ -148,9 +148,22 @@ function faceMaterial(pin: ArPin, dim: boolean, textured: boolean) {
   return name;
 }
 
+/**
+ * Each AR visit starts with no materials: when the AR view closes, Viro
+ * (iOS) wipes every material it was given (`clearAllMaterials`), so the
+ * "already created" caches above must be forgotten too, or the next visit
+ * never re-sends them and every coin renders black.
+ */
+function forgetMaterials() {
+  registered = false;
+  faceMaterials.clear();
+}
+
 export function ArWorld(props: {
   sceneNavigator: { viroAppProps: ArWorldProps };
 }) {
+  // Once per AR view, before anything is (re)created below.
+  useState(forgetMaterials);
   registerStatic();
   const { placed, focusedId, onCamera, onTracking, onPinTap } =
     props.sceneNavigator.viroAppProps;
