@@ -82,7 +82,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     "expo-font",
     "expo-image",
     "expo-secure-store",
-    "expo-audio",
+    // SFX only, foreground only. The plugin defaults enableBackgroundPlayback
+    // to true, which adds `audio` to UIBackgroundModes — App Review rejected
+    // 6.0.1 for that (guideline 2.5.4).
+    ["expo-audio", { enableBackgroundPlayback: false, recordAudioAndroid: false }],
     "expo-web-browser",
     "expo-sharing",
     "expo-status-bar",
